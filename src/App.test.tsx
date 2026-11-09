@@ -404,6 +404,7 @@ describe('After saving a finding', () => {
     const machine = container.querySelector('.machine.has-alert') as HTMLElement;
     expect(machine.querySelector('.status-inspected.is-new')).not.toBeNull();
     expect(machine.querySelector('.status-alert')).toBeNull();
+    expect(machine.querySelector('.status-inspected svg')).toBeNull();
     expect(machine.querySelector('.machine-inspected-text')?.textContent).toBe(floorText);
   });
 

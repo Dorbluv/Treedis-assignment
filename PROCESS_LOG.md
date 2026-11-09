@@ -107,3 +107,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** The user.
 - **What changed:** Decision: show the alert moving to Inspected and the finding added to machine history, rather than claiming the problem is solved, because no repair has happened.
 - **Evidence link or screenshot:** _to fill in_
+
+## Check mark on M-204 was unclear
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Inspected marker on the plant floor.
+- **What went wrong:** Claude Code used a check mark as the inspected marker. The user reported an unexplained "v" on M-204 that did not go away.
+- **Caught by:** The user.
+- **What changed:** The check mark was replaced with a plain blue status dot beside the "Inspected" text, and removed from the phone header and Home panel.
+- **Evidence link or screenshot:** _to fill in_

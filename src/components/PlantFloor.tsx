@@ -3,7 +3,7 @@ import { machineStatus } from '../domain/floor';
 import { inspectionStatus, type InspectionStatus } from '../domain/status';
 import type { Asset } from '../domain/types';
 import type { PlanMap } from '../storage/plans';
-import { AlertMark, CheckMark, TypeIcon } from './Icons';
+import { AlertMark, TypeIcon } from './Icons';
 
 type Role = 'selected' | 'parent' | 'sibling' | 'child' | null;
 
@@ -57,7 +57,7 @@ function MachineBody({ asset, role, state }: { asset: Asset; role: Role; state: 
         <TypeIcon type={asset.type} />
         <span className="machine-id">{asset.id}</span>
         {inspection ? (
-          <span className={`status-inspected${isNew}`}><CheckMark /></span>
+          <span className={`status-inspected${isNew}`} />
         ) : alert ? (
           <span className="status-alert"><span className="pulse" /><AlertMark /></span>
         ) : (

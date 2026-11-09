@@ -1,4 +1,4 @@
-import { AlertMark, CheckMark } from '../components/Icons';
+import { AlertMark } from '../components/Icons';
 import { MachineHistory } from '../components/MachineHistory';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
@@ -19,7 +19,7 @@ function HomeAlert({ plans }: { plans: PlanMap }) {
           <div className="alert-hero" key={alert.id}>
             {finding ? (
               <p className="inspected-title">
-                <CheckMark /> {alert.assetId} inspected: {inspectionStatus(finding.outcome, records).short}
+                {alert.assetId} inspected: {inspectionStatus(finding.outcome, records).short}
               </p>
             ) : (
               <p className="alert-title"><AlertMark /> {alert.title} on {alert.assetId}</p>

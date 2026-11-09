@@ -216,14 +216,11 @@ a { color: var(--blue); }
 .status-inspected {
   position: relative;
   flex: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.4em;
-  height: 1.4em;
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
   border-radius: 50%;
   background: var(--blue);
-  color: var(--page);
 }
 .machine-top .status-inspected { margin-left: auto; }
 .machine-inspected-text { color: var(--blue); font-size: 0.75rem; font-weight: 600; line-height: 1.2; }

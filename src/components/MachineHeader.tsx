@@ -1,7 +1,7 @@
 import { alertFor, records } from '../data';
 import { inspectionStatus } from '../domain/status';
 import type { RetrievalResult, SavedPlan } from '../domain/types';
-import { AlertMark, CheckMark } from './Icons';
+import { AlertMark } from './Icons';
 
 /** Phone only: keeps the machine in view once the plant floor is off screen. */
 export function MachineHeader({ result, saved }: { result: RetrievalResult; saved: SavedPlan | null }) {
@@ -15,9 +15,7 @@ export function MachineHeader({ result, saved }: { result: RetrievalResult; save
         {parent && <span className="machine-parent"> on {parent.type} {parent.id}</span>}
       </span>
       {inspection ? (
-        <span className="machine-inspected">
-          <CheckMark /> Inspected: {inspection.short}
-        </span>
+        <span className="machine-inspected">Inspected: {inspection.short}</span>
       ) : (
         alert && (
           <span className="machine-alert">
