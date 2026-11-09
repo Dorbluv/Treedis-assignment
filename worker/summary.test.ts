@@ -14,7 +14,7 @@ function modelReply(content: unknown): Response {
 const GOOD_M204 = {
   sentences: [
     { text: 'Vibration is 8.4 mm/s against a demo limit of 4.5.', citations: ['SR-M204-01'] },
-    { text: 'Past records list bearing wear as possible.', citations: ['INC-2291'] },
+    { text: 'Past records list bearing wear and low lubricant as possible causes.', citations: ['INC-2291', 'INC-1877'] },
   ],
 };
 
@@ -104,7 +104,7 @@ describe('what reaches the model', () => {
 describe('fallback', () => {
   it.each([
     ['an invented cause', { sentences: [{ text: 'Past records list misalignment as possible.', citations: ['INC-2291'] }] }, 'invalid_cause'],
-    ['a confirmed cause', { sentences: [{ text: 'Bearing wear is confirmed.', citations: ['INC-2291'] }] }, 'invalid_diagnosis'],
+    ['a confirmed cause', { sentences: [{ text: 'Bearing wear is confirmed.', citations: ['INC-2291'] }] }, 'invalid_diagnosis+cause_coverage'],
     ['a citation of INC-2310', { sentences: [{ text: 'Vibration was noted on the gearbox.', citations: ['INC-2310'] }] }, 'invalid_citation'],
     ['an added number', { sentences: [{ text: 'Vibration is 11.2 mm/s.', citations: ['SR-M204-01'] }] }, 'invalid_number'],
     ['an instruction', { sentences: [{ text: 'Check the bearing for play.', citations: ['SOP-014-C'] }] }, 'invalid_instruction'],

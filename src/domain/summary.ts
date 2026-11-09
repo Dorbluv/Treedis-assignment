@@ -20,7 +20,7 @@ export const MAX_SENTENCES = 3;
 export const MAX_SENTENCE_CHARS = 110;
 export const INSUFFICIENT_SENTENCE = 'Insufficient asset-specific evidence to recommend a likely cause.';
 
-export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient';
+export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient' | 'limit_label' | 'cause_coverage';
 
 export interface ValidationFailure {
   rule: SummaryRule;
@@ -54,6 +54,8 @@ const INSTRUCTION =
   /\b(should|must|needs? to|have to|has to|recommend\w*|ensure|make sure|next step|lock(?:ing)? out|lockout|steps? \d+|steps? (?:one|two|three|four|five)|inspect)\b|\b(?:check|replace|tighten|clean|measure|verify)\s+the\b/i;
 const IMPERATIVE_START =
   /^\s*(?:please\s+)?(check|inspect|lock|turn|replace|tighten|verify|measure|isolate|top up|stop|shut|remove|clean|apply|perform|follow|escalate|repair|use|open|feel|look|test|examine|lubricate|grease|align|confirm|investigate|review|schedule|call|contact|do)\b/i;
+
+const UNLABELED_LIMIT = /(?<!\bdemo\s)(?<!\bdemonstration\s)\blimits?\b/i;
 
 const RECORD_OR_ASSET_ID = /\b[A-Z]{1,4}-[A-Z]?\d+(?:-[A-Z0-9]+)*\b/g;
 const DIGITS = /\d+(?:[.,]\d+)?/g;
@@ -93,6 +95,8 @@ function checkSentence(sentence: SummarySentence, result: RetrievalResult): Vali
   for (const word of text.match(NUMBER_WORDS) ?? []) {
     if (!new RegExp(`\\b${word}\\b`, 'i').test(citedText)) failures.push({ rule: 'number', detail: `"${word}" is in no cited record` });
   }
+
+  if (UNLABELED_LIMIT.test(text)) failures.push({ rule: 'limit_label', detail: 'a limit must be called a demo limit' });
 
   if (DIAGNOSIS.test(text.replace(NEGATED_CONFIRMED, ' '))) failures.push({ rule: 'diagnosis', detail: 'states a confirmed cause or diagnosis' });
 
@@ -144,6 +148,12 @@ export function validateSummary(raw: unknown, result: RetrievalResult): Validati
     if (sentence.text.length > MAX_SENTENCE_CHARS) failures.push({ rule: 'shape', detail: 'sentence is too long' });
     if (/[.!?]\s+[A-Z]/.test(sentence.text)) failures.push({ rule: 'shape', detail: 'one entry holds more than one sentence' });
     failures.push(...checkSentence(sentence, result));
+  }
+
+  // Naming only some causes reads as ranking them.
+  const namedCauses = result.possibleCauses.filter((cause) => sentences.some((sentence) => termsFor(cause).test(sentence.text)));
+  if (namedCauses.length > 0 && namedCauses.length < result.possibleCauses.length) {
+    failures.push({ rule: 'cause_coverage', detail: 'names some allowed causes but not all' });
   }
 
   if (result.possibleCauses.length === 0 && !sentences.some((sentence) => /\binsufficient\b/i.test(sentence.text))) {

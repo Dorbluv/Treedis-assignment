@@ -1,0 +1,246 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "promptVersion": "v3",
+  "systemPrompt": "You summarize maintenance records for a technician who has just received a machine alert.\nRules:\n- Write 1 to 3 sentences. Each is one short English sentence of at most 110 characters. Some records are in German: use their meaning, in English.\n- Every sentence lists in \"citations\" the IDs of the records that support it. Do not put record IDs in the sentence text.\n- Use only facts and numbers from the cited records. Do not count, calculate or round. Always write \"demo limit\", never just \"limit\".\n- You never decide what is wrong now. A cause may appear only as a possible cause or as something seen in a past record, and only if it is in allowed_causes. A sentence naming a cause must cite that cause's record and must say \"possible\" or \"past record\", for example: \"A past record lists bearing wear as a possible cause.\" Never write that something was traced to, caused by or due to a cause. Do not mention any other cause or any other fault, including alignment.\n- Do not give instructions, inspection steps, or advice about what anyone should do.\n- If allowed_causes is empty, one sentence must be exactly: \"Insufficient asset-specific evidence to recommend a likely cause.\" Name no cause.",
+  "excerpts": {
+    "SR-M204-01": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
+    "INC-2291": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
+    "INC-1877": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
+    "INC-2310": "Vibration noted at G-204 during a routine round. An oil seal on the gearbox output shaft was leaking. Seal replaced.",
+    "ASM-0412": "Assembly check on C-204: drive train alignment between components drifted after belt replacement. Misalignment on this conveyor can raise vibration across the drive train.",
+    "NOTE-5521": "Motor on line 2 noisy near end of shift.",
+    "SOP-014-C": "Vor Beginn der Inspektion ist der Motor nach dem standortgenehmigten Verfahren freizuschalten und gegen Wiedereinschalten zu sichern.",
+    "SOP-014-B": "Motor freischalten. Lagergehäuse prüfen. Ausrichtung prüfen.",
+    "SOP-022": "Isolate and lock out M-310 using the site-approved procedure before inspection. Check bearing housing and mounting bolts.",
+    "INC-1650": "Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared.",
+    "SR-M310-01": "Motor housing: vibration velocity 6.2 mm/s RMS (demo limit 4.5).",
+    "SR-F118-01": "Nozzle bank: pressure 3.8 bar (demo limit 3.0)."
+  },
+  "runs": [
+    {
+      "assetId": "M-204",
+      "run": 1,
+      "at": "2026-11-09T16:57:07.907Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Vibration velocity is 8.4 mm/s RMS with a demo limit of 4.5.",
+            "citations": [
+              "SR-M204-01"
+            ]
+          },
+          {
+            "text": "Temperature is 78 degrees Celsius with a demo limit of 75.",
+            "citations": [
+              "SR-M204-01"
+            ]
+          },
+          {
+            "text": "A past record lists bearing wear as a possible cause.",
+            "citations": [
+              "INC-2291"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1624
+    },
+    {
+      "assetId": "M-204",
+      "run": 2,
+      "at": "2026-11-09T16:57:16.541Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "A past record lists bearing wear as a possible cause.",
+            "citations": [
+              "INC-2291"
+            ]
+          },
+          {
+            "text": "A past record lists lubrication problem as a possible cause.",
+            "citations": [
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "Vibration velocity is 8.4 mm/s RMS against demo limit 4.5.",
+            "citations": [
+              "SR-M204-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1280
+    },
+    {
+      "assetId": "M-204",
+      "run": 3,
+      "at": "2026-11-09T16:57:24.823Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "A past record lists bearing wear as a possible cause.",
+            "citations": [
+              "INC-2291"
+            ]
+          },
+          {
+            "text": "A past record lists lubrication problem as a possible cause.",
+            "citations": [
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "Vibration velocity is 8.4 mm/s RMS with a demo limit of 4.5.",
+            "citations": [
+              "SR-M204-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1230
+    },
+    {
+      "assetId": "M-310",
+      "run": 1,
+      "at": "2026-11-09T16:57:33.068Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Motor housing vibration velocity is 6.2 mm/s RMS with a demo limit of 4.5.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1176
+    },
+    {
+      "assetId": "M-310",
+      "run": 2,
+      "at": "2026-11-09T16:57:41.246Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Motor housing vibration velocity is 6.2 mm/s RMS against the demo limit of 4.5.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1052
+    },
+    {
+      "assetId": "M-310",
+      "run": 3,
+      "at": "2026-11-09T16:57:49.312Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Motor housing vibration velocity is 6.2 mm/s RMS, exceeding the demo limit of 4.5.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 977
+    },
+    {
+      "assetId": "F-118",
+      "run": 1,
+      "at": "2026-11-09T16:57:57.291Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle pressure is 3.8 bar with a demo limit of 3.0 bar.",
+            "citations": [
+              "SR-F118-01"
+            ]
+          },
+          {
+            "text": "A past record lists nozzle blockage as a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 936
+    },
+    {
+      "assetId": "F-118",
+      "run": 2,
+      "at": "2026-11-09T16:58:05.234Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle pressure is 3.8 bar with a demo limit of 3.0 bar.",
+            "citations": [
+              "SR-F118-01"
+            ]
+          },
+          {
+            "text": "A past record lists nozzle blockage as a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1710
+    },
+    {
+      "assetId": "F-118",
+      "run": 3,
+      "at": "2026-11-09T16:58:13.951Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle pressure is 3.8 bar with a demo limit of 3.0 bar.",
+            "citations": [
+              "SR-F118-01"
+            ]
+          },
+          {
+            "text": "A past record lists nozzle blockage as a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 852
+    }
+  ]
+}

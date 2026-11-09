@@ -83,7 +83,7 @@ describe('numbers', () => {
   });
 
   it('accepts a date from the cited record', () => {
-    expect(rules(one('Past records list bearing wear in 2025.', 'INC-2291'))).toEqual([]);
+    expect(rules(one('Past records list bearing wear in 2025.', 'INC-2291'))).not.toContain('number');
   });
 });
 
@@ -103,7 +103,7 @@ describe('diagnosis', () => {
   });
 
   it('allows saying a cause is not confirmed', () => {
-    expect(rules(one('Bearing wear is possible but not confirmed.', 'INC-2291'))).toEqual([]);
+    expect(rules(one('Bearing wear is possible but not confirmed.', 'INC-2291'))).not.toContain('diagnosis');
   });
 });
 
@@ -129,6 +129,27 @@ describe('instructions', () => {
     'We recommend replacing the bearing.',
   ])('rejects: %s', (text) => {
     expect(rules(one(text, 'SOP-014-C'))).toContain('instruction');
+  });
+});
+
+describe('cause coverage', () => {
+  it('rejects naming only one of the allowed causes', () => {
+    expect(rules(one('A past record lists bearing wear as a possible cause.', 'INC-2291'))).toContain('cause_coverage');
+  });
+
+  it('accepts naming every allowed cause, or none', () => {
+    expect(rules(one('Past records list bearing wear and lubrication problem as possible causes.', 'INC-2291', 'INC-1877'))).toEqual([]);
+    expect(rules(one('Vibration is 8.4 mm/s.', 'SR-M204-01'))).toEqual([]);
+  });
+});
+
+describe('limit labels', () => {
+  it('rejects a limit that is not called a demo limit', () => {
+    expect(rules(one('Nozzle pressure is 3.8 bar with a limit of 3 bar on this filler.', 'SR-F118-01'), 'F-118')).toContain('limit_label');
+  });
+
+  it('accepts a demo limit', () => {
+    expect(rules(one('Nozzle pressure is 3.8 bar against a demo limit of 3.', 'SR-F118-01'), 'F-118')).not.toContain('limit_label');
   });
 });
 

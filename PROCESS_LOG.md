@@ -244,5 +244,15 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code's validator, in a real model run.
 - **What changed:** The check stayed as it was. Prompt v2 requires a sentence naming a cause to say "possible" or "past record", gives one example, and forbids "traced to", "caused by" and "due to".
 - **Better output:** 9 of 9 runs passed validation in 0.8 to 4.1 seconds. M-204 returned "A past record lists bearing wear as a possible cause." M-310 returned the required insufficient-evidence sentence every time and named no cause.
-- **Remaining limit:** The model copies the prompt's example almost word for word, and M-204 no longer states its readings. The output is safer but adds little beyond the cause cards. Passing validation does not show that it is useful.
+- **Remaining limit:** The model copies the prompt's example almost word for word, and M-204 no longer states its readings. Passing validation does not show that it is useful. The next entry covers two further problems with this output.
 - **Evidence link or screenshot:** evidence/gate-3/model-diagnostic-1.json, evidence/gate-3/model-runs-prompt-v2.json
+
+## Two problems the validators missed in real output
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** Reviewing real output after prompt v2 passed 9 of 9.
+- **What went wrong:** In the app, F-118 showed "Nozzle pressure is 3.8 bar with a limit of 3 bar on this filler." It passed every check but dropped the required "demo" label. After prompt v3 fixed that, one M-204 run named only bearing wear and left out lubrication, which reads as ranking the causes. It also passed every check.
+- **Caught by:** Claude Code, the first in a screenshot review and the second reading raw run output.
+- **What changed:** Two new checks: every limit must be called a demo limit, and a summary must name all allowed causes or none. Prompts v3 and v4 say the same. The final v4 run passed 8 of 9 in 0.8 to 1.8 seconds. The one failure was M-310 run 1, where the model misspelled the required sentence as "recommend a likey cause". The instruction check rejected it because the exact phrase no longer matched, so the prepared summary would have been shown. That rejection was for an accidental reason, and I did not tune the check around one typo.
+- **Evidence link or screenshot:** evidence/gate-3/limit-unlabeled-1366-F-118.png, evidence/gate-3/model-runs-prompt-v3.json (M-204 run 1), evidence/gate-3/model-runs-prompt-v4.json

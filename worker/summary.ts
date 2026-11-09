@@ -5,7 +5,7 @@ import type { Alert, RetrievalResult } from '../src/domain/types';
 
 /** Free tier, confirmed on Google's models and pricing pages on 2026-11-09. 3.8 and 3.6 Flash were overloaded in testing. */
 export const MODEL = 'gemini-3.5-flash-lite';
-export const PROMPT_VERSION = 'v2';
+export const PROMPT_VERSION = 'v4';
 export const TIMEOUT_MS = 8000;
 const GOOD_TTL_MS = 24 * 60 * 60 * 1000;
 const FAILED_TTL_MS = 5 * 60 * 1000;
@@ -51,8 +51,8 @@ export const SYSTEM_PROMPT = `You summarize maintenance records for a technician
 Rules:
 - Write 1 to ${MAX_SENTENCES} sentences. Each is one short English sentence of at most ${MAX_SENTENCE_CHARS} characters. Some records are in German: use their meaning, in English.
 - Every sentence lists in "citations" the IDs of the records that support it. Do not put record IDs in the sentence text.
-- Use only facts and numbers from the cited records. Do not count, calculate or round.
-- You never decide what is wrong now. A cause may appear only as a possible cause or as something seen in a past record, and only if it is in allowed_causes. A sentence naming a cause must cite that cause's record and must say "possible" or "past record", for example: "A past record lists bearing wear as a possible cause." Never write that something was traced to, caused by or due to a cause. Do not mention any other cause or any other fault, including alignment.
+- Use only facts and numbers from the cited records. Do not count, calculate or round. Always write "demo limit", never just "limit".
+- You never decide what is wrong now. A cause may appear only as a possible cause or as something seen in a past record, and only if it is in allowed_causes. A sentence naming a cause must cite that cause's record and must say "possible" or "past record", for example: "A past record lists bearing wear as a possible cause." Never write that something was traced to, caused by or due to a cause. If you name one allowed cause, name every allowed cause and favor none. Do not mention any other cause or any other fault, including alignment.
 - Do not give instructions, inspection steps, or advice about what anyone should do.
 - If allowed_causes is empty, one sentence must be exactly: "${INSUFFICIENT_SENTENCE}" Name no cause.`;
 

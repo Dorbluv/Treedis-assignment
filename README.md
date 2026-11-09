@@ -38,20 +38,24 @@ Without a key the app uses the prepared summary.
 
 ### What validation does not prove
 
-Before anything is shown, code checks that every cited ID is in that asset's included set, that every number appears in a cited record, that no sentence states a confirmed cause, names a cause outside the allowed list or gives an instruction, and that M-310 states evidence is insufficient and names no cause.
+Before anything is shown, code checks that every cited ID is in that asset's included set, that every number appears in a cited record, that no sentence states a confirmed cause, names a cause outside the allowed list or gives an instruction, that every limit is called a demo limit, that a summary names all allowed causes or none, and that M-310 states evidence is insufficient and names no cause.
 
 These checks do not fully prove that each excerpt supports its sentence. They are word and number patterns. A number can be attached to the wrong reading, and a claim can use allowed words yet misread its source. That is why a person reviews the sentences below.
 
 ### Human review
 
-Built from the real model runs in `evidence/gate-3/model-runs-prompt-v2.json`, one row per distinct sentence across the 9 runs. The verdict column is for the human reviewer.
+Built from the real model runs in `evidence/gate-3/model-runs-prompt-v4.json`, one row per distinct sentence across the 8 valid runs of 9. The verdict column is for the human reviewer.
 
 **M-204**
 
 | Sentence | Cited excerpt | Supported (yes or no) |
 |---|---|---|
+| Vibration velocity is 8.4 mm/s RMS with a demo limit of 4.5. | SR-M204-01: Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14). |  |
 | A past record lists bearing wear as a possible cause. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. |  |
-| A past record lists lubrication problem as a possible cause. | INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. |  |
+| A past record lists a lubrication problem as a possible cause. | INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. |  |
+| Vibration velocity reached 8.4 mm/s RMS, exceeding the demo limit of 4.5. | SR-M204-01: Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14). |  |
+| Temperature is 78 °C with a demo limit of 75. | SR-M204-01: Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14). |  |
+| A past record lists bearing wear and a lubrication problem as a possible cause. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. |  |
 
 **M-310**
 
@@ -63,10 +67,8 @@ Built from the real model runs in `evidence/gate-3/model-runs-prompt-v2.json`, o
 
 | Sentence | Cited excerpt | Supported (yes or no) |
 |---|---|---|
+| Nozzle pressure is 3.8 bar with a demo limit of 3.0 bar. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
 | A past record lists nozzle blockage as a possible cause. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. |  |
-| Nozzle pressure is 3.8 bar with a demo limit of 3 bar. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
-| Nozzle pressure is 3.8 bar against a demo limit of 3.0 bar. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
-| Nozzle pressure is 3.8 bar with a demo limit of 3.0. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
 
 ## Credits
 
