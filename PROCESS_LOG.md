@@ -87,3 +87,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** The user.
 - **What changed:** Every machine now has "Review evidence". This brought forward the M-310 and F-118 states from Gate 2.
 - **Evidence link or screenshot:** _to fill in_
+
+## Shortened step 2 no longer matched the German
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Shortening the English plan steps.
+- **What went wrong:** The shortened English for step 2 dropped the housing check and merged heat and play into what you feel when turning the shaft, so it no longer matched the German SOP.
+- **Caught by:** The user.
+- **What changed:** Step 2 now follows the German: check the housing for signs of heat and play, then turn the shaft by hand and feel for roughness.
+- **Evidence link or screenshot:** _to fill in_
