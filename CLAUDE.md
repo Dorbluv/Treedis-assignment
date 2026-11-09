@@ -113,3 +113,10 @@ Predictive maintenance, live IoT or CMMS integrations, user accounts, assignment
 - Make small commits with clear messages.
 - After each meaningful AI mistake or direction change, add an entry to `PROCESS_LOG.md`: date, tool, prompt or context, what went wrong, what changed, evidence link or screenshot. Only record things that actually happened.
 - List all third-party code, templates and data in `README.md` under Credits.
+- Never use em dashes in any file, UI text or message.
+- Every number in the UI or docs is sourced, computed, or labeled as a demonstration value.
+- Label claims in docs as given, hypothesized, assumed or synthetic. Keep each fact in one place. Do not use unverified secondhand claims.
+- Before any large change, list gaps and assumptions explicitly.
+- Keep logic checks at unit level. End-to-end checks are only for real user flows.
+- Passing tests do not prove usability. I make the final call on every gate.
+- In PROCESS_LOG.md, record who caught each issue: me, Claude Code, or another named tool.
