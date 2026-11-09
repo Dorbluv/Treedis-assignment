@@ -31,7 +31,7 @@ export function causeComparison(result: RetrievalResult): CauseComparisonItem[] 
 
 export function separatingSentence(items: CauseComparisonItem[]): string {
   const steps = items.map((item) => item.stepNumber).sort((a, b) => a - b);
-  return `Neither is confirmed. Steps ${steps.join(' and ')} of the inspection separate them.`;
+  return `Neither is confirmed. Steps ${steps.join(' and ')} tell them apart.`;
 }
 
 export interface ContextStepNote {
@@ -39,7 +39,6 @@ export interface ContextStepNote {
   stepNumber: number;
   checks: string;
   recordId: string;
-  parentType: string;
   assetType: string;
 }
 
@@ -47,7 +46,6 @@ export interface ContextStepNote {
 export function contextStepNotes(result: RetrievalResult): ContextStepNote[] {
   const sop = result.applicableSop;
   if (!sop || !result.parent) return [];
-  const parentType = result.parent.type;
   const testedByCauses = new Set(causeComparison(result).map((item) => item.step.id));
   const notes: ContextStepNote[] = [];
   sop.steps.forEach((step, index) => {
@@ -60,7 +58,6 @@ export function contextStepNotes(result: RetrievalResult): ContextStepNote[] {
         stepNumber: index + 1,
         checks: step.checks,
         recordId: step.contextRecordId,
-        parentType,
         assetType: result.asset.type,
       });
     }
@@ -68,16 +65,34 @@ export function contextStepNotes(result: RetrievalResult): ContextStepNote[] {
   return notes;
 }
 
-/** Excluded records that a keyword search would have surfaced. */
-export function keywordExclusions(result: RetrievalResult): EvidenceItem[] {
-  return result.excluded.filter((item) => item.keywordMatch);
+function lowerFirst(text: string): string {
+  return text.charAt(0).toLowerCase() + text.slice(1);
 }
 
-export function leftOutSummary(result: RetrievalResult, assetTypeOf: (assetId: string) => string): string | null {
-  const items = keywordExclusions(result);
-  if (items.length === 0) return null;
-  if (items.length > 1) return `${items.length} records left out that also mention ${items[0].keywordMatch}.`;
-  const [item] = items;
-  const type = item.record.assetId ? assetTypeOf(item.record.assetId) : 'equipment';
-  return `1 record left out: ${type} report that also mentions ${item.keywordMatch}.`;
+function capitalize(text: string): string {
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+/** "Gearbox report that mentions vibration, older procedure" */
+export function listPreview(items: EvidenceItem[]): string {
+  return items.map((item, index) => (index === 0 ? item.record.takeaway : lowerFirst(item.record.takeaway))).join(', ');
+}
+
+/** "Readings, 2 past incidents, conveyor record, procedure" */
+export function usedPreview(items: EvidenceItem[]): string {
+  const count = (kind: string) => items.filter((item) => item.record.kind === kind).length;
+  const incidents = count('incident');
+  const parts = [
+    count('sensor') > 0 ? 'readings' : '',
+    incidents > 0 ? `${incidents} past incident${incidents > 1 ? 's' : ''}` : '',
+    count('assembly') > 0 ? 'conveyor record' : '',
+    count('sop') > 0 ? 'procedure' : '',
+  ].filter(Boolean);
+  return capitalize(parts.join(', '));
+}
+
+export function leftOutSummary(result: RetrievalResult): string | null {
+  const count = result.excluded.length;
+  if (count === 0) return null;
+  return `${count} record${count > 1 ? 's' : ''} left out: ${lowerFirst(listPreview(result.excluded))}.`;
 }

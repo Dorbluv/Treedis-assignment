@@ -1,19 +1,13 @@
 export type AssetType = 'conveyor' | 'motor' | 'gearbox' | 'filler';
 
-export interface MapPosition {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export interface Asset {
   id: string;
   name: string;
   type: AssetType;
   parentId: string | null;
   line: string;
-  mapPosition: MapPosition;
+  /** Display only: a synthetic value for the plant floor when no sensor record exists. */
+  liveValue?: string;
 }
 
 export interface Alert {
@@ -57,12 +51,10 @@ interface RecordBase {
   takeaway: string;
   // Display only, never read by retrieval.
   occurredOn?: string;
-  alertMatch?: string;
-  foundCondition?: string;
   fix?: string;
   downtimeHours?: number;
-  symptoms?: string[];
   testedByStepId?: string;
+  noteSuggestions?: string[];
   readings?: Reading[];
 }
 
@@ -86,8 +78,14 @@ export interface SopStep {
   id: string;
   original: string;
   english: string;
-  expectedOriginal?: string;
-  expectedEnglish?: string;
+  title?: string;
+  titleGerman?: string;
+  goodEnglish?: string;
+  goodGerman?: string;
+  ifNotEnglish?: string;
+  ifNotGerman?: string;
+  /** Display only: the short check named on a cause card. */
+  checkPhrase?: string;
   /** Display only: what this step checks when a record, not a cause, prompts it. */
   checks?: string;
   contextRecordId?: string;

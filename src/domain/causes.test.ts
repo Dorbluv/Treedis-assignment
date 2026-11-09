@@ -1,17 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { alertFor, assets, dataset } from '../data';
+import { alertFor, dataset } from '../data';
 import {
   causeComparison,
   contextStepNotes,
-  keywordExclusions,
   leftOutSummary,
+  listPreview,
   readingStatus,
   separatingSentence,
+  usedPreview,
 } from './causes';
 import { retrieve } from './retrieve';
 
 const result = retrieve('M-204', alertFor('M-204'), dataset);
-const typeOf = (id: string) => assets.find((asset) => asset.id === id)?.type ?? '';
 
 describe('cause comparison', () => {
   const items = causeComparison(result);
@@ -26,47 +26,45 @@ describe('cause comparison', () => {
     for (const item of items) {
       expect(stepIds).toContain(item.record.testedByStepId);
       expect(item.step.id).toBe(item.record.testedByStepId);
-      expect(item.step.expectedEnglish).toBeTruthy();
-      expect(item.step.expectedOriginal).toBeTruthy();
+      expect(item.step.checkPhrase).toBeTruthy();
+      expect(item.step.goodEnglish).toBeTruthy();
+      expect(item.step.goodGerman).toBeTruthy();
+      expect(item.step.ifNotEnglish).toBeTruthy();
+      expect(item.step.ifNotGerman).toBeTruthy();
     }
   });
 
-  it('has the display fields each column needs', () => {
+  it('has the display fields each card needs', () => {
     for (const { record } of items) {
       expect(record.occurredOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-      expect(record.alertMatch).toBeTruthy();
-      expect(record.foundCondition).toBeTruthy();
       expect(record.fix).toBeTruthy();
       expect(record.downtimeHours).toBeGreaterThan(0);
-      expect(record.symptoms?.length).toBeGreaterThan(0);
+      expect(record.noteSuggestions?.length).toBeGreaterThanOrEqual(2);
     }
   });
 
   it('builds the separating sentence from the linked steps', () => {
-    expect(separatingSentence(items)).toBe('Neither is confirmed. Steps 2 and 3 of the inspection separate them.');
+    expect(separatingSentence(items)).toBe('Neither is confirmed. Steps 2 and 3 tell them apart.');
   });
 });
 
 describe('alignment note', () => {
   it('names step 4 and ASM-0412, and stays out of the causes', () => {
     expect(contextStepNotes(result)).toEqual([
-      {
-        stepId: 'SOP-014-C-4',
-        stepNumber: 4,
-        checks: 'alignment',
-        recordId: 'ASM-0412',
-        parentType: 'conveyor',
-        assetType: 'motor',
-      },
+      { stepId: 'SOP-014-C-4', stepNumber: 4, checks: 'alignment', recordId: 'ASM-0412', assetType: 'motor' },
     ]);
     expect(result.possibleCauses.map((cause) => cause.recordId)).not.toContain('ASM-0412');
   });
 });
 
-describe('left-out summary', () => {
-  it('counts only the keyword match, not the superseded SOP', () => {
-    expect(keywordExclusions(result).map((item) => item.record.id)).toEqual(['INC-2310']);
-    expect(leftOutSummary(result, typeOf)).toBe('1 record left out: gearbox report that also mentions vibration.');
+describe('group previews', () => {
+  it('previews the left-out records', () => {
+    expect(listPreview(result.excluded)).toBe('Gearbox report that mentions vibration, older procedure');
+    expect(leftOutSummary(result)).toBe('2 records left out: gearbox report that mentions vibration, older procedure.');
+  });
+
+  it('previews the used records by kind', () => {
+    expect(usedPreview(result.included)).toBe('Readings, 2 past incidents, conveyor record, procedure');
   });
 });
 
