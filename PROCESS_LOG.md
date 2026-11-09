@@ -127,3 +127,90 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude chat, at the user's request.
 - **What changed:** Focus moves to the heading and the page title updates on every step change. The logo and standalone links are at least 24px high. Completed progress steps link back with saved data intact. The disabled "Save finding" says why, connected for screen readers.
 - **Evidence link or screenshot:** _to fill in_
+
+## Decision: deploy before adding AI, on Cloudflare Workers
+
+- **Date:** 2026-11-09
+- **Decided by:** The user.
+- **Decision:** Deploy before adding AI, to reduce delivery risk, and host on Cloudflare Workers because Vercel's free plan restricts commercial use (given by the user).
+- **Evidence link or screenshot:** _to fill in_
+
+## Cloudflare GitHub app uninstalled during deployment
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Deploying `main` to Cloudflare Workers from the user's Chrome.
+- **What went wrong:** Claude Code uninstalled the existing Cloudflare GitHub app on the user's account during deployment, so the app could be reconnected.
+- **Caught by:** The user.
+- **What changed:** New rule from the user: stop and ask before changing anything on their accounts.
+- **Evidence link or screenshot:** _to fill in_
+
+## Gate 2 layout problems found in browser review
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Gate 2 browser review at 380px, 768px and 1366x768.
+- **What went wrong:** With three alerts on the floor, the G-204 and C-204 relationship text fell below the fixed button at 380px. At 768px, "Line 2" wrapped once the Escalated legend item appeared.
+- **Caught by:** Claude Code.
+- **What changed:** The machine title and status share a line, the sibling line is shorter, and the zone name no longer wraps.
+- **Evidence link or screenshot:** _to fill in_
+
+## Legend placement, F-118 flow and empty machine screen
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** User review of Gate 2.
+- **What went wrong:** The legend sat inside one line, F-118's shorter flow had no visible reason, and the M-310 machine screen looked empty.
+- **Caught by:** The user.
+- **What changed:** The legend sits above Line 1 and lists every status. Machines with no procedure keep the four-step structure, with Plan shown as blocked. Every machine screen shows a snapshot built from data.
+- **Evidence link or screenshot:** _to fill in_
+
+## Snapshot and blocked step did not fit at phone width
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Browser review of the Gate 2 fixes at 380px.
+- **What went wrong:** The new machine snapshot fell below the fixed button, by up to 110px. "No procedure" also ran into "Finding" in the progress bar, which the measured checks missed and a screenshot showed.
+- **Caught by:** Claude Code.
+- **What changed:** On phone, a selected machine shows only its own group on the floor. The blocked step has more room.
+- **Evidence link or screenshot:** _to fill in_
+
+## Wizard replaced with an alert workspace
+
+- **Date:** 2026-11-09
+- **Tool:** Claude for comparing design directions, Claude Code for the rebuild
+- **Prompt or context:** User review of the working Gate 2 wizard.
+- **What went wrong:** The user rejected the working wizard as too junior to be a real product.
+- **Caught by:** The user.
+- **What changed:** We kept the tested logic and replaced the UI model with an alert workspace, after comparing three design directions in Claude.
+- **Evidence link or screenshot:** evidence/1366-02-investigate.png
+
+## Saved data could have shown a procedure on F-118
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Writing the test that F-118 can never reach a plan.
+- **What went wrong:** The first workspace code used the SOP named in a saved plan before checking that the machine had an applicable SOP. A saved entry for F-118 naming another SOP would have unlocked its plan tab.
+- **Caught by:** Claude Code.
+- **What changed:** A saved plan is only read when an applicable SOP exists. A unit test covers forged saved data.
+- **Evidence link or screenshot:** src/App.test.tsx, "can never reach a plan through forged saved data"
+
+## Screenshot review of the workspace
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Reviewing the workspace at 380px, 768px and 1366x768 after all tests passed.
+- **What went wrong:** The Line 1 and Line 2 names were hidden behind machines. On phone, coral appeared without a triangle, the activity text was cut mid-word, and Home said "Plant floor" twice. The headline lost the machine ID after a save. Script focus drew a box around the h1.
+- **Caught by:** Claude Code.
+- **What changed:** Zone names moved to open floor and are hidden when a crop would cut them. The coral text now has a triangle or uses a neutral color. The activity line wraps on phone, the location line names the machine after a save, and the h1 has no focus box because it is not a tab stop.
+- **Evidence link or screenshot:** evidence/380-05-saved.png
+
+## Coral on a selected machine with no alert
+
+- **Date:** 2026-11-09
+- **Tool:** Claude chat for the design spec, Claude Code for the build
+- **Prompt or context:** Review of the alert workspace on the redesign branch.
+- **What went wrong:** Selecting G-204 or C-204 painted a healthy machine coral, although coral must mean abnormal only. The error was in Claude chat's own design spec, which gave every selected machine the coral body, and Claude Code built it as written.
+- **Caught by:** Claude chat.
+- **What changed:** A selected machine with no alert gets a teal-tinted body and a bright outline. Coral stays on selected machines with an active alert. A unit test covers both.
+- **Evidence link or screenshot:** src/App.test.tsx, "selection color"

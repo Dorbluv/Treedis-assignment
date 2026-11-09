@@ -29,9 +29,23 @@ export function causeComparison(result: RetrievalResult): CauseComparisonItem[] 
   return items;
 }
 
+/** Causes no procedure step can test, such as on a machine with no applicable SOP. */
+export function causesWithoutStep(result: RetrievalResult): { cause: CauseItem; record: MaintenanceRecord }[] {
+  const linked = new Set(causeComparison(result).map((item) => item.cause.recordId));
+  return result.possibleCauses.flatMap((cause) => {
+    const record = result.included.find((item) => item.record.id === cause.recordId)?.record;
+    return record && !linked.has(cause.recordId) ? [{ cause, record }] : [];
+  });
+}
+
+/** Records the technician can actually look at. Left-out records alone are not a review. */
+export function hasReviewableEvidence(result: RetrievalResult): boolean {
+  return result.included.length + result.uncertain.length > 0;
+}
+
 export function separatingSentence(items: CauseComparisonItem[]): string {
   const steps = items.map((item) => item.stepNumber).sort((a, b) => a - b);
-  return `Neither is confirmed. Steps ${steps.join(' and ')} tell them apart.`;
+  return `Neither is confirmed. Steps ${steps.join(' and ')} of the inspection tell them apart.`;
 }
 
 export interface ContextStepNote {

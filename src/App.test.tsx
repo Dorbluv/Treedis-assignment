@@ -3,10 +3,9 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
-import { alertFor, dataset, records } from './data';
+import { alertFor, alerts, dataset } from './data';
 import { retrieve } from './domain/retrieve';
-import type { SopRecord } from './domain/types';
-import { STORAGE_KEY } from './storage/plans';
+import { ESCALATIONS_KEY, STORAGE_KEY } from './storage/plans';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -40,21 +39,44 @@ async function go(hash: string) {
 async function click(element: Element) {
   const target = element.matches('a[href^="#"]') ? element.getAttribute('href') : null;
   await act(async () => {
-    (element as HTMLElement).click();
+    element.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
     await settle();
     await navigationArrived(target);
   });
 }
 
+async function press(element: Element, key: string) {
+  await act(async () => {
+    element.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true }));
+    await settle();
+    await navigationArrived();
+  });
+}
+
+async function mount() {
+  root = createRoot(container);
+  await act(async () => {
+    root.render(<App />);
+    await settle();
+  });
+}
+
 function primary(): HTMLElement {
-  const found = [...container.querySelectorAll('[data-primary]')];
+  const found = [...container.querySelectorAll('.panel-body > .action-bar [data-primary]')];
   expect(found).toHaveLength(1);
   return found[0] as HTMLElement;
 }
 
 const heading = () => container.querySelector('h1')?.textContent;
-const currentStep = () => container.querySelector('[aria-current="step"]')?.textContent;
 const body = () => container.textContent ?? '';
+const panelText = () => [...container.querySelectorAll('.panel-head, .panel-body')].map((el) => el.textContent).join(' ');
+const tab = (key: string) => container.querySelector(`#tab-${key}`) as HTMLElement;
+const selectedTab = () => container.querySelector('[role="tab"][aria-selected="true"]')?.textContent;
+const pills = () => [...container.querySelectorAll('.pill')].map((pill) => pill.textContent);
+const currentPill = () => container.querySelector('.pill-current')?.textContent;
+const machineButton = (id: string) =>
+  [...container.querySelectorAll('.iso-machine')].find((el) => el.getAttribute('aria-label')?.includes(id)) as HTMLElement;
+const groupTitles = () => [...container.querySelectorAll('.records .group-title')].map((el) => el.textContent);
 
 function outcomeButton(label: string): Element {
   const button = [...container.querySelectorAll('button.outcome')].find((item) => item.textContent?.trim() === label);
@@ -62,13 +84,19 @@ function outcomeButton(label: string): Element {
   return button as Element;
 }
 
-async function typeNote(text: string) {
-  const area = container.querySelector('textarea') as HTMLTextAreaElement;
-  await act(async () => {
-    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set?.call(area, text);
-    area.dispatchEvent(new Event('input', { bubbles: true }));
-    await settle();
-  });
+function languageButton(label: string): Element {
+  return [...container.querySelectorAll('.switch button')].find((item) => item.textContent === label) as Element;
+}
+
+async function savePlanFor(assetId: string) {
+  await go(`#/asset/${assetId}/plan`);
+  await click(primary());
+}
+
+async function saveFindingFor(assetId: string, outcome: string) {
+  await savePlanFor(assetId);
+  await click(outcomeButton(outcome));
+  await click(primary());
 }
 
 beforeEach(async () => {
@@ -79,11 +107,7 @@ beforeEach(async () => {
   trackHash();
   window.addEventListener('hashchange', trackHash);
   container = document.body.appendChild(document.createElement('div'));
-  root = createRoot(container);
-  await act(async () => {
-    root.render(<App />);
-    await settle();
-  });
+  await mount();
 });
 
 afterEach(async () => {
@@ -93,506 +117,666 @@ afterEach(async () => {
   vi.restoreAllMocks();
 });
 
-describe('one action per screen', () => {
-  it('shows the Finding screen immediately after saving the plan', async () => {
-    await go('#/asset/M-204/plan');
-    expect(heading()).toBe('Review and save inspection plan');
-    expect(primary().textContent).toBe('Save inspection plan');
-
-    await click(primary());
-
-    expect(window.location.hash).toBe('#/asset/M-204/finding');
-    expect(heading()).toBe('Record finding');
-    expect(container.querySelector('.confirm')?.textContent).toContain('Plan saved');
-    expect(currentStep()).toContain('Finding');
-    expect([...container.querySelectorAll('button.outcome')].map((item) => item.textContent?.trim())).toEqual([
-      'Bearing wear',
-      'Lubrication problem',
-      'Neither',
-      'Inconclusive',
-    ]);
-    expect(primary().textContent).toBe('Save finding');
-    expect(primary().getAttribute('aria-disabled')).toBe('true');
-  });
-
-  it('explains the disabled Save finding, connected for screen readers', async () => {
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    const id = primary().getAttribute('aria-describedby') as string;
-    expect(document.getElementById(id)?.textContent).toBe('Pick one to save');
-
-    await click(primary());
-    expect(heading()).toBe('Record finding');
-
-    await click(outcomeButton('Neither'));
-    expect(primary().hasAttribute('aria-disabled')).toBe(false);
-    expect(primary().hasAttribute('aria-describedby')).toBe(false);
-  });
-
-  it('moves focus to the heading and names the page on every step change', async () => {
-    const expected: [string, string][] = [
-      ['#/asset/M-204', 'Machine, M-204, Maintenance Copilot'],
-      ['#/asset/M-204/evidence', 'Evidence, M-204, Maintenance Copilot'],
-      ['#/asset/M-204/plan', 'Plan, M-204, Maintenance Copilot'],
-      ['#/asset/M-310', 'Machine, M-310, Maintenance Copilot'],
-      ['#/', 'Plant floor, Maintenance Copilot'],
-    ];
-    for (const [hash, title] of expected) {
-      await go(hash);
-      expect(document.title).toBe(title);
-      expect(document.activeElement).toBe(container.querySelector('.panel-col h1'));
-    }
-  });
-
-  it('links completed steps only, and returns with saved data intact', async () => {
-    const links = () => [...container.querySelectorAll('.progress a')].map((item) => item.getAttribute('href'));
-
-    expect(links()).toEqual([]);
-    await go('#/asset/M-204/plan');
-    expect(links()).toEqual(['#/asset/M-204', '#/asset/M-204/evidence']);
-
-    await click(primary());
-    await click(outcomeButton('Lubrication problem'));
-    await typeNote('Below the mark');
-    await click(primary());
-    expect(links()).toEqual([
-      '#/asset/M-204',
-      '#/asset/M-204/evidence',
-      '#/asset/M-204/plan',
-      '#/asset/M-204/finding',
-    ]);
-
-    await click(container.querySelector('.progress a[href="#/asset/M-204/finding"]') as Element);
-    expect(heading()).toBe('Record finding');
-    expect(container.querySelector('.outcome[aria-pressed="true"]')?.textContent?.trim()).toBe('Lubrication problem');
-    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Below the mark');
-
-    await click(container.querySelector('.progress a[href="#/asset/M-204/plan"]') as Element);
-    expect(heading()).toBe('Review and save inspection plan');
-    expect(primary().textContent).toBe('Continue to finding');
-  });
-
-  it('uses one date format', async () => {
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    expect(container.querySelector('.confirm .num')?.textContent).toMatch(/^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}$/);
-    await go('#/asset/M-204/evidence');
-    expect(container.querySelector('.compare')?.textContent).toContain('12 Mar 2025');
-    expect(container.querySelectorAll('.cause')[1].textContent).toContain('3 Sep 2024');
-    expect(body()).toContain('Worn bearing, 12 Mar 2025');
-    expect(body()).not.toMatch(/March|September|Sept /);
-  });
-
-  it('walks the whole flow with exactly one primary action on each screen', async () => {
+describe('home', () => {
+  it('lists every active alert with one primary action', () => {
+    expect(heading()).toBe(`${alerts.length} active alerts`);
+    expect(container.querySelectorAll('.alert-row')).toHaveLength(alerts.length);
     expect(primary().textContent).toBe('Open M-204 alert');
-    expect(currentStep()).toContain('Machine');
-
-    await click(primary());
-    expect(primary().textContent).toBe('Review evidence');
-    expect(container.querySelector('.relations')?.textContent).toContain('G-204');
-
-    await click(primary());
-    expect(primary().textContent).toBe('Continue to inspection plan');
-    expect(currentStep()).toContain('Evidence');
-
-    await click(primary());
-    expect(currentStep()).toContain('Plan');
-    expect(container.querySelector('.steps li')?.textContent).toMatch(/isolate and lock out/i);
-    expect(container.querySelector('details')?.hasAttribute('open')).toBe(false);
-
-    await click(primary());
-    await click(outcomeButton('Bearing wear'));
-    await typeNote('Rough running');
-    expect([...container.querySelectorAll('button')].map((item) => item.textContent)).not.toContain('Save note');
-
-    await click(primary());
-    expect(window.location.hash).toBe('#/asset/M-204/done');
-    expect(primary().textContent).toBe('Back to plant layout');
-    expect(body()).toContain('SOP-014 rev C');
-    expect(body()).toContain('Bearing wear');
-    expect(body()).toContain('Rough running');
-    expect(container.querySelector('[aria-current="step"]')).toBeNull();
-
-    await click(primary());
-    expect(heading()).toBe('Plant floor');
+    expect(primary().getAttribute('href')).toBe('#/asset/M-204');
+    expect(container.querySelector('[role="tablist"]')).toBeNull();
   });
 
-  it('gives a source screen one action back to where it opened', async () => {
-    await go('#/asset/M-204/evidence/source/INC-2310');
-    expect(primary().textContent).toBe('Back to evidence');
-    expect(container.querySelector('dl')?.textContent).toContain('Keyword match');
+  it('puts M-204 first in the queue, with age and the demo text', () => {
+    const items = [...container.querySelectorAll('.queue-item')];
+    expect(items).toHaveLength(alerts.length);
+    expect(items[0].textContent).toContain('M-204');
+    expect(items[0].textContent).toContain('2 h');
+    expect(container.querySelector('.topbar')?.textContent).toContain('Demo with synthetic data. Not for operational use.');
   });
 
-  it('does not open the Finding screen before a plan is saved', async () => {
-    await go('#/asset/M-204/finding');
-    expect(heading()).toBe('Review and save inspection plan');
+  it('shows one legend with every status in use', () => {
+    const legends = container.querySelectorAll('.legend');
+    expect(legends).toHaveLength(1);
+    expect([...legends[0].querySelectorAll('li')].map((item) => item.textContent?.trim())).toEqual([
+      'No alert',
+      'Alert',
+      'Selected',
+      'Inspected',
+      'Escalated',
+    ]);
   });
 });
 
-describe('Evidence screen', () => {
-  beforeEach(() => go('#/asset/M-204/evidence'));
-
-  it('puts the alert and readings before the separating sentence and the evidence groups', () => {
-    const text = body();
-    const order = ['Abnormal vibration on M-204', 'Demo limits. Last 48 hours.', 'Neither is confirmed. Steps 2 and 3 tell them apart.', 'Used as evidence'].map(
-      (part) => text.indexOf(part),
-    );
-    expect(order.every((position) => position >= 0)).toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-  });
-
-  it('shows computed status for each reading', () => {
-    const statuses = [...container.querySelectorAll('.meter-status')].map((item) => item.textContent);
-    expect(statuses).toEqual(['Above limit 4.5', 'Above limit 75', 'Within limit 14']);
-  });
-
-  it('shows no ranking or confidence', () => {
-    expect(container.querySelector('.compare')?.textContent).not.toMatch(/%|most likely|confidence/i);
-  });
-
-  it('links the alignment line to the SOP step and ASM-0412', () => {
-    const line = [...container.querySelectorAll('.note-line')].find((item) => item.textContent?.includes('alignment'));
-    expect(line?.textContent).toBe('Step 4 also checks alignment. No past incident on this motor points to it.');
-    const hrefs = [...(line?.querySelectorAll('a') ?? [])].map((link) => link.getAttribute('href'));
-    expect(hrefs).toEqual([
-      '#/asset/M-204/evidence/source/SOP-014-C/step/SOP-014-C-4',
-      '#/asset/M-204/evidence/source/ASM-0412',
-    ]);
-  });
-
-  it('collapses every group by default, with a count and preview', () => {
-    const groups = [...container.querySelectorAll('.groups details')];
-    expect(groups).toHaveLength(3);
-    for (const group of groups) expect(group.hasAttribute('open')).toBe(false);
-    expect([...container.querySelectorAll('.groups .group-title')].map((item) => item.textContent)).toEqual([
-      'Used as evidence (5)',
-      'Not sure it applies (1)',
-      'Left out (2)',
-    ]);
-    expect(groups[2].querySelector('.group-preview')?.textContent).toBe('Gearbox report that mentions vibration, older procedure');
-  });
-
-  it('keeps the preview in the Left out header only, with the INC-2310 keyword and reason inside', () => {
-    expect(body()).not.toContain('records left out');
-    const leftOut = container.querySelectorAll('.groups details')[2] as HTMLDetailsElement;
-    expect(leftOut.querySelectorAll('.row')).toHaveLength(2);
-    const row = [...leftOut.querySelectorAll('.row-excluded')].find((item) => item.textContent?.includes('INC-2310'));
-    expect(row?.querySelector('mark')?.textContent).toBe('vibration');
-    expect(row?.textContent).toContain('does not link to M-204');
-  });
-
-  it('removes the prose rows from the cause cards', () => {
-    const cards = [...container.querySelectorAll('.cause')];
-    expect(cards).toHaveLength(2);
-    expect(cards[0].textContent).toContain('12 Mar 2025');
-    expect(cards[0].textContent).toContain('6.5 h');
-    expect(cards[0].querySelector('.check')?.textContent).toBe('Check: Step 2, feel for rough running or play');
-    expect(container.querySelector('.compare')?.textContent).not.toMatch(/Unconfirmed|Why it is on the list/);
-  });
-
-  it('shows no generic reason on included rows, and keeps it as relevance in the source', async () => {
-    const generic = 'Recorded against M-204, the selected asset.';
-    const included = [...container.querySelectorAll('.row-included')];
-    expect(included).toHaveLength(5);
-    for (const row of included) expect(row.textContent).not.toContain(generic);
-    expect(included.map((row) => row.querySelector('.tag')?.textContent)).toContain('Direct asset history');
-
-    await go('#/asset/M-204/evidence/source/INC-2291');
-    expect(container.querySelector('dl')?.textContent).toContain(generic);
-  });
-});
-
-describe('Plan screen', () => {
-  const languageButton = (label: string) =>
-    [...container.querySelectorAll('.switch button')].find((item) => item.textContent === label) as HTMLElement;
-
-  beforeEach(() => go('#/asset/M-204/plan'));
-
-  it('shows numbered steps with titles and compact expected results', () => {
-    expect(container.querySelector('.plan h2')?.textContent).toBe('Inspection steps (5)');
-    expect([...container.querySelectorAll('.step-title')].map((item) => item.textContent)).toEqual([
-      'Lock out the motor',
-      'Check the bearing',
-      'Check lubrication',
-      'Check alignment',
-      'Record and release',
-    ]);
-    expect(container.querySelectorAll('.step-text')[1].textContent).toBe(
-      'Check the housing for signs of heat and play. Then turn the shaft by hand and feel for roughness.',
-    );
-    const checks = [...container.querySelectorAll('.step-check')].map((item) => item.textContent);
-    expect(checks).toContain('Good: smooth, no play');
-    expect(checks).toContain('If not: points to bearing wear');
-  });
-
-  it('switches the whole plan to German, with nothing added below the English', async () => {
-    expect(languageButton('English').getAttribute('aria-pressed')).toBe('true');
-    await click(languageButton('Deutsch'));
-    expect(languageButton('Deutsch').getAttribute('aria-pressed')).toBe('true');
-    const plan = container.querySelector('.plan') as HTMLElement;
-    expect(plan.getAttribute('lang')).toBe('de');
-    expect(plan.textContent).toContain('Inspektionsschritte (5)');
-    expect(plan.textContent).toContain('Motor freischalten und sichern');
-    expect(plan.textContent).toContain('Gut: gleichmäßig, kein Spiel');
-    expect(plan.textContent).not.toMatch(/Lock out|Isolate and lock out|Check the bearing|Good:/);
-  });
-
-  it('has a German title and expected result wherever there is an English one', () => {
-    const sop = records.find((record) => record.id === 'SOP-014-C') as SopRecord;
-    for (const step of sop.steps) {
-      expect(step.title).toBeTruthy();
-      expect(step.titleGerman).toBeTruthy();
-      expect(Boolean(step.goodEnglish)).toBe(Boolean(step.goodGerman));
-      expect(Boolean(step.ifNotEnglish)).toBe(Boolean(step.ifNotGerman));
+describe('plant floor', () => {
+  it('makes every machine a focusable, named button', () => {
+    const machines = [...container.querySelectorAll('.iso-machine')];
+    expect(machines).toHaveLength(dataset.assets.length);
+    for (const asset of dataset.assets) {
+      const button = machineButton(asset.id);
+      expect(button.getAttribute('role')).toBe('button');
+      expect(button.getAttribute('tabindex')).toBe('0');
+      expect(button.getAttribute('aria-label')).toContain(asset.name);
     }
   });
-});
 
-describe('Finding screen', () => {
-  beforeEach(async () => {
-    await go('#/asset/M-204/plan');
-    await click(primary());
+  it('opens a machine with click and with the keyboard', async () => {
+    await click(machineButton('M-310'));
+    expect(heading()).toBe('M-310 abnormal vibration');
+    await act(async () => {
+      machineButton('G-204').dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      await settle();
+      await navigationArrived('#/asset/G-204');
+    });
+    expect(container.querySelector('.status-line')?.textContent).toBe('No active alert');
   });
 
-  const area = () => container.querySelector('textarea') as HTMLTextAreaElement;
-  const chips = () => [...container.querySelectorAll('.chip')];
-
-  it('starts with an empty note and no suggestions', () => {
-    expect(area().value).toBe('');
-    expect(area().placeholder).toBe('Add a note');
-    expect(chips()).toHaveLength(0);
-  });
-
-  it('marks the selected outcome for screen readers and offers suggestions without prefilling', async () => {
-    await click(outcomeButton('Bearing wear'));
-    const pressed = [...container.querySelectorAll('.outcome[aria-pressed="true"]')];
-    expect(pressed.map((item) => item.textContent?.trim())).toEqual(['Bearing wear']);
-    expect(pressed[0].querySelector('svg')).not.toBeNull();
-    expect(area().value).toBe('');
-    expect(chips().map((chip) => chip.textContent)).toContain('Play at drive-end bearing');
-
-    await click(chips()[0]);
-    expect(area().value).toBe('Play at drive-end bearing');
-  });
-});
-
-describe('Plant floor', () => {
-  it('shows each machine in its line, with the alert from data', () => {
-    const zone2 = container.querySelector('.zone-2') as HTMLElement;
-    for (const id of ['C-204', 'M-204', 'G-204', 'M-310']) expect(zone2.textContent).toContain(id);
-    expect(container.querySelectorAll('.zone-2 .zone-name')).toHaveLength(1);
-    expect(container.querySelector('.zone-1')?.textContent).toContain('F-118');
-    expect(container.querySelector('.legend')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('No alert Alert Inspected');
-    expect(container.querySelector('.legend .status-inspected')).not.toBeNull();
-    expect(container.querySelector('.zone-1')?.classList.contains('zone-strip')).toBe(true);
-    expect(container.querySelector('.zone-2')?.classList.contains('zone-strip')).toBe(false);
-    expect(container.querySelectorAll('.belt .belt-track')).toHaveLength(1);
-    const alertMachines = [...container.querySelectorAll('.machine.has-alert')];
-    expect(alertMachines).toHaveLength(1);
-    expect(alertMachines[0].textContent).toContain('8.4 mm/s');
-    expect(alertMachines[0].textContent).toContain('Abnormal vibration');
-  });
-
-  it('marks the selected machine and uses plain words for related ones', async () => {
+  it('gives only the selected machine the coral body and outlines what is connected', async () => {
     await go('#/asset/M-204');
-    expect(container.querySelector('.machine[aria-pressed="true"]')?.textContent).toContain('M-204');
-    expect(container.querySelector('.machine.is-sibling')?.textContent).toContain('Gearbox on the same conveyor');
+    expect(container.querySelectorAll('.iso-machine.is-selected')).toHaveLength(1);
+    expect(machineButton('M-204').getAttribute('aria-pressed')).toBe('true');
+    expect(machineButton('C-204').classList.contains('is-connected')).toBe(true);
+    expect(machineButton('G-204').classList.contains('is-connected')).toBe(true);
+    expect(machineButton('M-310').classList.contains('is-connected')).toBe(false);
+  });
+
+  it('shows a coral triangle only on labels of machines with an unanswered alert', async () => {
+    expect(container.querySelectorAll('.label-triangle')).toHaveLength(alerts.length);
+    await saveFindingFor('M-204', 'Bearing wear');
+    expect(container.querySelectorAll('.label-triangle')).toHaveLength(alerts.length - 1);
+    expect(container.querySelectorAll('.label-inspected')).toHaveLength(1);
   });
 });
 
-describe('Other machines', () => {
-  it.each(['C-204', 'G-204', 'M-310', 'F-118'])('offers Review evidence on %s', async (id) => {
+describe('selection color', () => {
+  const CORAL_TOP = '#FF8F7E';
+  const fills = (id: string) => [...machineButton(id).querySelectorAll('polygon')].map((face) => face.getAttribute('fill'));
+  const coralFaces = ['#FF8F7E', '#BF5A4C', '#94433A'];
+
+  it.each(['G-204', 'C-204'])('never gives %s coral, because it has no alert', async (id) => {
     await go(`#/asset/${id}`);
-    expect(primary().textContent).toBe('Review evidence');
-    expect(primary().getAttribute('href')).toBe(`#/asset/${id}/evidence`);
+    expect(machineButton(id).getAttribute('aria-pressed')).toBe('true');
+    expect(fills(id).some((fill) => coralFaces.includes(fill as string))).toBe(false);
+    expect(fills(id)[0]).toBe('#5FBDB2');
+    expect(machineButton(id).querySelector('polygon')?.getAttribute('stroke')).toBe('#7FE0D3');
   });
 
-  it('shows M-310 as insufficient evidence, with its SOP still available', async () => {
-    await go('#/asset/M-310/evidence');
-    expect(heading()).toBe('Evidence for M-310');
-    expect(container.querySelector('.separate')?.textContent).toBe(
-      'Insufficient asset-specific evidence to recommend a likely cause.',
-    );
-    expect(container.querySelector('.compare')).toBeNull();
-    expect(container.querySelector('.gap')).toBeNull();
-    expect(body()).toContain('Current procedure for M-310');
-    expect(body()).not.toContain('Worn bearing');
-
-    await click(primary());
-    expect(body()).toContain('Lock out the motor');
-    expect(body()).toContain('SOP-022 rev A');
-    expect(container.querySelector('.switch')).toBeNull();
-    expect(body()).not.toContain('Translated from German');
+  it.each(['M-204', 'M-310', 'F-118'])('keeps coral on %s, which has an active alert', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(fills(id)[0]).toBe(CORAL_TOP);
   });
 
-  it('saves a finding on M-310 without naming causes it does not have', async () => {
-    await go('#/asset/M-310/plan');
-    await click(primary());
-    expect([...container.querySelectorAll('button.outcome')].map((item) => item.textContent?.trim())).toEqual([
-      'Issue found',
-      'No issue found',
-      'Inconclusive',
-    ]);
-    await click(outcomeButton('No issue found'));
-    await click(primary());
-    expect(heading()).toBe('No issue found.');
-    expect(container.querySelector('.track')).toBeNull();
-    expect(body()).toContain('SOP-022 rev A');
+  it('keeps coral after a finding, because the alert is still active', async () => {
+    await saveFindingFor('M-204', 'Bearing wear');
+    expect(fills('M-204')[0]).toBe(CORAL_TOP);
   });
 
-  it('shows F-118 history with no plan, and routes to escalation', async () => {
-    await go('#/asset/F-118/evidence');
-    expect(container.querySelector('.gap')?.textContent).toContain('No applicable procedure for F-118');
-    expect(container.querySelector('.gap')?.textContent).toContain('site-approved');
-    expect(container.querySelector('.compare')).toBeNull();
-    expect(body()).toContain('Blocked nozzle stopped the filler');
-    expect(primary().textContent).toBe('Back to plant layout');
-
-    await go('#/asset/F-118/plan');
-    expect(container.querySelector('.gap')).not.toBeNull();
-    expect(body()).not.toContain('Save inspection plan');
-  });
-
-  it('carries no state from M-204 when switching machines', async () => {
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    await go('#/asset/M-310/plan');
-    expect(primary().textContent).toBe('Save inspection plan');
-    await go('#/asset/M-310/finding');
-    expect(heading()).toBe('Review and save inspection plan');
+  it('shows both selection colors in the one legend entry', () => {
+    const item = [...container.querySelectorAll('.legend li')].find((li) => li.textContent?.trim() === 'Selected') as Element;
+    expect(item.querySelector('.mark-selected')).not.toBeNull();
+    expect(item.querySelector('.mark-selected-clear')).not.toBeNull();
   });
 });
 
-describe('After saving a finding', () => {
-  async function finishWith(label: string, note?: string) {
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    await click(outcomeButton(label));
-    if (note) await typeNote(note);
-    await click(primary());
-  }
+describe('alert time', () => {
+  const strip = () => [...container.querySelectorAll('.activity-list li')].map((item) => item.textContent?.trim());
 
-  const trackStates = () =>
-    [...container.querySelectorAll('.track li')].map((item) => [item.querySelector('.track-label')?.textContent, item.className]);
+  it('shows computed relative ages in the queue', () => {
+    expect([...container.querySelectorAll('.queue-age')].map((age) => age.textContent)).toEqual(['2 h', '5 h', '20 h']);
+  });
+
+  it('shows alerts in the activity strip as relative time, with no fixed date', () => {
+    expect(strip()).toEqual([
+      '2 h ago M-204 abnormal vibration',
+      '5 h ago M-310 abnormal vibration',
+      '20 h ago F-118 high nozzle pressure',
+    ]);
+  });
+
+  it('keeps real timestamps for saved actions', async () => {
+    await savePlanFor('M-204');
+    const year = String(new Date().getFullYear());
+    expect(strip()[0]).toContain(year);
+    expect(strip()[0]).toContain('M-204 plan saved');
+    expect(strip()[1]).toBe('2 h ago M-204 abnormal vibration');
+  });
+});
+
+describe('machine details', () => {
+  const details = () => container.querySelector('.machine-details') as HTMLDetailsElement;
+
+  it.each(['M-204', 'M-310', 'F-118'])('is one closed row on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(details().querySelector('summary')?.textContent).toBe('Machine details');
+    expect(details().open).toBe(false);
+  });
+
+  it.each(['G-204', 'C-204'])('stays open on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(details().open).toBe(true);
+  });
+
+  it('keeps the M-310 no-incidents fact visible next to the evidence message', async () => {
+    await go('#/asset/M-310');
+    const line = container.querySelector('.tabpanel .insufficient') as HTMLElement;
+    expect(line.textContent).toContain('Insufficient asset-specific evidence to recommend a likely cause.');
+    expect(line.textContent).toContain('No past incidents on this machine');
+    expect(line.closest('details')).toBeNull();
+  });
+});
+
+describe('action bar', () => {
+  const next = () => container.querySelector('.action-next')?.textContent;
+
+  it('sits outside the title row and the scrolling content', async () => {
+    await go('#/asset/M-204');
+    expect(container.querySelector('.panel-head [data-primary]')).toBeNull();
+    expect(container.querySelector('.panel-scroll .action-bar')).toBeNull();
+    expect(container.querySelector('.panel-scroll [data-primary]')).toBeNull();
+  });
+
+  it('gives each state one action and a Next hint', async () => {
+    expect(next()).toBe('Next: start with the newest alert');
+    await go('#/asset/M-204');
+    expect(next()).toBe('Next: check the inspection steps');
+    await click(primary());
+    expect(next()).toBe('Next: do the steps, then record a finding');
+    await click(primary());
+    expect(next()).toBe('Pick one to save');
+    await click(outcomeButton('Bearing wear'));
+    expect(next()).toBe('Next: record what you found');
+    await click(primary());
+    expect(next()).toBe('Next: repair needed');
+    expect(primary().textContent).toBe('Back to plant floor');
+  });
 
   it.each([
-    ['Bearing wear', 'Bearing wear found. Repair needed.', 'Inspected: bearing wear'],
-    ['Lubrication problem', 'Lubrication problem found. Repair needed.', 'Inspected: lubrication problem'],
-    ['Neither', 'Cause still open. Escalate through the site process.', 'Inspected: cause still open'],
-    ['Inconclusive', 'Inconclusive. Reinspect or escalate.', 'Inspected: inconclusive'],
-  ])('shows the right status for %s', async (label, headline, floorText) => {
-    await finishWith(label);
-    expect(heading()).toBe(headline);
-    expect(trackStates()).toEqual([
-      ['Alert raised', 'is-done'],
-      ['Inspected', 'is-done'],
-      ['Repair', 'is-next'],
-      ['Closed', ''],
-    ]);
-    expect(container.querySelector('.track button, .track a')).toBeNull();
-    expect(primary().textContent).toBe('Back to plant layout');
-
-    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
-    expect(machine.querySelector('.status-inspected.is-new')).not.toBeNull();
-    expect(machine.querySelector('.status-alert')).toBeNull();
-    expect(machine.querySelector('.status-inspected svg')).toBeNull();
-    expect(machine.querySelector('.machine-inspected-text')?.textContent).toBe(floorText);
+    ['Inconclusive', 'Next: reinspect or escalate'],
+    ['Neither', 'Next: escalate through the site process'],
+  ])('shows the next step for %s', async (outcome, text) => {
+    await saveFindingFor('M-204', outcome);
+    expect(next()).toBe(text);
   });
 
-  it('keeps the readings above limit, unchanged, and says so', async () => {
-    await finishWith('Bearing wear');
-    expect([...container.querySelectorAll('.meter-status')].map((item) => item.textContent)).toEqual([
-      'Above limit 4.5',
-      'Above limit 75',
-    ]);
-    expect([...container.querySelectorAll('.meter-value')].map((item) => item.textContent)).toEqual(['8.4 mm/s', '78 °C']);
-    expect(body()).toContain('Readings stay high until repaired.');
-    const value = container.querySelector('.machine.has-alert .machine-value.is-abnormal') as HTMLElement;
-    expect(value.textContent).toBe('8.4 mm/s');
-    expect(value.querySelector('.icon-alert')).not.toBeNull();
-  });
-
-  it('keeps the plan and evidence collapsed, and shows the history entry', async () => {
-    await finishWith('Bearing wear', 'Rough running');
-    const groups = [...container.querySelectorAll('.groups details')];
-    expect(groups).toHaveLength(2);
-    for (const group of groups) expect(group.hasAttribute('open')).toBe(false);
-    expect(body()).toContain('Added to M-204 history');
-    expect(container.querySelector('.history-entry')?.textContent).toContain('Bearing wear');
-    expect(container.querySelector('.history-entry')?.textContent).toContain('Rough running');
-    expect(body()).not.toMatch(/solved|resolved|fixed/i);
-  });
-
-  it('puts the finding at the top of the machine history on later visits', async () => {
-    await finishWith('Lubrication problem', 'Below the mark');
-    await go('#/asset/M-204');
-    const entries = [...container.querySelectorAll('.history .history-entry')];
-    expect(entries).toHaveLength(3);
-    expect(entries[0].textContent).toContain('Lubrication problem');
-    expect(entries[0].textContent).toContain('Below the mark');
-    expect(entries[0].textContent).toContain('Technician finding');
-    expect(entries[1].textContent).toContain('Worn bearing');
-    expect(entries[2].textContent).toContain('Low lubricant');
-    expect(container.querySelector('.machine.has-alert .machine-inspected-text')?.textContent).toBe('Inspected: lubrication problem');
-    expect(container.querySelector('.status-inspected.is-new')).toBeNull();
-  });
-
-  it('leaves retrieval results and the evidence screen identical', async () => {
-    const before = JSON.stringify(retrieve('M-204', alertFor('M-204'), dataset));
-    const recordsBefore = JSON.stringify(dataset);
-    await go('#/asset/M-204/evidence');
-    const screenBefore = [...container.querySelectorAll('.compare, .groups, .meters')].map((item) => item.innerHTML);
-
-    await finishWith('Bearing wear', 'Rough running');
-
-    expect(JSON.stringify(retrieve('M-204', alertFor('M-204'), dataset))).toBe(before);
-    expect(JSON.stringify(dataset)).toBe(recordsBefore);
-    await go('#/asset/M-204/evidence');
-    expect([...container.querySelectorAll('.compare, .groups, .meters')].map((item) => item.innerHTML)).toEqual(screenBefore);
-    expect(body()).not.toContain('Technician finding');
+  it('shows the escalation path on F-118, and a plain hint on machines with no alert', async () => {
+    await go('#/asset/F-118');
+    expect(next()).toBe('Next: send it to site review');
+    await click(primary());
+    expect(next()).toBe('Next: wait for site review');
+    await go('#/asset/G-204');
+    expect(next()).toBe('Next: choose a machine with an alert');
   });
 });
 
-describe('Reset demo', () => {
-  it('restores the original alert state', async () => {
-    await go('#/asset/M-204/plan');
+describe('M-204 investigate', () => {
+  beforeEach(() => go('#/asset/M-204'));
+
+  it('leads with what is wrong and where', () => {
+    expect(heading()).toBe('M-204 abnormal vibration');
+    expect(container.querySelector('.location')?.textContent).toBe('Line 2, conveyor C-204');
+    expect(selectedTab()).toBe('Investigate');
+  });
+
+  it('starts the pills at Investigating', () => {
+    expect(pills()).toEqual(['Alert raised', 'Investigating', 'Inspected', 'Repair', 'Closed']);
+    expect(currentPill()).toBe('Investigating');
+  });
+
+  it('derives the safety callout from the SOP first step', () => {
+    expect(container.querySelector('.safety')?.textContent?.trim()).toBe('Lock out the motor before you inspect it.');
+  });
+
+  it('shows three readings with computed status against labeled limits', () => {
+    const readings = [...container.querySelectorAll('.reading')];
+    expect(readings).toHaveLength(3);
+    expect(readings[0].textContent).toContain('Above, demo limit 4.5');
+    expect(readings[2].textContent).toContain('Within, demo limit 14');
+    expect(container.querySelectorAll('.sparkline')).toHaveLength(3);
+  });
+
+  it('shows two unranked possible causes that link to the procedure', () => {
+    expect(body()).toContain('Two possible causes');
+    expect(body()).toContain('Neither is confirmed. Steps 2 and 3 of the inspection tell them apart.');
+    const causes = [...container.querySelectorAll('.cause')];
+    expect(causes).toHaveLength(2);
+    expect(causes[0].querySelector('.step-link')?.getAttribute('href')).toBe('#/asset/M-204/plan/step/SOP-014-C-2');
+    expect(causes[0].querySelector('.source-link')?.getAttribute('href')).toBe('#/asset/M-204/investigate/source/INC-2291');
+    expect(body()).not.toMatch(/\d+\s?%/);
+  });
+
+  it('computes the record count from the data', () => {
+    expect(container.querySelector('.records h2')?.textContent).toBe(`${dataset.records.length} records checked`);
+  });
+
+  it('collapses the evidence rows, with counts that match retrieval', () => {
+    const result = retrieve('M-204', alertFor('M-204'), dataset);
+    expect(groupTitles()).toEqual([
+      `Used as evidence (${result.included.length})`,
+      `Not sure it applies (${result.uncertain.length})`,
+      `Left out (${result.excluded.length})`,
+    ]);
+    expect(container.querySelectorAll('.records details[open]')).toHaveLength(0);
+  });
+
+  it('keeps labels, and shows the INC-2310 keyword match next to its exclusion reason', () => {
+    const row = container.querySelector('a.row[href$="INC-2310"]') as HTMLElement;
+    expect(row.classList.contains('row-excluded')).toBe(true);
+    expect(row.querySelector('mark')?.textContent).toBe('vibration');
+    expect(row.textContent).toContain('A keyword alone does not make this evidence.');
+    expect(row.querySelector('.tag')?.textContent).toBeTruthy();
+    const direct = container.querySelector('a.row[href$="INC-2291"] .tag');
+    expect(direct?.textContent).toBe('Direct asset history');
+    const assembly = container.querySelector('a.row[href$="ASM-0412"] .tag');
+    expect(assembly?.textContent).toBe('Assembly-level context');
+  });
+
+  it('opens a source as a slide-over with every field, and closes it', async () => {
+    await click(container.querySelector('a.source-link[href$="INC-1877"]') as Element);
+    const sheet = container.querySelector('[role="dialog"]') as HTMLElement;
+    for (const field of ['ID', 'Asset', 'Language', 'Original excerpt', 'English explanation', 'Relevance', 'Limitation']) {
+      expect([...sheet.querySelectorAll('dt')].map((dt) => dt.textContent)).toContain(field);
+    }
+    expect(sheet.textContent).toContain('German');
+    expect(document.activeElement).toBe(sheet.querySelector('h2'));
+    expect(heading()).toBe('M-204 abnormal vibration');
+    await click(sheet.querySelector('.sheet-close') as Element);
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('closes a source with Escape', async () => {
+    await go('#/asset/M-204/investigate/source/INC-2291');
+    expect(container.querySelector('[role="dialog"]')).not.toBeNull();
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+      await settle();
+      await navigationArrived('#/asset/M-204');
+    });
+    expect(container.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('jumps from a cause to its step in the plan tab', async () => {
+    await click(container.querySelector('.step-link') as Element);
+    expect(selectedTab()).toBe('Inspection plan');
+    expect(container.querySelector('.steps li.is-target .step-num')?.textContent).toBe('2');
+  });
+});
+
+describe('tabs', () => {
+  it('uses real ARIA tabs with a labeled panel', async () => {
+    await go('#/asset/M-204');
+    const tabs = [...container.querySelectorAll('[role="tablist"] [role="tab"]')];
+    expect(tabs.map((item) => item.textContent)).toEqual(['Investigate', 'Inspection plan', 'Finding']);
+    const panel = container.querySelector('[role="tabpanel"]') as HTMLElement;
+    expect(panel.getAttribute('aria-labelledby')).toBe('tab-investigate');
+    expect(tab('investigate').getAttribute('aria-controls')).toBe(panel.id);
+    expect(tab('investigate').getAttribute('tabindex')).toBe('0');
+    expect(tab('plan').getAttribute('tabindex')).toBe('-1');
+  });
+
+  it('keeps Finding inactive until the plan is saved', async () => {
+    await go('#/asset/M-204');
+    expect(tab('finding').getAttribute('aria-disabled')).toBe('true');
+    await click(tab('finding'));
+    expect(selectedTab()).toBe('Investigate');
+    await go('#/asset/M-204/finding');
+    expect(selectedTab()).toBe('Inspection plan');
+    expect(container.querySelector('button.outcome')).toBeNull();
+  });
+
+  it('moves with arrow keys, Home and End, and skips inactive tabs', async () => {
+    await go('#/asset/M-204');
+    await press(tab('investigate'), 'ArrowRight');
+    expect(selectedTab()).toBe('Inspection plan');
+    expect(document.activeElement).toBe(tab('plan'));
+    await press(tab('plan'), 'ArrowRight');
+    expect(selectedTab()).toBe('Investigate');
+    await press(tab('investigate'), 'End');
+    expect(selectedTab()).toBe('Inspection plan');
+    await press(tab('plan'), 'Home');
+    expect(selectedTab()).toBe('Investigate');
+  });
+
+  it('reaches Finding by keyboard once the plan is saved', async () => {
+    await savePlanFor('M-204');
+    expect(selectedTab()).toBe('Finding');
+    await press(tab('finding'), 'ArrowLeft');
+    expect(selectedTab()).toBe('Inspection plan');
+  });
+});
+
+describe('inspection plan', () => {
+  beforeEach(() => go('#/asset/M-204/plan'));
+
+  it('shows the steps of the current SOP only', () => {
+    expect(body()).toContain('Inspection steps (5)');
+    expect(body()).toContain('Review and save inspection plan');
+    expect(container.querySelectorAll('.steps li')).toHaveLength(5);
+    expect(body()).toContain('Translated from German');
+    expect(container.querySelector('.sop-link')?.getAttribute('href')).toBe('#/asset/M-204/plan/source/SOP-014-C');
+    expect(body()).toContain('rev C');
+    expect(panelText()).not.toContain('rev B');
+  });
+
+  it('shows Good and If not lines, and keeps evidence references collapsed', () => {
+    expect(body()).toContain('Good:');
+    expect(body()).toContain('If not:');
+    expect(container.querySelector('.plan details')?.hasAttribute('open')).toBe(false);
+  });
+
+  it('shows the safety callout', () => {
+    expect(container.querySelector('.safety')).not.toBeNull();
+  });
+
+  it('replaces all plan text with German', async () => {
+    const english = container.querySelector('.plan')?.textContent;
+    await click(languageButton('Deutsch'));
+    const plan = container.querySelector('.plan') as HTMLElement;
+    expect(plan.getAttribute('lang')).toBe('de');
+    expect(plan.textContent).not.toEqual(english);
+    expect(plan.textContent).toContain('Inspektionsschritte (5)');
+    expect(plan.textContent).toContain('Gut:');
+    expect(plan.textContent).not.toContain('Good:');
+    expect(plan.textContent).toContain('Motor freischalten und sichern');
+    expect(primary().textContent).toBe('Inspektionsplan speichern');
+    expect(container.querySelector('.safety')?.textContent).toContain('bevor Sie ihn prüfen');
+  });
+
+  it('survives a language change when saving', async () => {
+    await click(languageButton('Deutsch'));
     await click(primary());
+    expect(selectedTab()).toBe('Finding');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) as string)['M-204'].sopRecordId).toBe('SOP-014-C');
+  });
+});
+
+describe('finding', () => {
+  beforeEach(() => savePlanFor('M-204'));
+
+  it('asks for an outcome, with the note empty and no safety callout', () => {
+    expect(selectedTab()).toBe('Finding');
+    expect(primary().textContent).toBe('Save finding');
+    expect(primary().getAttribute('aria-disabled')).toBe('true');
+    expect(body()).toContain('Pick one to save');
+    const note = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(note.value).toBe('');
+    expect(note.placeholder).toBe('Add a note');
+    expect(container.querySelector('.chip')).toBeNull();
+    expect(container.querySelector('.safety')).toBeNull();
+  });
+
+  it('does nothing when saved with no outcome', async () => {
+    await click(primary());
+    expect(selectedTab()).toBe('Finding');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) as string)['M-204'].finding).toBeUndefined();
+  });
+
+  it('offers suggestions per outcome without prefilling the note', async () => {
+    await click(outcomeButton('Bearing wear'));
+    expect(outcomeButton('Bearing wear').getAttribute('aria-pressed')).toBe('true');
+    expect(primary().getAttribute('aria-disabled')).toBeNull();
+    const note = container.querySelector('textarea') as HTMLTextAreaElement;
+    expect(note.value).toBe('');
+    const chip = container.querySelector('.chip') as HTMLElement;
+    await click(chip);
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe(chip.textContent);
+  });
+
+  it('sends Save finding to the Finding tab when used from another tab', async () => {
+    await go('#/asset/M-204');
+    expect(primary().textContent).toBe('Save finding');
+    await click(primary());
+    expect(selectedTab()).toBe('Finding');
+  });
+});
+
+describe('primary action by state, and after saving', () => {
+  it('follows Start, Save plan, Save finding, Back', async () => {
+    await go('#/asset/M-204');
+    expect(primary().textContent).toBe('Start inspection plan');
+    await click(primary());
+    expect(selectedTab()).toBe('Inspection plan');
+    expect(primary().textContent).toBe('Save inspection plan');
+    await click(primary());
+    expect(selectedTab()).toBe('Finding');
+    expect(primary().textContent).toBe('Save finding');
     await click(outcomeButton('Bearing wear'));
     await click(primary());
-    expect(container.querySelector('.machine .status-inspected')).not.toBeNull();
+    expect(selectedTab()).toBe('Investigate');
+    expect(primary().textContent).toBe('Back to plant floor');
+    expect(primary().getAttribute('href')).toBe('#/');
+  });
 
-    await click(container.querySelector('button.reset') as Element);
+  it('stays in the workspace and never claims it is solved', async () => {
+    await saveFindingFor('M-204', 'Bearing wear');
+    expect(heading()).toBe('Bearing wear found. Repair needed.');
+    expect(currentPill()).toBe('Inspected');
+    expect(container.querySelectorAll('.reading.is-above')).toHaveLength(2);
+    expect(body()).toContain('Readings stay high until repaired.');
+    expect(machineButton('M-204').getAttribute('aria-label')).toContain('Inspected');
+    expect(container.querySelector('.activity')?.textContent).toContain('M-204 inspected: bearing wear');
+    expect(container.querySelector('.history')?.textContent).toContain('Technician finding');
+    expect(panelText()).not.toMatch(/\b(solved|resolved|fixed)\b/i);
+  });
 
-    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
-    expect(container.querySelector('.machine .status-inspected')).toBeNull();
-    expect(machine.querySelector('.status-alert')).not.toBeNull();
-    expect(machine.querySelector('.machine-alert-text')?.textContent).toBe('Abnormal vibration');
-    expect(primary().textContent).toBe('Open M-204 alert');
+  it('keeps the plan, evidence references and finding across a refresh', async () => {
+    await saveFindingFor('M-204', 'Bearing wear');
+    await act(async () => root.unmount());
+    await mount();
+    expect(heading()).toBe('Bearing wear found. Repair needed.');
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) as string)['M-204'];
+    expect(saved.evidenceIds).toContain('INC-2291');
+    expect(saved.finding.outcome).toBe('bearing_wear');
+    await go('#/asset/M-204/finding');
+    expect(body()).toContain('Finding saved');
+    expect(container.querySelector('button.outcome')).toBeNull();
+  });
+
+  it('does not let a saved finding change retrieval', async () => {
+    const before = retrieve('M-204', alertFor('M-204'), dataset);
+    await saveFindingFor('M-204', 'Lubrication problem');
+    expect(retrieve('M-204', alertFor('M-204'), dataset)).toEqual(before);
+    expect(groupTitles()).toContain(`Used as evidence (${before.included.length})`);
+  });
+
+  it('never writes a real-time activity event before something is saved', () => {
+    expect(container.querySelectorAll('.activity-list li')).toHaveLength(alerts.length);
+  });
+});
+
+describe('M-310: procedure but no incident history', () => {
+  beforeEach(() => go('#/asset/M-310'));
+
+  it('refuses to name a cause and keeps the SOP', () => {
+    expect(body()).toContain('Insufficient asset-specific evidence to recommend a likely cause.');
+    expect(container.querySelector('.cause')).toBeNull();
+    expect(primary().textContent).toBe('Start inspection plan');
+  });
+
+  it('builds the plan from SOP-022 with no language switch', async () => {
+    await click(tab('plan'));
+    expect(container.querySelector('.sop-link')?.textContent).toContain('SOP-022');
+    expect(container.querySelector('.switch')).toBeNull();
+    expect(container.querySelector('.safety')).not.toBeNull();
+  });
+
+  it('offers the generic outcomes', async () => {
+    await savePlanFor('M-310');
+    expect([...container.querySelectorAll('button.outcome')].map((button) => button.textContent)).toEqual([
+      'Fault found',
+      'No fault found',
+      'Inconclusive',
+    ]);
+  });
+});
+
+describe('F-118: no applicable procedure', () => {
+  beforeEach(() => go('#/asset/F-118'));
+
+  it('marks the cause unconfirmed and states the gap', () => {
+    expect(container.querySelector('.cause .tag')?.textContent).toBe('Unconfirmed');
+    expect(body()).toContain('No approved procedure for F-118.');
+    expect(body()).toContain('We will not create inspection steps without one. Send it to site review.');
+    expect(container.querySelector('.safety')).toBeNull();
+  });
+
+  it('labels the plan tab No procedure and blocks it', async () => {
+    expect(tab('plan').textContent).toBe('No procedure');
+    expect(tab('plan').getAttribute('aria-disabled')).toBe('true');
+    expect(tab('finding').getAttribute('aria-disabled')).toBe('true');
+    await click(tab('plan'));
+    expect(selectedTab()).toBe('Investigate');
+  });
+
+  it('skips blocked tabs with the keyboard', async () => {
+    await press(tab('investigate'), 'ArrowRight');
+    expect(selectedTab()).toBe('Investigate');
+    await press(tab('investigate'), 'End');
+    expect(selectedTab()).toBe('Investigate');
+  });
+
+  it.each(['#/asset/F-118/plan', '#/asset/F-118/finding', '#/asset/F-118/plan/step/SOP-014-C-1'])(
+    'can never reach a plan through %s',
+    async (hash) => {
+      await go(hash);
+      expect(selectedTab()).toBe('Investigate');
+      expect(container.querySelector('.steps')).toBeNull();
+      expect(container.querySelector('button.outcome')).toBeNull();
+      expect(primary().textContent).toBe('Escalate through site process');
+    },
+  );
+
+  it('can never reach a plan through forged saved data', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        'F-118': { assetId: 'F-118', sopRecordId: 'SOP-014-C', stepIds: ['SOP-014-C-1'], evidenceIds: [], savedAt: '2026-11-09T08:00:00.000Z' },
+      }),
+    );
+    await go('#/asset/F-118/plan');
+    expect(selectedTab()).toBe('Investigate');
+    expect(container.querySelector('.steps')).toBeNull();
+    expect(primary().textContent).toBe('Escalate through site process');
+  });
+
+  it('uses the escalation pills, escalates, and survives a refresh', async () => {
+    expect(pills()).toEqual(['Alert raised', 'Investigating', 'Escalated', 'Site review', 'Closed']);
+    await click(primary());
+    expect(heading()).toBe('Escalated through the site process. Waiting on site review.');
+    expect(currentPill()).toBe('Escalated');
+    expect(body()).toContain('Sent to site review.');
+    expect(primary().textContent).toBe('Back to plant floor');
+    expect(machineButton('F-118').getAttribute('aria-label')).toContain('Escalated');
+    expect(container.querySelector('.activity')?.textContent).toContain('F-118 escalated');
+    expect(JSON.parse(localStorage.getItem(ESCALATIONS_KEY) as string)['F-118']).toBeDefined();
+    await act(async () => root.unmount());
+    await mount();
+    expect(heading()).toBe('Escalated through the site process. Waiting on site review.');
+  });
+});
+
+describe('machines with no active alert', () => {
+  it.each(['G-204', 'C-204'])('shows %s with no tabs, plan or escalation', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(container.querySelector('.status-line')?.textContent).toBe('No active alert');
+    expect(container.querySelector('[role="tablist"]')).toBeNull();
+    expect(container.querySelector('.pill')).toBeNull();
+    expect(container.querySelector('.steps')).toBeNull();
+    expect(primary().textContent).toBe('Back to plant floor');
+    expect(body()).not.toContain('Escalate through site process');
+    expect(container.querySelector('.records h2')?.textContent).toBe(`${dataset.records.length} records checked`);
+  });
+
+  it('shows INC-2310 as Direct asset history on G-204', async () => {
+    await go('#/asset/G-204');
+    expect(container.querySelector('a.row[href$="INC-2310"] .tag')?.textContent).toBe('Direct asset history');
+  });
+
+  it('opens a source on a machine with no alert', async () => {
+    await go('#/asset/G-204');
+    await click(container.querySelector('a.row[href$="INC-2310"]') as Element);
+    expect(container.querySelector('[role="dialog"]')?.textContent).toContain('INC-2310');
+  });
+});
+
+describe('every machine has a snapshot', () => {
+  it.each([
+    ['M-204', 'conveyor C-204'],
+    ['M-310', 'No past incidents on this machine'],
+    ['F-118', 'No approved procedure'],
+    ['G-204', 'Gearbox'],
+    ['C-204', 'No approved procedure'],
+    ['C-204', '1. Latest: Conveyor alignment drifted after belt change'],
+  ])('fills the snapshot on %s', async (id, text) => {
+    await go(`#/asset/${id}`);
+    const snapshot = container.querySelector('.snapshot') as HTMLElement;
+    expect([...snapshot.querySelectorAll('dt')].map((dt) => dt.textContent)).toEqual(['Status', 'Past records', 'Procedure', 'Connected']);
+    expect(panelText()).toContain(text);
+  });
+
+  it('calls a machine with no connections standalone', async () => {
+    await go('#/asset/M-310');
+    expect(container.querySelector('.snapshot')?.textContent).toContain('Standalone machine');
+  });
+});
+
+describe('focus, title and switching', () => {
+  it('moves focus to the h1 and updates the title when the machine changes', async () => {
     await go('#/asset/M-204');
-    expect(body()).not.toContain('Technician finding');
+    expect(document.activeElement).toBe(container.querySelector('h1'));
+    expect(document.title).toBe('Investigate, M-204, Maintenance Copilot');
+    await go('#/asset/M-310');
+    expect(document.activeElement).toBe(container.querySelector('h1'));
+    expect(document.title).toBe('Investigate, M-310, Maintenance Copilot');
   });
 
-  it('clears saved data from the summary and returns to the plant floor', async () => {
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    await click(outcomeButton('Neither'));
-    await click(primary());
-    expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull();
+  it('updates the title but keeps focus on the tab when only the tab changes', async () => {
+    await go('#/asset/M-204');
+    await press(tab('investigate'), 'ArrowRight');
+    expect(document.title).toBe('Inspection plan, M-204, Maintenance Copilot');
+    expect(document.activeElement).toBe(tab('plan'));
+  });
 
-    await click(container.querySelector('button.reset') as Element);
+  it('carries no state between machines', async () => {
+    await savePlanFor('M-204');
+    await click(outcomeButton('Bearing wear'));
+    await go('#/asset/M-310');
+    expect(heading()).toBe('M-310 abnormal vibration');
+    expect(body()).not.toContain('Two possible causes');
+    expect(primary().textContent).toBe('Start inspection plan');
+    await go('#/asset/M-204/finding');
+    expect(outcomeButton('Bearing wear').getAttribute('aria-pressed')).toBe('false');
+  });
 
+  it('shows an unknown machine as home', async () => {
+    await go('#/asset/X-999');
+    expect(heading()).toBe(`${alerts.length} active alerts`);
+  });
+});
+
+describe('reset demo', () => {
+  const reset = () => container.querySelector('.reset') as HTMLElement | null;
+
+  it('appears only when saved data exists, and clears it', async () => {
+    expect(reset()).toBeNull();
+    await saveFindingFor('M-204', 'Bearing wear');
+    expect(reset()?.textContent).toBe('Reset demo');
+    await click(reset() as Element);
+    await act(async () => {
+      await settle();
+      await navigationArrived('#/');
+    });
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
-    expect(heading()).toBe('Plant floor');
-    expect(container.querySelector('button.reset')).toBeNull();
-    await go('#/asset/M-204/plan');
-    expect(primary().textContent).toBe('Save inspection plan');
+    expect(reset()).toBeNull();
+    expect(heading()).toBe(`${alerts.length} active alerts`);
+    expect(container.querySelectorAll('.label-triangle')).toHaveLength(alerts.length);
   });
+});
 
-  it('appears on Home only when saved data exists', async () => {
-    expect(container.querySelector('button.reset')).toBeNull();
-    await go('#/asset/M-204/plan');
-    await click(primary());
-    await go('#/');
-    expect(container.querySelector('button.reset')).not.toBeNull();
-  });
+describe('copy rules', () => {
+  it.each(['#/', '#/asset/M-204', '#/asset/M-204/plan', '#/asset/M-310', '#/asset/F-118', '#/asset/G-204', '#/asset/C-204'])(
+    'has no em dashes on %s',
+    async (hash) => {
+      await go(hash);
+      expect(body()).not.toContain(String.fromCharCode(0x2014));
+    },
+  );
 });

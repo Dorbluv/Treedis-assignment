@@ -30,17 +30,15 @@ export function recordLine(record: MaintenanceRecord): string {
 }
 
 const VIEW_NAMES: Record<string, string> = {
-  selected: 'Machine',
-  evidence: 'Evidence',
+  investigate: 'Investigate',
   source: 'Source',
-  plan: 'Plan',
+  plan: 'Inspection plan',
   finding: 'Finding',
-  done: 'Summary',
 };
 
 export function pageTitle(view: string, assetId: string | null): string {
   const app = 'Maintenance Copilot';
-  return assetId ? `${VIEW_NAMES[view] ?? 'Machine'}, ${assetId}, ${app}` : `Plant floor, ${app}`;
+  return assetId ? `${VIEW_NAMES[view] ?? 'Investigate'}, ${assetId}, ${app}` : `Plant floor, ${app}`;
 }
 
 export interface OutcomeOption {
@@ -53,8 +51,8 @@ export function outcomeOptions(result: RetrievalResult): OutcomeOption[] {
   // With no possible causes, "Neither" would have nothing to refer to.
   if (result.possibleCauses.length === 0) {
     return [
-      { key: 'issue_found', label: 'Issue found', suggestions: ['Play at the bearing', 'Loose mounting bolts'] },
-      { key: 'no_issue', label: 'No issue found', suggestions: ['Bearing and bolts normal'] },
+      { key: 'fault_found', label: 'Fault found', suggestions: ['Play at the bearing', 'Loose mounting bolts'] },
+      { key: 'no_fault', label: 'No fault found', suggestions: ['Bearing and bolts normal'] },
       { key: 'inconclusive', label: 'Inconclusive', suggestions: ['Could not reach the bearing', 'Needs a second inspection'] },
     ];
   }

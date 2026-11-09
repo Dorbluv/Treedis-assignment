@@ -17,6 +17,8 @@ export interface Alert {
   conditions: string[];
   keywords: string[];
   sensorRecordId: string;
+  /** Synthetic: how old the alert is when the app loads. Its start time is computed from this. */
+  ageHours: number;
 }
 
 export type RecordKind = 'sensor' | 'incident' | 'assembly' | 'note' | 'sop';
@@ -135,6 +137,11 @@ export interface Finding {
   outcome: string;
   note?: string;
   savedAt: string;
+}
+
+export interface Escalation {
+  assetId: string;
+  escalatedAt: string;
 }
 
 export interface SavedPlan {

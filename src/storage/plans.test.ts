@@ -1,6 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedPlan } from '../domain/types';
-import { STORAGE_KEY, clearPlans, loadPlan, saveFinding, savePlan } from './plans';
+import {
+  STORAGE_KEY,
+  clearPlans,
+  hasSavedPlans,
+  loadEscalations,
+  loadPlan,
+  saveEscalation,
+  saveFinding,
+  savePlan,
+} from './plans';
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial));
@@ -44,6 +53,16 @@ describe('plan storage', () => {
     savePlan(plan, storage);
     clearPlans(storage);
     expect(loadPlan('M-204', storage)).toBeNull();
+  });
+
+  it('clears escalations for a demo reset too', () => {
+    const storage = fakeStorage();
+    saveEscalation({ assetId: 'F-118', escalatedAt: '2026-11-09T10:00:00.000Z' }, storage);
+    expect(loadEscalations(storage)['F-118']).toBeDefined();
+    expect(hasSavedPlans(storage)).toBe(true);
+    clearPlans(storage);
+    expect(loadEscalations(storage)).toEqual({});
+    expect(hasSavedPlans(storage)).toBe(false);
   });
 
   it('reads corrupt storage as empty', () => {

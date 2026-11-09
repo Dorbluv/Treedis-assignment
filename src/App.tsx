@@ -2,62 +2,45 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { alertFor, assets, dataset } from './data';
 import { retrieve } from './domain/retrieve';
 import type { SavedPlan } from './domain/types';
-import { Banner } from './components/Banner';
-import { MachineHeader } from './components/MachineHeader';
-import { PlantFloor } from './components/PlantFloor';
-import { Progress, type ProgressStep } from './components/Progress';
-import { clearPlans, hasSavedPlans, loadAllPlans, loadPlan, type PlanMap } from './storage/plans';
+import { resolveTab, tabAvailability, type WorkspaceTab } from './domain/workspace';
+import { AlertPanel } from './components/AlertPanel';
+import { FloorColumn } from './components/FloorColumn';
+import { HomePanel } from './components/HomePanel';
+import { MachinePanel } from './components/MachinePanel';
+import { TopBar } from './components/TopBar';
 import { pageTitle } from './screens/format';
-import { DoneScreen } from './screens/DoneScreen';
-import { EvidenceScreen } from './screens/EvidenceScreen';
-import { FindingScreen } from './screens/FindingScreen';
-import { LayoutScreen } from './screens/LayoutScreen';
-import { PlanScreen } from './screens/PlanScreen';
-import { SourceScreen } from './screens/SourceScreen';
+import {
+  clearPlans,
+  hasSavedPlans,
+  loadAllPlans,
+  loadEscalations,
+  loadPlan,
+  type EscalationMap,
+  type PlanMap,
+} from './storage/plans';
 
-type FlowScreen = 'evidence' | 'plan' | 'finding' | 'done';
-type SourceParent = 'evidence' | 'plan' | 'done';
+interface Route {
+  assetId: string | null;
+  tab: WorkspaceTab;
+  sourceId: string | null;
+  stepId: string | null;
+}
 
-type Route =
-  | { name: 'map'; assetId: null }
-  | { name: 'selected'; assetId: string }
-  | { name: FlowScreen; assetId: string }
-  | { name: 'source'; assetId: string; parent: SourceParent; recordId: string; stepId?: string };
-
-const FLOW_SCREENS: string[] = ['evidence', 'plan', 'finding', 'done'];
-const SOURCE_PARENTS: string[] = ['evidence', 'plan', 'done'];
-
-const BACK_LABEL: Record<SourceParent, string> = {
-  evidence: 'Back to evidence',
-  plan: 'Back to plan',
-  done: 'Back to summary',
-};
-
-const STEP_FOR: Record<SourceParent, ProgressStep> = {
-  evidence: 'evidence',
-  plan: 'plan',
-  done: 'complete',
-};
+const TABS: string[] = ['investigate', 'plan', 'finding'];
 
 function parseHash(hash: string): Route {
   const parts = hash.replace(/^#\/?/, '').split('/').filter(Boolean);
-  if (parts[0] !== 'asset' || !parts[1]) return { name: 'map', assetId: null };
-  const assetId = parts[1];
-  const screen = parts[2];
-  if (!FLOW_SCREENS.includes(screen)) return { name: 'selected', assetId };
-  if (parts[3] === 'source' && parts[4] && SOURCE_PARENTS.includes(screen)) {
-    return {
-      name: 'source',
-      assetId,
-      parent: screen as SourceParent,
-      recordId: parts[4],
-      stepId: parts[5] === 'step' ? parts[6] : undefined,
-    };
-  }
-  return { name: screen as FlowScreen, assetId };
+  if (parts[0] !== 'asset' || !parts[1]) return { assetId: null, tab: 'investigate', sourceId: null, stepId: null };
+  const tab = (TABS.includes(parts[2]) ? parts[2] : 'investigate') as WorkspaceTab;
+  return {
+    assetId: parts[1],
+    tab,
+    sourceId: parts[3] === 'source' ? parts[4] ?? null : null,
+    stepId: parts[3] === 'step' ? parts[4] ?? null : null,
+  };
 }
 
-function useRoute(): [Route, string] {
+function useRoute(): Route {
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
     const onChange = () => {
@@ -67,140 +50,86 @@ function useRoute(): [Route, string] {
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
-  return [useMemo(() => parseHash(hash), [hash]), hash];
+  return useMemo(() => parseHash(hash), [hash]);
 }
 
-function readPlan(assetId: string): SavedPlan | null {
+function safely<T>(read: () => T, fallback: T): T {
   try {
-    return loadPlan(assetId);
+    return read();
   } catch {
-    return null;
-  }
-}
-
-function readAllPlans(): PlanMap {
-  try {
-    return loadAllPlans();
-  } catch {
-    return {};
-  }
-}
-
-function anySavedPlans(): boolean {
-  try {
-    return hasSavedPlans();
-  } catch {
-    return false;
+    return fallback;
   }
 }
 
 export function App() {
-  const [route, hash] = useRoute();
-  const [resetCount, setResetCount] = useState(0);
+  const route = useRoute();
+  const [, setTick] = useState(0);
+  const refresh = () => setTick((count) => count + 1);
+
   const asset = assets.find((candidate) => candidate.id === route.assetId) ?? null;
-  const result = useMemo(
-    () => (asset ? retrieve(asset.id, alertFor(asset.id), dataset) : null),
-    [asset],
-  );
-  // Read on every render: each route change re-renders, so this is never stale.
-  const saved = result ? readPlan(result.asset.id) : null;
-  const plans = readAllPlans();
+  const alert = asset ? alertFor(asset.id) : null;
+  const result = useMemo(() => (asset ? retrieve(asset.id, alertFor(asset.id), dataset) : null), [asset]);
+
+  // Read on every render: each route change or save re-renders, so this is never stale.
+  const plans: PlanMap = safely(loadAllPlans, {});
+  const escalations: EscalationMap = safely(loadEscalations, {});
+  const saved: SavedPlan | null = asset ? safely(() => loadPlan(asset.id), null) : null;
+  const escalation = asset ? escalations[asset.id] : undefined;
+  const showReset = safely(hasSavedPlans, false);
+
+  const available = tabAvailability(Boolean(result?.applicableSop), Boolean(saved));
+  const tab = resolveTab(route.tab, available);
 
   function resetDemo() {
-    try {
-      clearPlans();
-    } catch {
-      // Storage is unavailable, so there is nothing saved to clear.
-    }
+    safely(() => clearPlans(), undefined);
     window.location.hash = '#/';
-    setResetCount((count) => count + 1);
+    refresh();
   }
 
-  // A deeper route falls back to the furthest step the saved state allows.
-  let view: Route['name'] = !asset ? 'map' : !result ? 'selected' : route.name;
-  if (view === 'finding' && !saved) view = 'plan';
-  if (view === 'done' && !saved?.finding) view = saved ? 'finding' : 'plan';
-
-  let step: ProgressStep = 'machine';
-  let panel;
-  if (!result || !asset || view === 'map' || view === 'selected') {
-    panel = (
-      <LayoutScreen
-        asset={asset}
-        result={result}
-        saved={saved}
-        plans={plans}
-        showReset={!asset && anySavedPlans()}
-        onReset={resetDemo}
-      />
-    );
-  } else if (view === 'source' && route.name === 'source') {
-    step = STEP_FOR[route.parent];
-    panel = (
-      <SourceScreen
-        result={result}
-        recordId={route.recordId}
-        stepId={route.stepId}
-        backHref={`#/asset/${asset.id}/${route.parent}`}
-        backLabel={BACK_LABEL[route.parent]}
-      />
-    );
-  } else if (view === 'done' && saved) {
-    step = 'complete';
-    panel = <DoneScreen result={result} saved={saved} onReset={resetDemo} />;
-  } else if (view === 'finding' && saved) {
-    step = 'finding';
-    panel = <FindingScreen result={result} saved={saved} />;
-  } else if (view === 'plan') {
-    step = 'plan';
-    panel = <PlanScreen result={result} saved={saved} />;
-  } else {
-    step = 'evidence';
-    panel = <EvidenceScreen result={result} />;
-  }
-
-  // The summary keeps the floor in view, so the change to the machine can be seen.
-  const onFloor = view === 'map' || view === 'selected' || view === 'done';
-
-  const stepHrefs = asset
-    ? {
-        machine: `#/asset/${asset.id}`,
-        evidence: `#/asset/${asset.id}/evidence`,
-        plan: `#/asset/${asset.id}/plan`,
-        finding: `#/asset/${asset.id}/finding`,
-      }
-    : {};
-
-  // On every step change, tell assistive technology where the user has landed.
+  // Tell assistive technology where the user is. Focus moves only when the machine changes.
   const assetId = asset?.id ?? null;
-  const pageKey = `${hash}|${resetCount}`;
-  const lastPage = useRef(pageKey);
+  const lastAsset = useRef(assetId);
+  const view = route.sourceId ? 'source' : tab;
   useEffect(() => {
     document.title = pageTitle(view, assetId);
-    if (lastPage.current === pageKey) return;
-    lastPage.current = pageKey;
-    const heading = document.querySelector<HTMLElement>('.panel-col h1');
-    if (heading) {
-      heading.tabIndex = -1;
-      heading.focus({ preventScroll: true });
-    }
-  }, [pageKey, view, assetId]);
+    if (lastAsset.current === assetId) return;
+    lastAsset.current = assetId;
+    document.querySelector<HTMLElement>('.panel-head h1')?.focus({ preventScroll: true });
+  }, [view, assetId]);
+
+  let panel;
+  if (!asset || !result) panel = <HomePanel plans={plans} escalations={escalations} />;
+  else if (!alert) panel = <MachinePanel key={asset.id} result={result} sourceId={route.sourceId} />;
+  else {
+    panel = (
+      <AlertPanel
+        key={asset.id}
+        result={result}
+        saved={saved}
+        escalation={escalation}
+        tab={tab}
+        stepId={route.stepId}
+        sourceId={route.sourceId}
+        refresh={refresh}
+      />
+    );
+  }
+
+  const justMoved = Boolean(alert && (saved?.finding || escalation) && tab === 'investigate');
 
   return (
-    <div className="app" data-view={view} data-resets={resetCount}>
-      <Banner />
-      <header className="topbar">
-        <a href="#/" className="wordmark">Maintenance Copilot</a>
-        <Progress current={step} hrefs={stepHrefs} />
-      </header>
+    <div className="app" data-state={asset ? 'machine' : 'home'}>
+      <TopBar currentId={assetId} plans={plans} escalations={escalations} />
       <main className="workspace">
-        <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">
-          <PlantFloor selectedId={asset?.id ?? null} plans={plans} animateInspected={view === 'done'} />
-        </section>
-        <section className="panel-col" key={hash}>
-          {result && !onFloor && <MachineHeader result={result} saved={saved} />}
-          {panel}
-        </section>
+        {panel}
+        <FloorColumn
+          selectedId={assetId}
+          plans={plans}
+          escalations={escalations}
+          animate={justMoved}
+          showReset={showReset}
+          onReset={resetDemo}
+        />
       </main>
     </div>
   );
