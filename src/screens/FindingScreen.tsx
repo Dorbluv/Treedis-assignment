@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { CheckMark } from '../components/Icons';
 import { PrimaryAction } from '../components/PrimaryAction';
+import { Screen } from '../components/Screen';
 import type { RetrievalResult, SavedPlan } from '../domain/types';
 import { saveFinding } from '../storage/plans';
 import { outcomeOptions, time } from './format';
@@ -25,8 +27,8 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
   }
 
   return (
-    <div className="panel">
-      <p className="confirm" role="status"><strong>Plan saved</strong> {time(saved.savedAt)}</p>
+    <Screen action={<PrimaryAction label="Save finding" onClick={handleSave} disabled={!outcome} />}>
+      <p className="confirm" role="status"><CheckMark /> <strong>Plan saved</strong> <span className="num">{time(saved.savedAt)}</span></p>
       <h1>Record finding</h1>
       <p className="muted">What did you observe in this inspection?</p>
       <div className="outcomes" role="group" aria-label="Finding outcome">
@@ -38,7 +40,7 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
             aria-pressed={outcome === option.key}
             onClick={() => setOutcome(option.key)}
           >
-            {option.label}
+            {outcome === option.key && <CheckMark />} {option.label}
           </button>
         ))}
       </div>
@@ -46,9 +48,8 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
         Note (optional)
         <textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} />
       </label>
-      {error && <p className="caution" role="alert">{error}</p>}
+      {error && <p className="error" role="alert">{error}</p>}
       {!outcome && <p className="muted">Choose one outcome to save.</p>}
-      <PrimaryAction label="Save finding" onClick={handleSave} disabled={!outcome} />
-    </div>
+    </Screen>
   );
 }

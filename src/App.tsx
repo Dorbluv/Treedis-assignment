@@ -3,7 +3,8 @@ import { alertFor, assets, dataset } from './data';
 import { retrieve } from './domain/retrieve';
 import type { SavedPlan } from './domain/types';
 import { Banner } from './components/Banner';
-import { PlantMap } from './components/PlantMap';
+import { MachineHeader } from './components/MachineHeader';
+import { PlantFloor } from './components/PlantFloor';
 import { Progress, type ProgressStep } from './components/Progress';
 import { clearPlans, loadPlan } from './storage/plans';
 import { DoneScreen } from './screens/DoneScreen';
@@ -23,7 +24,7 @@ type Route =
   | { name: 'map'; assetId: null }
   | { name: 'selected'; assetId: string }
   | { name: FlowScreen; assetId: string }
-  | { name: 'source'; assetId: string; parent: SourceParent; recordId: string };
+  | { name: 'source'; assetId: string; parent: SourceParent; recordId: string; stepId?: string };
 
 const FLOW_SCREENS: string[] = ['evidence', 'plan', 'finding', 'done'];
 const SOURCE_PARENTS: string[] = ['evidence', 'plan', 'done'];
@@ -34,10 +35,9 @@ const BACK_LABEL: Record<SourceParent, string> = {
   done: 'Back to summary',
 };
 
-const STEP_FOR: Record<FlowScreen | SourceParent, ProgressStep> = {
+const STEP_FOR: Record<SourceParent, ProgressStep> = {
   evidence: 'evidence',
   plan: 'plan',
-  finding: 'finding',
   done: 'complete',
 };
 
@@ -48,12 +48,18 @@ function parseHash(hash: string): Route {
   const screen = parts[2];
   if (!FLOW_SCREENS.includes(screen)) return { name: 'selected', assetId };
   if (parts[3] === 'source' && parts[4] && SOURCE_PARENTS.includes(screen)) {
-    return { name: 'source', assetId, parent: screen as SourceParent, recordId: parts[4] };
+    return {
+      name: 'source',
+      assetId,
+      parent: screen as SourceParent,
+      recordId: parts[4],
+      stepId: parts[5] === 'step' ? parts[6] : undefined,
+    };
   }
   return { name: screen as FlowScreen, assetId };
 }
 
-function useRoute(): Route {
+function useRoute(): [Route, string] {
   const [hash, setHash] = useState(window.location.hash);
   useEffect(() => {
     const onChange = () => {
@@ -63,7 +69,7 @@ function useRoute(): Route {
     window.addEventListener('hashchange', onChange);
     return () => window.removeEventListener('hashchange', onChange);
   }, []);
-  return useMemo(() => parseHash(hash), [hash]);
+  return [useMemo(() => parseHash(hash), [hash]), hash];
 }
 
 function readPlan(assetId: string): SavedPlan | null {
@@ -74,17 +80,9 @@ function readPlan(assetId: string): SavedPlan | null {
   }
 }
 
-function resetDemo() {
-  try {
-    clearPlans();
-  } catch {
-    // Storage is unavailable, so there is nothing saved to clear.
-  }
-  window.location.hash = '#/';
-}
-
 export function App() {
-  const route = useRoute();
+  const [route, hash] = useRoute();
+  const [resetCount, setResetCount] = useState(0);
   const asset = assets.find((candidate) => candidate.id === route.assetId) ?? null;
   const result = useMemo(
     () => (asset?.id === EVIDENCE_ASSET ? retrieve(asset.id, alertFor(asset.id), dataset) : null),
@@ -92,6 +90,16 @@ export function App() {
   );
   // Read on every render: each route change re-renders, so this is never stale.
   const saved = result ? readPlan(result.asset.id) : null;
+
+  function resetDemo() {
+    try {
+      clearPlans();
+    } catch {
+      // Storage is unavailable, so there is nothing saved to clear.
+    }
+    window.location.hash = '#/';
+    setResetCount((count) => count + 1);
+  }
 
   // A deeper route falls back to the furthest step the saved state allows.
   let view: Route['name'] = !asset ? 'map' : !result ? 'selected' : route.name;
@@ -101,45 +109,57 @@ export function App() {
   let step: ProgressStep = 'machine';
   let panel;
   if (!result || !asset || view === 'map' || view === 'selected') {
-    panel = <LayoutScreen asset={asset} hasEvidenceView={Boolean(result)} />;
+    panel = (
+      <LayoutScreen
+        asset={asset}
+        hasEvidenceView={Boolean(result)}
+        showReset={!asset && readPlan(EVIDENCE_ASSET) !== null}
+        onReset={resetDemo}
+      />
+    );
   } else if (view === 'source' && route.name === 'source') {
     step = STEP_FOR[route.parent];
     panel = (
       <SourceScreen
         result={result}
         recordId={route.recordId}
+        stepId={route.stepId}
         backHref={`#/asset/${asset.id}/${route.parent}`}
         backLabel={BACK_LABEL[route.parent]}
       />
     );
   } else if (view === 'done' && saved) {
     step = 'complete';
-    panel = <DoneScreen result={result} saved={saved} />;
+    panel = <DoneScreen result={result} saved={saved} onReset={resetDemo} />;
   } else if (view === 'finding' && saved) {
     step = 'finding';
-    panel = <FindingScreen key={asset.id} result={result} saved={saved} />;
+    panel = <FindingScreen result={result} saved={saved} />;
   } else if (view === 'plan') {
     step = 'plan';
-    panel = <PlanScreen key={asset.id} result={result} saved={saved} />;
+    panel = <PlanScreen result={result} saved={saved} />;
   } else {
     step = 'evidence';
     panel = <EvidenceScreen result={result} />;
   }
 
+  const onFloor = view === 'map' || view === 'selected';
+
   return (
-    <>
+    <div className="app" data-view={view} data-resets={resetCount}>
       <Banner />
-      <header className="app-header">
-        <a href="#/" className="app-title">Maintenance Copilot</a>
-        <button type="button" className="reset" onClick={resetDemo}>Reset demo</button>
+      <header className="topbar">
+        <a href="#/" className="wordmark">Maintenance Copilot</a>
+        <Progress current={step} />
       </header>
-      <Progress current={step} />
-      <main className="shell" data-view={view}>
-        <section className="map-col" aria-label="Plant layout">
-          <PlantMap selectedId={asset?.id ?? null} />
+      <main className="workspace">
+        <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">
+          <PlantFloor selectedId={asset?.id ?? null} />
         </section>
-        <section className="panel-col">{panel}</section>
+        <section className="panel-col" key={hash}>
+          {result && !onFloor && <MachineHeader result={result} />}
+          {panel}
+        </section>
       </main>
-    </>
+    </div>
   );
 }

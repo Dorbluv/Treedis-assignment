@@ -26,4 +26,8 @@ Third-party code, all installed through npm:
 - jsdom (MIT), used only to test the screens
 - @rollup/wasm-node (MIT) and esbuild-wasm (MIT), used through npm overrides in place of the native Rollup and esbuild binaries, which Windows Smart App Control blocks on the development machine
 
-No templates or third-party data are used. The plant layout is hand-written SVG, and every equipment record is synthetic and written for this project.
+Font:
+
+- Archivo Variable by Omnibus-Type (SIL Open Font License 1.1), through @fontsource-variable/archivo
+
+No templates or third-party data are used. The plant floor, meters and sparklines are hand-written SVG, and every equipment record is synthetic and written for this project.
