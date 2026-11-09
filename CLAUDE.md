@@ -55,6 +55,7 @@ Records:
 - SOP-014 rev B, German, M-204: superseded
 - SOP-022, English, M-310: current
 - INC-1650, English, F-118: incident history only
+- SR-M204-01, SR-M310-01, SR-F118-01, English: synthetic readings behind the alerts on M-204, M-310 and F-118
 - Each German record stores a prepared English explanation so Gate 1 works without AI.
 
 Missing-evidence states:
@@ -114,7 +115,8 @@ Predictive maintenance, live IoT or CMMS integrations, user accounts, assignment
 - After each meaningful AI mistake or direction change, add an entry to `PROCESS_LOG.md`: date, tool, prompt or context, what went wrong, what changed, evidence link or screenshot. Only record things that actually happened.
 - List all third-party code, templates and data in `README.md` under Credits.
 - Never use em dashes in any file, UI text or message.
-- Every number in the UI or docs is sourced, computed, or labeled as a demonstration value.
+- Every number in the UI or docs is sourced, computed, or labeled as a demonstration value. The on-screen synthetic data banner covers synthetic readings, except limits, which stay labeled.
+- Stop and ask before changing anything on my accounts.
 - Label claims in docs as given, hypothesized, assumed or synthetic. Keep each fact in one place. Do not use unverified secondhand claims.
 - Before any large change, list gaps and assumptions explicitly.
 - Keep logic checks at unit level. End-to-end checks are only for real user flows.
