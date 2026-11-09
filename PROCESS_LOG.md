@@ -37,3 +37,33 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **What went wrong:** The automated click-through passed, but when the user tried the flow they could not find the plan or finding steps. A browser review found the finding was hidden below the screen after saving. Passing tests did not prove usability.
 - **What changed:** The flow was changed to one action per screen.
 - **Evidence link or screenshot:** _to fill in_
+
+## Visual design and possible causes rejected
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Gate 1 UX fix, tried by hand before merging.
+- **What went wrong:** The automated click-through passed, but the user could not find the plan or finding steps, and rejected the visual design and the possible-causes content as not useful.
+- **Caught by:** The user.
+- **What changed:** Redesigned around one action per screen and a comparison that tells the technician how to separate the causes.
+- **Evidence link or screenshot:** _to fill in_
+
+## Contrast failure and vibration mismatch found in the design plan
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Design plan for the Gate 1 redesign.
+- **What went wrong:** The proposed line color failed AA contrast for controls when measured. The existing reading of 7.1 mm/s did not match the requested 8.4 mm/s.
+- **Caught by:** Claude Code.
+- **What changed:** Added a separate control line color. Vibration is 8.4 mm/s everywhere.
+- **Evidence link or screenshot:** _to fill in_
+
+## Alignment contradiction found in plan review
+
+- **Date:** 2026-11-09
+- **Tool:** Claude chat
+- **Prompt or context:** Plan review of the Gate 1 redesign.
+- **What went wrong:** The plan had an alignment contradiction: SOP step 4 checks alignment, but alignment is not listed as a possible cause.
+- **Caught by:** Claude chat.
+- **What changed:** A line under the comparison explains why step 4 checks alignment and links to the SOP step and ASM-0412. The ASM-0412 takeaway now states what happened on the conveyor without suggesting a cause on this motor.
+- **Evidence link or screenshot:** _to fill in_
