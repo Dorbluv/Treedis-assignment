@@ -93,6 +93,10 @@ a { color: var(--blue); }
 }
 .progress .is-done { border-color: var(--blue); color: var(--text); }
 .progress .is-done .progress-mark { border-color: var(--blue); color: var(--blue); }
+.progress .is-blocked { color: var(--text); border-bottom-style: dashed; border-color: var(--control-line); }
+.progress .is-blocked .progress-mark { border: 0; font-size: 1.05rem; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.progress-blocked { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
+.progress-reason { color: var(--muted); font-size: 0.75rem; white-space: nowrap; }
 .progress .is-current { border-color: var(--blue); color: var(--text); font-weight: 650; }
 .progress .is-current .progress-mark { border-color: var(--blue); background: var(--blue); color: var(--page); }
 
@@ -150,11 +154,8 @@ a { color: var(--blue); }
 .zone-1 .zone-name { color: var(--zone-1-text); }
 .zone-2 .zone-name { color: var(--zone-2-text); }
 
-.zone-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
-.zone-strip .zone-head { flex: none; }
-.zone-head .zone-name { flex: none; white-space: nowrap; }
-.machine-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.75rem; }
-.legend { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.7rem; color: var(--muted); font-size: 0.75rem; }
+.zone-strip .zone-name { flex: none; white-space: nowrap; }
+.legend { display: flex; flex-wrap: wrap; justify-content: flex-start; padding: 0 0.15rem; gap: 0.7rem; color: var(--muted); font-size: 0.75rem; }
 .legend > span { display: inline-flex; align-items: center; gap: 0.25rem; }
 
 .machine {
@@ -281,7 +282,13 @@ a { color: var(--blue); }
 .alert-title { display: flex; align-items: center; gap: 0.4rem; color: var(--coral); font-size: var(--size-lead); font-weight: 600; }
 .inspected-title { display: flex; align-items: center; gap: 0.4rem; color: var(--blue); font-size: var(--size-lead); font-weight: 600; }
 .machine-header .machine-inspected { color: var(--blue); font-size: var(--size-meta); font-weight: 600; }
-.relations { display: flex; flex-direction: column; gap: 0.2rem; padding-left: 1.1rem; }
+.snapshot { display: flex; flex-direction: column; }
+.snapshot > div { display: grid; grid-template-columns: 6.2rem minmax(0, 1fr); gap: 0 0.5rem; padding: 0.25rem 0; border-top: 1px solid var(--line); }
+.snapshot > div:first-child { border-top: 0; }
+.snapshot dt { color: var(--muted); font-size: var(--size-meta); line-height: 1.5rem; }
+.snapshot dd { display: flex; flex-direction: column; min-width: 0; overflow-wrap: anywhere; }
+.snapshot-high { display: flex; align-items: center; gap: 0.3rem; color: var(--coral); font-weight: 600; }
+.snapshot-reading { color: var(--muted); }
 
 .alert-list { display: flex; flex-direction: column; gap: 0.3rem; list-style: none; }
 .alert-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0 0.75rem; min-height: 44px; padding: 0.3rem 0.65rem; background: var(--raised); border-radius: 6px; color: var(--text); text-decoration: none; }
@@ -504,12 +511,25 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
 @media (max-width: 767.98px) {
   html { scrollbar-gutter: stable; }
   .source-link { display: inline-flex; align-items: center; min-height: 44px; }
+  .progress { gap: 0.15rem; }
+  .progress .is-blocked { flex: 1.2 1 0; }
+  .progress-reason { font-size: 0.72rem; }
+  /* Once a machine is selected, show only its group, so its summary fits above the button. */
+  .floor.has-selection .zone:not(.holds-selection),
+  .floor.has-selection .assembly:not(.is-lit),
+  .floor.has-selection .zone > .machine-row:not(.is-selected) { display: none; }
+  /* The conveyor shares one row with its value, so the machine summary fits above the button. */
+  .machine.belt { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 0.1rem 0.5rem; }
+  .belt .machine-top { display: contents; }
+  .belt .machine-top .status-dot { order: 5; margin-left: 0.15rem; }
+  .belt .machine-value { margin-left: auto; }
+  .belt-track { order: 7; flex: 1 0 100%; }
   .cause { gap: 0.15rem; }
   /* Links inside a line of text extend their target without disturbing the line spacing. */
   .wordmark, .tap-link.solo, .check .tap-link, .note-links .tap-link, .progress-link { position: relative; }
   .wordmark::after, .tap-link.solo::after, .check .tap-link::after, .note-links .tap-link::after, .progress-link::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
   .wide-only, .path { display: none; }
-  .progress li { gap: 0.2rem; }
+  .progress li { gap: 0.12rem; }
   .progress-mark { width: 1.15rem; height: 1.15rem; line-height: calc(1.15rem - 2px); }
 }
 

@@ -1,8 +1,9 @@
 import { AlertMark } from '../components/Icons';
 import { MachineHistory } from '../components/MachineHistory';
+import { MachineSnapshot } from '../components/MachineSnapshot';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
-import { alertFor, alerts, assets, records } from '../data';
+import { alerts, records } from '../data';
 import { hasReviewableEvidence, readingStatus } from '../domain/causes';
 import { followUp } from '../domain/status';
 import type { Asset, Escalation, RetrievalResult, SavedPlan } from '../domain/types';
@@ -36,17 +37,6 @@ function AlertList({ plans, escalations }: { plans: PlanMap; escalations: Escala
   );
 }
 
-function MachineStatus({ asset, saved, escalation }: { asset: Asset; saved: SavedPlan | null; escalation?: Escalation }) {
-  const alert = alertFor(asset.id);
-  if (!alert) return <p className="muted">No active alert</p>;
-  const next = followUp(saved?.finding, escalation, records);
-  return next ? (
-    <p className="inspected-title">{next.text}</p>
-  ) : (
-    <p className="alert-title"><AlertMark /> {alert.title}</p>
-  );
-}
-
 export function LayoutScreen({
   asset,
   result,
@@ -76,13 +66,6 @@ export function LayoutScreen({
     );
   }
 
-  const parent = assets.find((candidate) => candidate.id === asset.parentId) ?? null;
-  const siblings = asset.parentId
-    ? assets.filter((candidate) => candidate.parentId === asset.parentId && candidate.id !== asset.id)
-    : [];
-  const children = assets.filter((candidate) => candidate.parentId === asset.id);
-  const hasRelations = parent || siblings.length > 0 || children.length > 0;
-
   const action = hasReviewableEvidence(result) ? (
     <PrimaryAction label="Review evidence" href={`#/asset/${asset.id}/evidence`} />
   ) : (
@@ -91,19 +74,8 @@ export function LayoutScreen({
 
   return (
     <Screen action={action}>
-      <div className="machine-title">
-        <h1>{asset.name}</h1>
-        <MachineStatus asset={asset} saved={saved} escalation={escalation} />
-      </div>
-      {hasRelations && (
-        <ul className="relations">
-          {parent && <li>Part of {parent.type} {parent.id}</li>}
-          {siblings.map((sibling) => (
-            <li key={sibling.id}>{sibling.id} shares it. Its records stay out.</li>
-          ))}
-          {children.map((child) => <li key={child.id}>{child.name} is part of it</li>)}
-        </ul>
-      )}
+      <h1>{asset.name}</h1>
+      <MachineSnapshot result={result} saved={saved} escalation={escalation} />
       <MachineHistory result={result} finding={saved?.finding} escalation={escalation} />
     </Screen>
   );

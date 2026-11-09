@@ -1,52 +1,61 @@
-const LABELS = {
-  machine: 'Machine',
-  evidence: 'Evidence',
-  plan: 'Plan',
-  finding: 'Finding',
-  escalate: 'Escalate',
-} as const;
+import { NoEntryMark } from './Icons';
 
-export type StepKey = keyof typeof LABELS;
+const STEPS = [
+  { key: 'machine', label: 'Machine' },
+  { key: 'evidence', label: 'Evidence' },
+  { key: 'plan', label: 'Plan' },
+  { key: 'finding', label: 'Finding' },
+] as const;
+
+export type StepKey = (typeof STEPS)[number]['key'];
 export type ProgressStep = StepKey | 'complete';
-export type ProgressFlow = 'full' | 'escalate' | 'review';
 
-/** Only the steps this machine can actually go through. */
-const FLOWS: Record<ProgressFlow, StepKey[]> = {
-  full: ['machine', 'evidence', 'plan', 'finding'],
-  escalate: ['machine', 'evidence', 'escalate'],
-  review: ['machine', 'evidence'],
-};
+const PLAN_POSITION = 2;
 
-/** Completed steps link back. The current step and future steps do not. */
+/**
+ * Completed steps link back. The current step and future steps do not.
+ * With no procedure, Plan shows as blocked and nothing past it can be reached.
+ */
 export function Progress({
   current,
   hrefs,
-  flow,
+  planBlocked,
 }: {
   current: ProgressStep;
   hrefs: Partial<Record<StepKey, string>>;
-  flow: ProgressFlow;
+  planBlocked: boolean;
 }) {
-  const steps = FLOWS[flow];
-  const index = current === 'complete' ? steps.length : steps.indexOf(current);
+  const reached = current === 'complete' ? STEPS.length : STEPS.findIndex((step) => step.key === current);
+  const index = planBlocked ? Math.min(reached, PLAN_POSITION) : reached;
   return (
     <ol className="progress" aria-label="Progress">
-      {steps.map((step, position) => {
+      {STEPS.map((step, position) => {
+        if (planBlocked && step.key === 'plan') {
+          return (
+            <li key={step.key} className="is-blocked">
+              <span className="progress-mark" aria-hidden="true"><NoEntryMark /></span>
+              <span className="progress-blocked">
+                {step.label}
+                <span className="progress-reason">No procedure</span>
+              </span>
+            </li>
+          );
+        }
         const done = position < index;
         const state = done ? 'is-done' : position === index ? 'is-current' : '';
         const mark = <span className="progress-mark" aria-hidden="true">{done ? '✓' : position + 1}</span>;
-        const href = done ? hrefs[step] : undefined;
+        const href = done ? hrefs[step.key] : undefined;
         return (
-          <li key={step} className={state} aria-current={position === index ? 'step' : undefined}>
+          <li key={step.key} className={state} aria-current={position === index ? 'step' : undefined}>
             {href ? (
-              <a className="progress-link" href={href} aria-label={`Back to ${LABELS[step]}, completed`}>
+              <a className="progress-link" href={href} aria-label={`Back to ${step.label}, completed`}>
                 {mark}
-                <span className="progress-label">{LABELS[step]}</span>
+                <span className="progress-label">{step.label}</span>
               </a>
             ) : (
               <>
                 {mark}
-                {LABELS[step]}
+                {step.label}
               </>
             )}
           </li>

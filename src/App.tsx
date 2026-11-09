@@ -5,7 +5,7 @@ import type { SavedPlan } from './domain/types';
 import { Banner } from './components/Banner';
 import { MachineHeader } from './components/MachineHeader';
 import { PlantFloor } from './components/PlantFloor';
-import { Progress, type ProgressFlow, type ProgressStep } from './components/Progress';
+import { Progress, type ProgressStep } from './components/Progress';
 import {
   clearPlans,
   hasSavedPlans,
@@ -192,12 +192,10 @@ export function App() {
         evidence: `#/asset/${asset.id}/evidence`,
         plan: `#/asset/${asset.id}/plan`,
         finding: `#/asset/${asset.id}/finding`,
-        escalate: `#/asset/${asset.id}/done`,
       }
     : {};
 
-  let flow: ProgressFlow = 'full';
-  if (result && !result.applicableSop) flow = alertFor(result.asset.id) ? 'escalate' : 'review';
+  const planBlocked = Boolean(result && !result.applicableSop);
 
   // On every step change, tell assistive technology where the user has landed.
   const assetId = asset?.id ?? null;
@@ -219,7 +217,7 @@ export function App() {
       <Banner />
       <header className="topbar">
         <a href="#/" className="wordmark">Maintenance Copilot</a>
-        <Progress current={step} hrefs={stepHrefs} flow={flow} />
+        <Progress current={step} hrefs={stepHrefs} planBlocked={planBlocked} />
       </header>
       <main className="workspace">
         <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">

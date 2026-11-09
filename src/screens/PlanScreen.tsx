@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { ChevronMark } from '../components/Icons';
+import { NoProcedureCallout } from '../components/NoProcedureCallout';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
-import { records } from '../data';
+import { alertFor, records } from '../data';
 import type { RetrievalResult, SavedPlan, SopRecord } from '../domain/types';
 import { savePlan } from '../storage/plans';
 import { recordLine } from './format';
@@ -49,7 +50,7 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
     return (
       <Screen action={<PrimaryAction label="Back to evidence" href={`#/asset/${asset.id}/evidence`} />}>
         <h1>{COPY.en.title}</h1>
-        <p className="gap" role="status">No applicable procedure, so no plan.</p>
+        <NoProcedureCallout assetId={asset.id} hasAlert={Boolean(alertFor(asset.id))} escalated={false} />
       </Screen>
     );
   }

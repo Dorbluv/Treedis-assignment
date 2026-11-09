@@ -189,7 +189,7 @@ describe('one action per screen', () => {
 
     await click(primary());
     expect(primary().textContent).toBe('Review evidence');
-    expect(container.querySelector('.relations')?.textContent).toContain('G-204');
+    expect(container.querySelector('.snapshot')?.textContent).toContain('G-204');
 
     await click(primary());
     expect(primary().textContent).toBe('Continue to inspection plan');
@@ -382,8 +382,9 @@ describe('Plant floor', () => {
     for (const id of ['C-204', 'M-204', 'G-204', 'M-310']) expect(zone2.textContent).toContain(id);
     expect(container.querySelectorAll('.zone-2 .zone-name')).toHaveLength(1);
     expect(container.querySelector('.zone-1')?.textContent).toContain('F-118');
-    expect(container.querySelector('.legend')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('No alert Alert Inspected');
+    expect(container.querySelector('.legend')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('No alert Alert Inspected Escalated');
     expect(container.querySelector('.legend .status-inspected')).not.toBeNull();
+    expect(container.querySelector('.legend .status-escalated')).not.toBeNull();
     expect(container.querySelector('.zone-1')?.classList.contains('zone-strip')).toBe(true);
     expect(container.querySelector('.zone-2')?.classList.contains('zone-strip')).toBe(false);
     expect(container.querySelectorAll('.belt .belt-track')).toHaveLength(1);
@@ -397,6 +398,106 @@ describe('Plant floor', () => {
     await go('#/asset/M-204');
     expect(container.querySelector('.machine[aria-pressed="true"]')?.textContent).toContain('M-204');
     expect(container.querySelector('.machine.is-sibling')?.textContent).toContain('Gearbox on the same conveyor');
+  });
+});
+
+describe('Machine snapshot', () => {
+  const rows = () =>
+    Object.fromEntries(
+      [...container.querySelectorAll('.snapshot > div')].map((row) => [
+        row.querySelector('dt')?.textContent,
+        row.querySelector('dd')?.textContent,
+      ]),
+    );
+
+  it.each(['M-204', 'M-310', 'F-118', 'G-204', 'C-204'])('shows all four items on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(Object.keys(rows())).toEqual(['Status', 'Past incidents', 'Procedure', 'Connected']);
+    for (const value of Object.values(rows())) expect(String(value).trim()).toBeTruthy();
+  });
+
+  it('shows M-310 clearly', async () => {
+    await go('#/asset/M-310');
+    expect(rows()).toEqual({
+      Status: ' Abnormal vibration6.2 mm/s, above demo limit 4.5',
+      'Past incidents': 'No past incidents on this machine',
+      Procedure: 'SOP-022 rev A available',
+      Connected: 'Standalone machine',
+    });
+  });
+
+  it('shows the latest incident, a missing procedure, and connected equipment', async () => {
+    await go('#/asset/M-204');
+    expect(rows()['Past incidents']).toBe('2. Latest: Worn bearing, 12 Mar 2025');
+    expect(rows().Connected).toBe('Part of C-204, with G-204');
+    await go('#/asset/F-118');
+    expect(rows().Procedure).toBe('No approved procedure');
+    expect(rows()['Past incidents']).toBe('1. Latest: Blocked nozzle stopped the filler, 5 Aug 2025');
+    await go('#/asset/C-204');
+    expect(rows().Status).toContain('No active alert');
+    expect(rows().Connected).toBe('Includes M-204, G-204');
+  });
+
+  it('keeps readings high and shows follow-up after a finding', async () => {
+    await go('#/asset/M-310/plan');
+    await click(primary());
+    await click(outcomeButton('Fault found'));
+    await click(primary());
+    await go('#/asset/M-310');
+    expect(rows().Status).toContain('Inspected: fault found');
+    expect(rows().Status).toContain('6.2 mm/s, above demo limit 4.5');
+  });
+});
+
+describe('Blocked plan', () => {
+  it('shows F-118 with Plan blocked and Finding inactive, on every step', async () => {
+    for (const hash of ['#/asset/F-118', '#/asset/F-118/evidence']) {
+      await go(hash);
+      const items = [...container.querySelectorAll('.progress li')];
+      expect(items).toHaveLength(4);
+      const plan = items[2];
+      expect(plan.classList.contains('is-blocked')).toBe(true);
+      expect(plan.querySelector('svg')).not.toBeNull();
+      expect(plan.textContent).toBe('PlanNo procedure');
+      expect(plan.querySelector('a')).toBeNull();
+      expect(items[3].classList.contains('is-done')).toBe(false);
+      expect(items[3].querySelector('a')).toBeNull();
+    }
+  });
+
+  it('keeps Plan blocked and Finding inactive after escalating', async () => {
+    await go('#/asset/F-118/evidence');
+    await click(primary());
+    const items = [...container.querySelectorAll('.progress li')];
+    expect(items.map((item) => item.className)).toEqual(['is-done', 'is-done', 'is-blocked', '']);
+    expect(container.querySelector('.progress [aria-current="step"]')).toBeNull();
+    expect([...container.querySelectorAll('.track-label')].map((item) => item.textContent)).toEqual([
+      'Alert raised',
+      'Escalated',
+      'Site review',
+      'Closed',
+    ]);
+    await go('#/asset/F-118/evidence');
+    expect(container.querySelector('.gap')?.textContent).toContain('Sent to site review.');
+  });
+
+  it('does not block Plan on machines with a procedure', async () => {
+    for (const id of ['M-204', 'M-310']) {
+      await go(`#/asset/${id}`);
+      expect(container.querySelector('.progress .is-blocked')).toBeNull();
+    }
+  });
+});
+
+describe('Legend', () => {
+  it.each(['#/', '#/asset/M-310'])('appears once, above Line 1, at %s', async (hash) => {
+    await go(hash);
+    const legends = container.querySelectorAll('.legend');
+    expect(legends).toHaveLength(1);
+    const floor = container.querySelector('.floor') as HTMLElement;
+    expect(floor.firstElementChild).toBe(legends[0]);
+    expect(container.querySelector('.zone .legend')).toBeNull();
+    expect(legends[0].compareDocumentPosition(container.querySelector('.zone-1') as Element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 });
 
@@ -460,7 +561,10 @@ describe('Other machines', () => {
 
   it('shows F-118 its cause as unconfirmed, states the gap, and offers escalation only', async () => {
     await go('#/asset/F-118/evidence');
-    expect(container.querySelector('.gap')?.textContent).toBe('No applicable procedure, so no plan.');
+    expect([...container.querySelectorAll('.gap p')].map((item) => item.textContent)).toEqual([
+      'No approved procedure for F-118.',
+      'We will not create inspection steps without one. Send it to site review.',
+    ]);
     expect(container.querySelector('.cause-solo h3')?.textContent).toBe('Nozzle blockage');
     expect(container.querySelector('.cause-solo')?.textContent).toContain('Unconfirmed');
     expect(body()).toContain('Blocked nozzle stopped the filler');
@@ -471,7 +575,7 @@ describe('Other machines', () => {
   it('can never produce a plan for F-118', async () => {
     for (const hash of ['#/asset/F-118/plan', '#/asset/F-118/finding', '#/asset/F-118/done']) {
       await go(hash);
-      expect(container.querySelector('.gap')?.textContent).toBe('No applicable procedure, so no plan.');
+      expect(container.querySelector('.gap')?.textContent).toContain('No approved procedure for F-118.');
       expect(container.querySelector('.steps')).toBeNull();
       expect(body()).not.toContain('Save inspection plan');
     }
@@ -502,7 +606,12 @@ describe('Other machines', () => {
     expect(primary().textContent).toBe('View escalation');
     await go('#/asset/F-118');
     expect(container.querySelector('.history-entry')?.textContent).toContain('Escalated through site process');
-    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual(['1Machine', '2Evidence', '3Escalate']);
+    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual([
+      '1Machine',
+      '2Evidence',
+      'PlanNo procedure',
+      '4Finding',
+    ]);
   });
 
   it.each([
@@ -520,9 +629,14 @@ describe('Other machines', () => {
     await go(`#/asset/${id}/evidence`);
     expect(container.querySelector('.separate')?.textContent).toBe('No active alert');
     expect(container.querySelector('.gap')).toBeNull();
-    expect(body()).not.toMatch(/Escalate|Insufficient/);
+    expect(container.querySelector('.panel-col')?.textContent).not.toMatch(/Escalate|Insufficient/);
     expect(primary().textContent).toBe('Back to plant layout');
-    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual(['✓Machine', '2Evidence']);
+    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual([
+      '✓Machine',
+      '2Evidence',
+      'PlanNo procedure',
+      '4Finding',
+    ]);
   });
 
   it('shows INC-2310 as direct history on G-204 and excluded on M-204', async () => {
@@ -703,7 +817,6 @@ describe('Reset demo', () => {
 
     expect(container.querySelectorAll('.machine .status-alert')).toHaveLength(3);
     expect(container.querySelector('.machine .status-inspected, .machine .status-escalated')).toBeNull();
-    expect(container.querySelector('.legend')?.textContent).not.toContain('Escalated');
     expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
     expect(localStorage.getItem(ESCALATIONS_KEY)).toBeNull();
   });

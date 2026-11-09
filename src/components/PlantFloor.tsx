@@ -145,32 +145,27 @@ export function PlantFloor({
     escalations,
     animateInspected,
   };
-  const anyEscalated = Object.keys(escalations).length > 0;
   const lines = [...new Set(assets.map((asset) => asset.line))].sort();
   const isParent = (asset: Asset) => assets.some((other) => other.parentId === asset.id);
 
   return (
-    <div className="floor">
-      {lines.map((line, index) => {
+    <div className={`floor${state.selected ? ' has-selection' : ''}`}>
+      <p className="legend">
+        <span><span className="status-dot" /> No alert</span>
+        <span><AlertMark /> Alert</span>
+        <span><span className="status-inspected" /> Inspected</span>
+        <span><span className="status-escalated" /> Escalated</span>
+      </p>
+      {lines.map((line) => {
         const top = assets.filter((asset) => asset.line === line && asset.parentId === null);
         const assemblies = top.filter(isParent);
         return (
           <section
-            className={`zone zone-${line}${assemblies.length === 0 ? ' zone-strip' : ''}`}
+            className={`zone zone-${line}${assemblies.length === 0 ? ' zone-strip' : ''}${state.selected?.line === line ? ' holds-selection' : ''}`}
             key={line}
             aria-label={`Line ${line}`}
           >
-            <div className="zone-head">
-              <h2 className="zone-name">Line {line}</h2>
-              {index === lines.length - 1 && (
-                <p className="legend">
-                  <span><span className="status-dot" /> No alert</span>
-                  <span><AlertMark /> Alert</span>
-                  <span><span className="status-inspected" /> Inspected</span>
-                  {anyEscalated && <span><span className="status-escalated" /> Escalated</span>}
-                </p>
-              )}
-            </div>
+            <h2 className="zone-name">Line {line}</h2>
             {assemblies.map((asset) => <Assembly belt={asset} state={state} key={asset.id} />)}
             {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} state={state} row key={asset.id} />)}
           </section>

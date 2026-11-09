@@ -3,6 +3,7 @@ import { CauseComparison, UntestableCause } from '../components/CauseComparison'
 import { EvidenceGroup } from '../components/EvidenceGroup';
 import { EvidenceRow } from '../components/EvidenceRow';
 import { AlertMark } from '../components/Icons';
+import { NoProcedureCallout } from '../components/NoProcedureCallout';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { ReadingMeter } from '../components/ReadingMeter';
 import { Screen } from '../components/Screen';
@@ -101,7 +102,7 @@ export function EvidenceScreen({ result, escalation }: { result: RetrievalResult
 
       {alert && noCauses && <p className="separate">Insufficient asset-specific evidence to recommend a likely cause.</p>}
 
-      {alert && !applicableSop && <p className="gap" role="status">No applicable procedure, so no plan.</p>}
+      {alert && !applicableSop && <NoProcedureCallout assetId={asset.id} hasAlert escalated={Boolean(escalation)} />}
 
       {error && <p className="error" role="alert">{error}</p>}
 
