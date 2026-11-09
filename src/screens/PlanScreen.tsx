@@ -49,10 +49,7 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
     return (
       <Screen action={<PrimaryAction label="Back to evidence" href={`#/asset/${asset.id}/evidence`} />}>
         <h1>{COPY.en.title}</h1>
-        <div className="gap" role="status">
-          <p><strong>No applicable procedure for {asset.id}</strong></p>
-          <p>No plan can be created. Escalate through your site-approved process.</p>
-        </div>
+        <p className="gap" role="status">No applicable procedure, so no plan.</p>
       </Screen>
     );
   }

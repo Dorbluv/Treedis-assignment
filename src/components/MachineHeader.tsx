@@ -1,21 +1,29 @@
 import { alertFor, records } from '../data';
-import { inspectionStatus } from '../domain/status';
-import type { RetrievalResult, SavedPlan } from '../domain/types';
+import { followUp } from '../domain/status';
+import type { Escalation, RetrievalResult, SavedPlan } from '../domain/types';
 import { AlertMark } from './Icons';
 
 /** Phone only: keeps the machine in view once the plant floor is off screen. */
-export function MachineHeader({ result, saved }: { result: RetrievalResult; saved: SavedPlan | null }) {
+export function MachineHeader({
+  result,
+  saved,
+  escalation,
+}: {
+  result: RetrievalResult;
+  saved: SavedPlan | null;
+  escalation?: Escalation;
+}) {
   const { asset, parent } = result;
   const alert = alertFor(asset.id);
-  const inspection = alert && saved?.finding ? inspectionStatus(saved.finding.outcome, records) : null;
+  const next = alert ? followUp(saved?.finding, escalation, records) : null;
   return (
     <a className="machine-header" href={`#/asset/${asset.id}`}>
       <span className="machine-name">
         {asset.id} {asset.type}
         {parent && <span className="machine-parent"> on {parent.type} {parent.id}</span>}
       </span>
-      {inspection ? (
-        <span className="machine-inspected">Inspected: {inspection.short}</span>
+      {next ? (
+        <span className="machine-inspected">{next.text}</span>
       ) : (
         alert && (
           <span className="machine-alert">

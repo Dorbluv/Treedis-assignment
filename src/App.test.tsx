@@ -6,7 +6,7 @@ import { App } from './App';
 import { alertFor, dataset, records } from './data';
 import { retrieve } from './domain/retrieve';
 import type { SopRecord } from './domain/types';
-import { STORAGE_KEY } from './storage/plans';
+import { ESCALATIONS_KEY, STORAGE_KEY } from './storage/plans';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -387,7 +387,7 @@ describe('Plant floor', () => {
     expect(container.querySelector('.zone-1')?.classList.contains('zone-strip')).toBe(true);
     expect(container.querySelector('.zone-2')?.classList.contains('zone-strip')).toBe(false);
     expect(container.querySelectorAll('.belt .belt-track')).toHaveLength(1);
-    const alertMachines = [...container.querySelectorAll('.machine.has-alert')];
+    const alertMachines = [...container.querySelectorAll('.machine[aria-label^="Motor M-204"]')];
     expect(alertMachines).toHaveLength(1);
     expect(alertMachines[0].textContent).toContain('8.4 mm/s');
     expect(alertMachines[0].textContent).toContain('Abnormal vibration');
@@ -425,32 +425,167 @@ describe('Other machines', () => {
     expect(body()).not.toContain('Translated from German');
   });
 
-  it('saves a finding on M-310 without naming causes it does not have', async () => {
+  it.each([
+    ['Fault found', 'Fault found. Repair needed.', 'Inspected: fault found'],
+    ['No fault found', 'No fault found. Cause still open. Reinspect or escalate.', 'Inspected: no fault found'],
+    ['Inconclusive', 'Inconclusive. Reinspect or escalate.', 'Inspected: inconclusive'],
+  ])('saves %s on M-310, with no invented causes', async (label, headline, floorText) => {
     await go('#/asset/M-310/plan');
     await click(primary());
     expect([...container.querySelectorAll('button.outcome')].map((item) => item.textContent?.trim())).toEqual([
-      'Issue found',
-      'No issue found',
+      'Fault found',
+      'No fault found',
       'Inconclusive',
     ]);
-    await click(outcomeButton('No issue found'));
+    await click(outcomeButton(label));
     await click(primary());
-    expect(heading()).toBe('No issue found.');
-    expect(container.querySelector('.track')).toBeNull();
+    expect(heading()).toBe(headline);
+    expect(container.querySelector('.track')).not.toBeNull();
     expect(body()).toContain('SOP-022 rev A');
+    expect(container.querySelector('.machine[aria-label^="Motor M-310"] .machine-inspected-text')?.textContent).toBe(floorText);
+    expect(container.querySelector('.meter-status')?.textContent).toBe('Above limit 4.5');
   });
 
-  it('shows F-118 history with no plan, and routes to escalation', async () => {
-    await go('#/asset/F-118/evidence');
-    expect(container.querySelector('.gap')?.textContent).toContain('No applicable procedure for F-118');
-    expect(container.querySelector('.gap')?.textContent).toContain('site-approved');
+  it('shows M-310 its own alert, with no causes and no M-204 incidents', async () => {
+    await go('#/asset/M-310');
+    expect(body()).not.toContain('Worn bearing');
+    await go('#/asset/M-310/evidence');
+    expect(body()).toContain('Abnormal vibration on M-310');
+    expect(container.querySelector('.meter-value')?.textContent).toBe('6.2 mm/s');
     expect(container.querySelector('.compare')).toBeNull();
-    expect(body()).toContain('Blocked nozzle stopped the filler');
-    expect(primary().textContent).toBe('Back to plant layout');
+    expect(container.querySelector('.cause')).toBeNull();
+    expect(body()).not.toMatch(/Worn bearing|Low lubricant|INC-2291|INC-1877/);
+    expect(primary().textContent).toBe('Continue to inspection plan');
+  });
 
-    await go('#/asset/F-118/plan');
-    expect(container.querySelector('.gap')).not.toBeNull();
-    expect(body()).not.toContain('Save inspection plan');
+  it('shows F-118 its cause as unconfirmed, states the gap, and offers escalation only', async () => {
+    await go('#/asset/F-118/evidence');
+    expect(container.querySelector('.gap')?.textContent).toBe('No applicable procedure, so no plan.');
+    expect(container.querySelector('.cause-solo h3')?.textContent).toBe('Nozzle blockage');
+    expect(container.querySelector('.cause-solo')?.textContent).toContain('Unconfirmed');
+    expect(body()).toContain('Blocked nozzle stopped the filler');
+    expect(primary().textContent).toBe('Escalate through site process');
+    expect(container.querySelector('.steps')).toBeNull();
+  });
+
+  it('can never produce a plan for F-118', async () => {
+    for (const hash of ['#/asset/F-118/plan', '#/asset/F-118/finding', '#/asset/F-118/done']) {
+      await go(hash);
+      expect(container.querySelector('.gap')?.textContent).toBe('No applicable procedure, so no plan.');
+      expect(container.querySelector('.steps')).toBeNull();
+      expect(body()).not.toContain('Save inspection plan');
+    }
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+  });
+
+  it('records the F-118 escalation and updates the floor, without claiming a fix', async () => {
+    await go('#/asset/F-118/evidence');
+    await click(primary());
+
+    expect(window.location.hash).toBe('#/asset/F-118/done');
+    expect(heading()).toBe('Escalated through the site process. Waiting on site review.');
+    expect([...container.querySelectorAll('.track-label')].map((item) => item.textContent)).toEqual([
+      'Alert raised',
+      'Escalated',
+      'Site review',
+      'Closed',
+    ]);
+    const machine = container.querySelector('.machine[aria-label^="Filler F-118"]') as HTMLElement;
+    expect(machine.querySelector('.status-escalated')).not.toBeNull();
+    expect(machine.querySelector('.status-alert')).toBeNull();
+    expect(machine.querySelector('.machine-inspected-text')?.textContent).toBe('Escalated');
+    expect(machine.querySelector('.machine-value.is-abnormal')?.textContent).toBe('3.8 bar');
+    expect(container.querySelector('.legend')?.textContent).toContain('Escalated');
+    expect(body()).not.toMatch(/solved|resolved|fixed/i);
+
+    await go('#/asset/F-118/evidence');
+    expect(primary().textContent).toBe('View escalation');
+    await go('#/asset/F-118');
+    expect(container.querySelector('.history-entry')?.textContent).toContain('Escalated through site process');
+    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual(['1Machine', '2Evidence', '3Escalate']);
+  });
+
+  it.each([
+    ['G-204', 'Gearbox report that mentions vibration'],
+    ['C-204', 'Conveyor alignment drifted after belt change'],
+  ])('shows %s as no active alert, with its own history and no escalation', async (id, record) => {
+    await go(`#/asset/${id}`);
+    expect(body()).toContain('No active alert');
+    expect(container.querySelector('.history-entry')?.textContent).toContain(record);
+    for (const date of container.querySelectorAll('.history-date')) {
+      expect(date.textContent).toMatch(/^\d{1,2} [A-Z][a-z]{2} \d{4}$/);
+    }
+    expect(primary().textContent).toBe('Review evidence');
+
+    await go(`#/asset/${id}/evidence`);
+    expect(container.querySelector('.separate')?.textContent).toBe('No active alert');
+    expect(container.querySelector('.gap')).toBeNull();
+    expect(body()).not.toMatch(/Escalate|Insufficient/);
+    expect(primary().textContent).toBe('Back to plant layout');
+    expect([...container.querySelectorAll('.progress li')].map((item) => item.textContent)).toEqual(['✓Machine', '2Evidence']);
+  });
+
+  it('shows INC-2310 as direct history on G-204 and excluded on M-204', async () => {
+    await go('#/asset/G-204/evidence');
+    const row = [...container.querySelectorAll('.row-included')].find((item) => item.textContent?.includes('Gearbox report'));
+    expect(row?.querySelector('.tag')?.textContent).toBe('Direct asset history');
+
+    await go('#/asset/M-204/evidence');
+    const excluded = [...container.querySelectorAll('.row-excluded')].find((item) => item.textContent?.includes('INC-2310'));
+    expect(excluded).toBeDefined();
+    expect([...container.querySelectorAll('.row-included')].some((item) => item.textContent?.includes('Gearbox report'))).toBe(false);
+  });
+
+  it('never shows the superseded SOP in a plan', async () => {
+    await go('#/asset/M-204/plan');
+    expect(body()).toContain('SOP-014 rev C');
+    expect(body()).not.toMatch(/rev B|SOP-014-B/);
+    await click(primary());
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) as string)['M-204'];
+    expect(saved.sopRecordId).toBe('SOP-014-C');
+    expect(saved.evidenceIds).not.toContain('SOP-014-B');
+    expect(saved.stepIds.every((id: string) => id.startsWith('SOP-014-C-'))).toBe(true);
+  });
+
+  it('lists every active alert on Home, M-204 first, with the same primary action', () => {
+    const rows = [...container.querySelectorAll('.alert-row')].map((item) => item.textContent);
+    expect(rows).toHaveLength(3);
+    expect(rows[0]).toContain('M-204');
+    expect(rows[1]).toContain('M-310');
+    expect(rows[1]).toContain('6.2 mm/s, demo limit 4.5');
+    expect(rows[2]).toContain('F-118');
+    expect(rows[2]).toContain('3.8 bar, demo limit 3');
+    expect(primary().textContent).toBe('Open M-204 alert');
+    expect(container.querySelectorAll('.machine.has-alert')).toHaveLength(3);
+  });
+
+  it('leaves no stale state when switching machines', async () => {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    await click(outcomeButton('Bearing wear'));
+    await typeNote('Only for M-204');
+    await click(primary());
+
+    await go('#/asset/M-310/evidence');
+    expect(heading()).toBe('Evidence for M-310');
+    expect(body()).not.toMatch(/Only for M-204|Bearing wear|Technician finding/);
+    await go('#/asset/M-310/plan');
+    expect(primary().textContent).toBe('Save inspection plan');
+    expect(body()).toContain('SOP-022 rev A');
+    expect(body()).not.toContain('SOP-014 rev C');
+    await click(primary());
+    expect(container.querySelector('.outcome[aria-pressed="true"]')).toBeNull();
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe('');
+
+    await go('#/asset/G-204');
+    expect(body()).not.toContain('Technician finding');
+    await go('#/asset/F-118/evidence');
+    expect(primary().textContent).toBe('Escalate through site process');
+    await go('#/asset/M-204/done');
+    expect(heading()).toBe('Bearing wear found. Repair needed.');
+    expect(body()).toContain('Only for M-204');
+    expect(container.querySelector('.machine[aria-label^="Filler F-118"] .status-alert')).not.toBeNull();
+    expect(container.querySelector('.machine[aria-label^="Gearbox G-204"] .status-dot')).not.toBeNull();
   });
 
   it('carries no state from M-204 when switching machines', async () => {
@@ -492,7 +627,7 @@ describe('After saving a finding', () => {
     expect(container.querySelector('.track button, .track a')).toBeNull();
     expect(primary().textContent).toBe('Back to plant layout');
 
-    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
+    const machine = container.querySelector('.machine[aria-label^="Motor M-204"]') as HTMLElement;
     expect(machine.querySelector('.status-inspected.is-new')).not.toBeNull();
     expect(machine.querySelector('.status-alert')).toBeNull();
     expect(machine.querySelector('.status-inspected svg')).toBeNull();
@@ -507,7 +642,7 @@ describe('After saving a finding', () => {
     ]);
     expect([...container.querySelectorAll('.meter-value')].map((item) => item.textContent)).toEqual(['8.4 mm/s', '78 °C']);
     expect(body()).toContain('Readings stay high until repaired.');
-    const value = container.querySelector('.machine.has-alert .machine-value.is-abnormal') as HTMLElement;
+    const value = container.querySelector('.machine[aria-label^="Motor M-204"] .machine-value.is-abnormal') as HTMLElement;
     expect(value.textContent).toBe('8.4 mm/s');
     expect(value.querySelector('.icon-alert')).not.toBeNull();
   });
@@ -533,7 +668,7 @@ describe('After saving a finding', () => {
     expect(entries[0].textContent).toContain('Technician finding');
     expect(entries[1].textContent).toContain('Worn bearing');
     expect(entries[2].textContent).toContain('Low lubricant');
-    expect(container.querySelector('.machine.has-alert .machine-inspected-text')?.textContent).toBe('Inspected: lubrication problem');
+    expect(container.querySelector('.machine[aria-label^="Motor M-204"] .machine-inspected-text')?.textContent).toBe('Inspected: lubrication problem');
     expect(container.querySelector('.status-inspected.is-new')).toBeNull();
   });
 
@@ -554,6 +689,25 @@ describe('After saving a finding', () => {
 });
 
 describe('Reset demo', () => {
+  it('restores every alert after a finding and an escalation', async () => {
+    await go('#/asset/M-310/plan');
+    await click(primary());
+    await click(outcomeButton('Fault found'));
+    await click(primary());
+    await go('#/asset/F-118/evidence');
+    await click(primary());
+    await go('#/');
+    expect(container.querySelectorAll('.machine .status-alert')).toHaveLength(1);
+
+    await click(container.querySelector('button.reset') as Element);
+
+    expect(container.querySelectorAll('.machine .status-alert')).toHaveLength(3);
+    expect(container.querySelector('.machine .status-inspected, .machine .status-escalated')).toBeNull();
+    expect(container.querySelector('.legend')?.textContent).not.toContain('Escalated');
+    expect(localStorage.getItem(STORAGE_KEY)).toBeNull();
+    expect(localStorage.getItem(ESCALATIONS_KEY)).toBeNull();
+  });
+
   it('restores the original alert state', async () => {
     await go('#/asset/M-204/plan');
     await click(primary());
@@ -563,7 +717,7 @@ describe('Reset demo', () => {
 
     await click(container.querySelector('button.reset') as Element);
 
-    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
+    const machine = container.querySelector('.machine[aria-label^="Motor M-204"]') as HTMLElement;
     expect(container.querySelector('.machine .status-inspected')).toBeNull();
     expect(machine.querySelector('.status-alert')).not.toBeNull();
     expect(machine.querySelector('.machine-alert-text')?.textContent).toBe('Abnormal vibration');

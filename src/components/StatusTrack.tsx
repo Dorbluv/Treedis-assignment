@@ -1,13 +1,12 @@
-import { INSPECTION_STAGES } from '../domain/status';
 import { CheckMark } from './Icons';
 
-const DONE_THROUGH = INSPECTION_STAGES.indexOf('Inspected');
+const DONE_THROUGH = 1;
 
 /** Where the machine stands. Later stages are shown, not actionable, in this prototype. */
-export function StatusTrack() {
+export function StatusTrack({ stages }: { stages: string[] }) {
   return (
     <ol className="track" aria-label="Machine status">
-      {INSPECTION_STAGES.map((stage, index) => {
+      {stages.map((stage, index) => {
         const state = index <= DONE_THROUGH ? 'is-done' : index === DONE_THROUGH + 1 ? 'is-next' : '';
         return (
           <li key={stage} className={state}>

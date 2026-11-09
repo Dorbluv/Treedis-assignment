@@ -1,4 +1,5 @@
-import { CauseComparison } from '../components/CauseComparison';
+import { useState } from 'react';
+import { CauseComparison, UntestableCause } from '../components/CauseComparison';
 import { EvidenceGroup } from '../components/EvidenceGroup';
 import { EvidenceRow } from '../components/EvidenceRow';
 import { AlertMark } from '../components/Icons';
@@ -8,26 +9,26 @@ import { Screen } from '../components/Screen';
 import { alertFor } from '../data';
 import {
   causeComparison,
+  causesWithoutStep,
   contextStepNotes,
   listPreview,
   separatingSentence,
   usedPreview,
 } from '../domain/causes';
-import type { EvidenceItem, RetrievalResult } from '../domain/types';
+import type { Escalation, EvidenceItem, RetrievalResult } from '../domain/types';
+import { saveEscalation } from '../storage/plans';
 
-export function EvidenceScreen({ result }: { result: RetrievalResult }) {
+export function EvidenceScreen({ result, escalation }: { result: RetrievalResult; escalation?: Escalation }) {
   const { asset, parent, included, uncertain, excluded, applicableSop } = result;
+  const [error, setError] = useState<string | null>(null);
   const alert = alertFor(asset.id);
   const readings = included.find((item) => item.record.id === alert?.sensorRecordId)?.record.readings ?? [];
   const sourceHref = (id: string) => `#/asset/${asset.id}/evidence/source/${id}`;
   const stepHref = (stepId: string) => `${sourceHref(applicableSop?.id ?? '')}/step/${stepId}`;
   const items = causeComparison(result);
+  const untestable = causesWithoutStep(result);
   const notes = contextStepNotes(result);
-  const hasIncident = included.some((item) => item.record.kind === 'incident');
-  const noCauseMessage =
-    alert || !hasIncident
-      ? 'Insufficient asset-specific evidence to recommend a likely cause.'
-      : `No active alert on ${asset.id}. Past records are below.`;
+  const noCauses = items.length === 0 && untestable.length === 0;
 
   function rows(list: EvidenceItem[], tone: 'included' | 'uncertain' | 'excluded') {
     return list.map((item) => (
@@ -35,19 +36,35 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
     ));
   }
 
+  function escalate() {
+    try {
+      saveEscalation({ assetId: asset.id, escalatedAt: new Date().toISOString() });
+      window.location.hash = `#/asset/${asset.id}/done`;
+    } catch {
+      setError('Could not save on this device. Check that browser storage is allowed.');
+    }
+  }
+
+  let action;
+  if (applicableSop) {
+    action = <PrimaryAction label="Continue to inspection plan" href={`#/asset/${asset.id}/plan`} />;
+  } else if (!alert) {
+    action = <PrimaryAction label="Back to plant layout" href="#/" />;
+  } else if (escalation) {
+    action = <PrimaryAction label="View escalation" href={`#/asset/${asset.id}/done`} />;
+  } else {
+    action = <PrimaryAction label="Escalate through site process" onClick={escalate} />;
+  }
+
   return (
-    <Screen
-      action={
-        applicableSop ? (
-          <PrimaryAction label="Continue to inspection plan" href={`#/asset/${asset.id}/plan`} />
-        ) : (
-          <PrimaryAction label="Back to plant layout" href="#/" />
-        )
-      }
-    >
+    <Screen action={action}>
       <p className="path">{parent && `${parent.id} > `}{asset.id}</p>
       <h1>Evidence for {asset.id}</h1>
-      {alert && <p className="alert-title wide-only"><AlertMark /> {alert.title} on {asset.id}</p>}
+      {alert ? (
+        <p className="alert-title wide-only"><AlertMark /> {alert.title} on {asset.id}</p>
+      ) : (
+        <p className="separate">No active alert</p>
+      )}
 
       {readings.length > 0 && (
         <section aria-label="Current readings">
@@ -73,14 +90,20 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
         </section>
       )}
 
-      {items.length === 0 && <p className="separate">{noCauseMessage}</p>}
-
-      {!applicableSop && (
-        <div className="gap" role="status">
-          <p><strong>No applicable procedure for {asset.id}</strong></p>
-          <p>No plan can be created. Escalate through your site-approved process.</p>
-        </div>
+      {untestable.length > 0 && (
+        <section aria-label="Possible cause">
+          <h2>Possible cause</h2>
+          {untestable.map(({ cause, record }) => (
+            <UntestableCause key={cause.key} label={cause.label} record={record} sourceHref={sourceHref(record.id)} />
+          ))}
+        </section>
       )}
+
+      {alert && noCauses && <p className="separate">Insufficient asset-specific evidence to recommend a likely cause.</p>}
+
+      {alert && !applicableSop && <p className="gap" role="status">No applicable procedure, so no plan.</p>}
+
+      {error && <p className="error" role="alert">{error}</p>}
 
       <div className="groups">
         {included.length > 0 && (
@@ -88,7 +111,7 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
             title="Used as evidence"
             count={included.length}
             preview={usedPreview(included)}
-            open={items.length === 0 || undefined}
+            open={noCauses || undefined}
           >
             {rows(included, 'included')}
           </EvidenceGroup>

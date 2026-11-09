@@ -53,8 +53,8 @@ export function outcomeOptions(result: RetrievalResult): OutcomeOption[] {
   // With no possible causes, "Neither" would have nothing to refer to.
   if (result.possibleCauses.length === 0) {
     return [
-      { key: 'issue_found', label: 'Issue found', suggestions: ['Play at the bearing', 'Loose mounting bolts'] },
-      { key: 'no_issue', label: 'No issue found', suggestions: ['Bearing and bolts normal'] },
+      { key: 'fault_found', label: 'Fault found', suggestions: ['Play at the bearing', 'Loose mounting bolts'] },
+      { key: 'no_fault', label: 'No fault found', suggestions: ['Bearing and bolts normal'] },
       { key: 'inconclusive', label: 'Inconclusive', suggestions: ['Could not reach the bearing', 'Needs a second inspection'] },
     ];
   }

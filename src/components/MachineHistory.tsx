@@ -1,5 +1,5 @@
 import { formatDate, formatDay, outcomeOptions } from '../screens/format';
-import type { Finding, RetrievalResult } from '../domain/types';
+import type { Escalation, Finding, RetrievalResult } from '../domain/types';
 
 /** A technician finding: what was observed in this inspection. It is never evidence. */
 export function FindingEntry({ result, finding }: { result: RetrievalResult; finding: Finding }) {
@@ -18,23 +18,44 @@ export function FindingEntry({ result, finding }: { result: RetrievalResult; fin
   );
 }
 
-export function MachineHistory({ result, finding }: { result: RetrievalResult; finding?: Finding }) {
+export function EscalationEntry({ escalation }: { escalation: Escalation }) {
+  return (
+    <div className="history-entry">
+      <span className="history-date">{formatDate(escalation.escalatedAt)}</span>
+      <span className="history-main"><strong>Escalated through site process</strong></span>
+      <span className="tag">Escalation</span>
+    </div>
+  );
+}
+
+const TAGS: Record<string, string> = { incident: 'Past incident', assembly: 'Conveyor record' };
+
+export function MachineHistory({
+  result,
+  finding,
+  escalation,
+}: {
+  result: RetrievalResult;
+  finding?: Finding;
+  escalation?: Escalation;
+}) {
   const { asset, included } = result;
-  const incidents = included
-    .filter((item) => item.record.kind === 'incident' && item.record.assetId === asset.id)
+  const past = included
+    .filter((item) => TAGS[item.record.kind] && item.record.assetId === asset.id && item.record.occurredOn)
     .sort((a, b) => (b.record.occurredOn ?? '').localeCompare(a.record.occurredOn ?? ''));
 
-  if (!finding && incidents.length === 0) return null;
+  if (!finding && !escalation && past.length === 0) return null;
 
   return (
     <section aria-label={`${asset.id} history`} className="history">
       <h2>History</h2>
+      {escalation && <EscalationEntry escalation={escalation} />}
       {finding && <FindingEntry result={result} finding={finding} />}
-      {incidents.map(({ record }) => (
+      {past.map(({ record }) => (
         <a className="history-entry" key={record.id} href={`#/asset/${asset.id}/evidence/source/${record.id}`}>
-          <span className="history-date">{record.occurredOn ? formatDay(record.occurredOn) : 'Past'}</span>
+          <span className="history-date">{formatDay(record.occurredOn ?? '')}</span>
           <span className="history-main">{record.takeaway}</span>
-          <span className="tag">Past incident</span>
+          <span className="tag">{TAGS[record.kind]}</span>
         </a>
       ))}
     </section>

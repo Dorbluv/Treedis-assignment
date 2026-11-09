@@ -6,7 +6,7 @@ import { Screen } from '../components/Screen';
 import { StatusTrack } from '../components/StatusTrack';
 import { alertFor, records } from '../data';
 import { readingStatus } from '../domain/causes';
-import { inspectionStatus } from '../domain/status';
+import { INSPECTION_STAGES, inspectionStatus } from '../domain/status';
 import type { RetrievalResult, SavedPlan } from '../domain/types';
 import { formatDateTime, recordLine } from './format';
 
@@ -32,7 +32,7 @@ export function DoneScreen({
 
   return (
     <Screen action={<PrimaryAction label="Back to plant layout" href="#/" />}>
-      {alert && <StatusTrack />}
+      {alert && <StatusTrack stages={INSPECTION_STAGES} />}
       <h1>{status.headline}</h1>
 
       {high.length > 0 && (
@@ -40,7 +40,7 @@ export function DoneScreen({
           <div className="meters">
             {high.map((reading) => <ReadingMeter key={reading.label} reading={reading} />)}
           </div>
-          <p className="fine">Readings stay high until repaired.</p>
+          <p className="fine">Readings stay high until repaired. Demo limits.</p>
         </section>
       )}
 

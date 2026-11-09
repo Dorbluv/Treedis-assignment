@@ -5,10 +5,19 @@ import type { SavedPlan } from './domain/types';
 import { Banner } from './components/Banner';
 import { MachineHeader } from './components/MachineHeader';
 import { PlantFloor } from './components/PlantFloor';
-import { Progress, type ProgressStep } from './components/Progress';
-import { clearPlans, hasSavedPlans, loadAllPlans, loadPlan, type PlanMap } from './storage/plans';
+import { Progress, type ProgressFlow, type ProgressStep } from './components/Progress';
+import {
+  clearPlans,
+  hasSavedPlans,
+  loadAllPlans,
+  loadEscalations,
+  loadPlan,
+  type EscalationMap,
+  type PlanMap,
+} from './storage/plans';
 import { pageTitle } from './screens/format';
 import { DoneScreen } from './screens/DoneScreen';
+import { EscalatedScreen } from './screens/EscalatedScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { FindingScreen } from './screens/FindingScreen';
 import { LayoutScreen } from './screens/LayoutScreen';
@@ -86,6 +95,14 @@ function readAllPlans(): PlanMap {
   }
 }
 
+function readEscalations(): EscalationMap {
+  try {
+    return loadEscalations();
+  } catch {
+    return {};
+  }
+}
+
 function anySavedPlans(): boolean {
   try {
     return hasSavedPlans();
@@ -105,6 +122,8 @@ export function App() {
   // Read on every render: each route change re-renders, so this is never stale.
   const saved = result ? readPlan(result.asset.id) : null;
   const plans = readAllPlans();
+  const escalations = readEscalations();
+  const escalation = result ? escalations[result.asset.id] : undefined;
 
   function resetDemo() {
     try {
@@ -119,7 +138,7 @@ export function App() {
   // A deeper route falls back to the furthest step the saved state allows.
   let view: Route['name'] = !asset ? 'map' : !result ? 'selected' : route.name;
   if (view === 'finding' && !saved) view = 'plan';
-  if (view === 'done' && !saved?.finding) view = saved ? 'finding' : 'plan';
+  if (view === 'done' && !saved?.finding && !escalation) view = saved ? 'finding' : 'plan';
 
   let step: ProgressStep = 'machine';
   let panel;
@@ -129,7 +148,9 @@ export function App() {
         asset={asset}
         result={result}
         saved={saved}
+        escalation={escalation}
         plans={plans}
+        escalations={escalations}
         showReset={!asset && anySavedPlans()}
         onReset={resetDemo}
       />
@@ -145,6 +166,9 @@ export function App() {
         backLabel={BACK_LABEL[route.parent]}
       />
     );
+  } else if (view === 'done' && escalation) {
+    step = 'complete';
+    panel = <EscalatedScreen result={result} escalation={escalation} onReset={resetDemo} />;
   } else if (view === 'done' && saved) {
     step = 'complete';
     panel = <DoneScreen result={result} saved={saved} onReset={resetDemo} />;
@@ -156,7 +180,7 @@ export function App() {
     panel = <PlanScreen result={result} saved={saved} />;
   } else {
     step = 'evidence';
-    panel = <EvidenceScreen result={result} />;
+    panel = <EvidenceScreen result={result} escalation={escalation} />;
   }
 
   // The summary keeps the floor in view, so the change to the machine can be seen.
@@ -168,8 +192,12 @@ export function App() {
         evidence: `#/asset/${asset.id}/evidence`,
         plan: `#/asset/${asset.id}/plan`,
         finding: `#/asset/${asset.id}/finding`,
+        escalate: `#/asset/${asset.id}/done`,
       }
     : {};
+
+  let flow: ProgressFlow = 'full';
+  if (result && !result.applicableSop) flow = alertFor(result.asset.id) ? 'escalate' : 'review';
 
   // On every step change, tell assistive technology where the user has landed.
   const assetId = asset?.id ?? null;
@@ -191,14 +219,14 @@ export function App() {
       <Banner />
       <header className="topbar">
         <a href="#/" className="wordmark">Maintenance Copilot</a>
-        <Progress current={step} hrefs={stepHrefs} />
+        <Progress current={step} hrefs={stepHrefs} flow={flow} />
       </header>
       <main className="workspace">
         <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">
-          <PlantFloor selectedId={asset?.id ?? null} plans={plans} animateInspected={view === 'done'} />
+          <PlantFloor selectedId={asset?.id ?? null} plans={plans} escalations={escalations} animateInspected={view === 'done'} />
         </section>
         <section className="panel-col" key={hash}>
-          {result && !onFloor && <MachineHeader result={result} saved={saved} />}
+          {result && !onFloor && <MachineHeader result={result} saved={saved} escalation={escalation} />}
           {panel}
         </section>
       </main>

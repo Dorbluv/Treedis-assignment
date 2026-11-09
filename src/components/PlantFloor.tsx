@@ -1,8 +1,8 @@
 import { alerts, assets, records } from '../data';
 import { machineStatus } from '../domain/floor';
-import { inspectionStatus, type InspectionStatus } from '../domain/status';
+import { followUp, type FollowUp } from '../domain/status';
 import type { Asset } from '../domain/types';
-import type { PlanMap } from '../storage/plans';
+import type { EscalationMap, PlanMap } from '../storage/plans';
 import { AlertMark, TypeIcon } from './Icons';
 
 type Role = 'selected' | 'parent' | 'sibling' | 'child' | null;
@@ -10,6 +10,7 @@ type Role = 'selected' | 'parent' | 'sibling' | 'child' | null;
 interface FloorState {
   selected: Asset | null;
   plans: PlanMap;
+  escalations: EscalationMap;
   animateInspected: boolean;
 }
 
@@ -41,23 +42,22 @@ function open(id: string) {
   window.location.hash = `#/asset/${id}`;
 }
 
-/** A finding moves an alert to Inspected. It does not clear it. */
-function inspectionOf(asset: Asset, plans: PlanMap, hasAlert: boolean): InspectionStatus | null {
-  const finding = plans[asset.id]?.finding;
-  return finding && hasAlert ? inspectionStatus(finding.outcome, records) : null;
+/** A finding or escalation moves an alert along. It does not clear it. */
+function followUpOf(asset: Asset, state: FloorState, hasAlert: boolean): FollowUp | null {
+  return hasAlert ? followUp(state.plans[asset.id]?.finding, state.escalations[asset.id], records) : null;
 }
 
 function MachineBody({ asset, role, state }: { asset: Asset; role: Role; state: FloorState }) {
   const { alert, value } = machineStatus(asset, alerts, records);
-  const inspection = inspectionOf(asset, state.plans, Boolean(alert));
-  const isNew = inspection && state.animateInspected ? ' is-new' : '';
+  const next = followUpOf(asset, state, Boolean(alert));
+  const isNew = next && state.animateInspected && state.selected?.id === asset.id ? ' is-new' : '';
   return (
     <>
       <span className="machine-top">
         <TypeIcon type={asset.type} />
         <span className="machine-id">{asset.id}</span>
-        {inspection ? (
-          <span className={`status-inspected${isNew}`} />
+        {next ? (
+          <span className={`status-${next.kind}${isNew}`} />
         ) : alert ? (
           <span className="status-alert"><span className="pulse" /><AlertMark /></span>
         ) : (
@@ -67,12 +67,12 @@ function MachineBody({ asset, role, state }: { asset: Asset; role: Role; state: 
       <span className="machine-desc">{describe(asset, role, state.selected)}</span>
       {value && (
         <span className={`machine-value${alert ? ' is-abnormal' : ''}`}>
-          {inspection && <AlertMark />}
+          {next && <AlertMark />}
           {value}
         </span>
       )}
-      {inspection ? (
-        <span className={`machine-inspected-text${isNew}`}>Inspected: {inspection.short}</span>
+      {next ? (
+        <span className={`machine-inspected-text${isNew}`}>{next.text}</span>
       ) : (
         alert && <span className="machine-alert-text">{alert.title}</span>
       )}
@@ -82,8 +82,8 @@ function MachineBody({ asset, role, state }: { asset: Asset; role: Role; state: 
 
 function controlProps(asset: Asset, role: Role, state: FloorState) {
   const { alert, value } = machineStatus(asset, alerts, records);
-  const inspection = inspectionOf(asset, state.plans, Boolean(alert));
-  const statusText = inspection ? `inspected: ${inspection.short}, readings still above limit` : alert ? alert.title : 'no alert';
+  const next = followUpOf(asset, state, Boolean(alert));
+  const statusText = next ? `${next.text}, readings still above limit` : alert ? alert.title : 'no alert';
   const parts = [asset.name, statusText, value, role && role !== 'selected' ? describe(asset, role, state.selected) : null];
   return {
     type: 'button' as const,
@@ -131,17 +131,21 @@ function Assembly({ belt, state }: { belt: Asset; state: FloorState }) {
 export function PlantFloor({
   selectedId,
   plans,
+  escalations,
   animateInspected,
 }: {
   selectedId: string | null;
   plans: PlanMap;
+  escalations: EscalationMap;
   animateInspected: boolean;
 }) {
   const state: FloorState = {
     selected: assets.find((asset) => asset.id === selectedId) ?? null,
     plans,
+    escalations,
     animateInspected,
   };
+  const anyEscalated = Object.keys(escalations).length > 0;
   const lines = [...new Set(assets.map((asset) => asset.line))].sort();
   const isParent = (asset: Asset) => assets.some((other) => other.parentId === asset.id);
 
@@ -156,14 +160,17 @@ export function PlantFloor({
             key={line}
             aria-label={`Line ${line}`}
           >
-            <h2 className="zone-name">Line {line}</h2>
-            {index === lines.length - 1 && (
-              <p className="legend">
-                <span><span className="status-dot" /> No alert</span>
-                <span><AlertMark /> Alert</span>
-                <span><span className="status-inspected" /> Inspected</span>
-              </p>
-            )}
+            <div className="zone-head">
+              <h2 className="zone-name">Line {line}</h2>
+              {index === lines.length - 1 && (
+                <p className="legend">
+                  <span><span className="status-dot" /> No alert</span>
+                  <span><AlertMark /> Alert</span>
+                  <span><span className="status-inspected" /> Inspected</span>
+                  {anyEscalated && <span><span className="status-escalated" /> Escalated</span>}
+                </p>
+              )}
+            </div>
             {assemblies.map((asset) => <Assembly belt={asset} state={state} key={asset.id} />)}
             {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} state={state} row key={asset.id} />)}
           </section>
