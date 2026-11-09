@@ -256,3 +256,15 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code, the first in a screenshot review and the second reading raw run output.
 - **What changed:** Two new checks: every limit must be called a demo limit, and a summary must name all allowed causes or none. Prompts v3 and v4 say the same. The final v4 run passed 8 of 9 in 0.8 to 1.8 seconds. The one failure was M-310 run 1, where the model misspelled the required sentence as "recommend a likey cause". The instruction check rejected it because the exact phrase no longer matched, so the prepared summary would have been shown. That rejection was for an accidental reason, and I did not tune the check around one typo.
 - **Evidence link or screenshot:** evidence/gate-3/limit-unlabeled-1366-F-118.png, evidence/gate-3/model-runs-prompt-v3.json (M-204 run 1), evidence/gate-3/model-runs-prompt-v4.json
+
+## Prompt v5: the summary stops repeating the screen
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** After prompt v4 the output mostly repeated the readings and cause cards.
+- **What went wrong:** The summary was valid but added little. Claude Code flagged this in its report.
+- **Caught by:** Claude Code flagged it, and the user chose the change.
+- **What changed:** Prompt v5 returns at most two sentences: what the records have in common or where they differ across all allowed causes, and what they cannot tell the technician about the current fault. M-310 keeps the insufficient-evidence sentence and then states what is missing. A new check rejects a sentence that only restates a reading. All earlier checks stay. "Cannot confirm" now counts as a negation, so stating a limit of the evidence is not read as a diagnosis. The prepared fallback was rewritten to the same job, because its old text restated readings and would have failed the new check.
+- **Result:** 9 of 9 real runs passed validation in 0.9 to 2.0 seconds.
+- **Remaining limits:** Sentence 1 usually lists the causes and does not say how the records compare. One M-204 run wrote "lubrication problem" with no article. "These records cannot tell what is happening now" is vague. None of these fail a check.
+- **Evidence link or screenshot:** evidence/gate-3/model-runs-prompt-v5.json

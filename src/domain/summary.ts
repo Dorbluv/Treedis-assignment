@@ -1,4 +1,3 @@
-import { readingStatus } from './causes';
 import type { CauseItem, MaintenanceRecord, RetrievalResult } from './types';
 
 /**
@@ -16,11 +15,11 @@ export type SummaryResponse =
   | { source: 'prepared'; sentences: SummarySentence[]; reason?: string }
   | { source: 'none' };
 
-export const MAX_SENTENCES = 3;
+export const MAX_SENTENCES = 2;
 export const MAX_SENTENCE_CHARS = 110;
 export const INSUFFICIENT_SENTENCE = 'Insufficient asset-specific evidence to recommend a likely cause.';
 
-export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient' | 'limit_label' | 'cause_coverage';
+export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient' | 'limit_label' | 'cause_coverage' | 'restates_reading';
 
 export interface ValidationFailure {
   rule: SummaryRule;
@@ -47,7 +46,7 @@ const MEASUREMENT = /\b(vibration|temperature|current|pressure|readings?|limits?
 
 const DIAGNOSIS =
   /\b(confirm(?:s|ed)?|diagnos\w*|definitely|certainly|clearly|undoubtedly|root cause|the cause is|must be|proves?|proven)\b|\b(?:is|are)\s+(?:due to|caused by|the cause|worn|blocked|clogged|failing|failed|damaged)\b/i;
-const NEGATED_CONFIRMED = /\b(?:not|never|neither|nor|none|no)\b[^.;]*?\bconfirmed\b/gi;
+const NEGATED_CONFIRMED = /\b(?:not|never|neither|nor|none|no|cannot|can't)\b[^.;]*?\bconfirm(?:s|ed)?\b/gi;
 const HEDGE = /\b(possible|possibly|may|might|could|past|previous|previously|earlier|before|history|unconfirmed|neither|none|not confirmed|incidents?|records?)\b|\bin (?:\w+ )?\d{4}\b/i;
 
 const INSTRUCTION =
@@ -78,6 +77,21 @@ function recordText(record: MaintenanceRecord): string {
   return JSON.stringify(record, null, 1);
 }
 
+/** Words that add nothing beyond a reading and its limit. */
+const READING_FILLER = new Set(
+  'a an the is are was were at of on in to for with and or by its their it this that these those has have had now currently still remains against reached reaching reads reading readings value values above below within over under exceeds exceeded exceeding high higher low elevated demo demonstration limit limits motor machine filler housing bank velocity rms degrees celsius'.split(' '),
+);
+
+function onlyRestatesReading(text: string, result: RetrievalResult): boolean {
+  const readings = result.included.flatMap((item) => item.record.readings ?? []);
+  if (readings.length === 0) return false;
+  const words = new Set(readings.flatMap((reading) => `${reading.label} ${reading.unit}`.toLowerCase().match(/\p{L}+/gu) ?? []));
+  const numbers = new Set(readings.flatMap((reading) => [String(reading.value), String(reading.limit)]));
+  const tokens = text.replace(RECORD_OR_ASSET_ID, ' ').toLowerCase().match(/\p{L}+|\d+(?:[.,]\d+)?/gu) ?? [];
+  const isReadingRef = (token: string) => words.has(token) || numbers.has(/\d/.test(token) ? normalizeNumber(token) : token);
+  return tokens.some(isReadingRef) && tokens.every((token) => isReadingRef(token) || READING_FILLER.has(token));
+}
+
 function checkSentence(sentence: SummarySentence, result: RetrievalResult): ValidationFailure[] {
   const failures: ValidationFailure[] = [];
   const { text, citations } = sentence;
@@ -95,6 +109,8 @@ function checkSentence(sentence: SummarySentence, result: RetrievalResult): Vali
   for (const word of text.match(NUMBER_WORDS) ?? []) {
     if (!new RegExp(`\\b${word}\\b`, 'i').test(citedText)) failures.push({ rule: 'number', detail: `"${word}" is in no cited record` });
   }
+
+  if (onlyRestatesReading(text, result)) failures.push({ rule: 'restates_reading', detail: 'only restates a reading the screen already shows' });
 
   if (UNLABELED_LIMIT.test(text)) failures.push({ rule: 'limit_label', detail: 'a limit must be called a demo limit' });
 
@@ -163,35 +179,27 @@ export function validateSummary(raw: unknown, result: RetrievalResult): Validati
   return failures.length > 0 ? { ok: false, failures } : { ok: true, sentences };
 }
 
-function joinLabels(labels: string[]): string {
-  return labels.length > 1 ? `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}` : labels[0];
-}
-
-/** The deterministic summary, built only from retrieval. It needs no model. */
+/** The deterministic summary, built only from retrieval. It needs no model and repeats no readings. */
 export function preparedSummary(result: RetrievalResult): SummarySentence[] {
-  const sensor = result.included.find((item) => item.record.kind === 'sensor')?.record;
-  const above = (sensor?.readings ?? []).filter((reading) => readingStatus(reading) === 'above').slice(0, 2);
-  const sentences: SummarySentence[] = [];
-
-  if (sensor && above.length > 0) {
-    const parts = above.map((reading, index) => {
-      const label = index === 0 ? reading.label : reading.label.toLowerCase();
-      return `${label} is ${reading.value} ${reading.unit} (demo limit ${reading.limit})`;
-    });
-    sentences.push({ text: `${joinLabels(parts)}.`, citations: [sensor.id] });
-  }
-
   const causes = result.possibleCauses;
   if (causes.length === 0) {
     const citations = result.included.filter((item) => item.record.kind === 'sensor' || item.record.kind === 'sop').map((item) => item.record.id);
-    sentences.push({ text: INSUFFICIENT_SENTENCE, citations });
-    return sentences;
+    return [
+      { text: INSUFFICIENT_SENTENCE, citations },
+      { text: 'The records hold no past incident for this machine.', citations },
+    ];
   }
 
   const citations = causes.map((cause) => cause.recordId);
-  const labels = causes.map((cause, index) => (index === 0 ? cause.label : cause.label.toLowerCase()));
-  const possible = causes.length === 1 ? 'a possible cause' : 'possible causes';
-  sentences.push({ text: `Past records list ${joinLabels(labels).toLowerCase()} as ${possible}.`, citations });
-  sentences.push({ text: causes.length === 1 ? 'It is not confirmed.' : 'Neither is confirmed.', citations });
-  return sentences;
+  const labels = causes.map((cause) => cause.label.toLowerCase()).join(', ');
+  if (causes.length === 1) {
+    return [
+      { text: `A past record lists one possible cause: ${labels}.`, citations },
+      { text: 'It cannot show whether that applies to the current fault.', citations },
+    ];
+  }
+  return [
+    { text: `Past records list different possible causes: ${labels}.`, citations },
+    { text: 'They cannot show which, if either, applies to the current fault.', citations },
+  ];
 }

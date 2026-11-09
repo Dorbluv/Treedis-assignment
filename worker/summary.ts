@@ -5,7 +5,7 @@ import type { Alert, RetrievalResult } from '../src/domain/types';
 
 /** Free tier, confirmed on Google's models and pricing pages on 2026-11-09. 3.8 and 3.6 Flash were overloaded in testing. */
 export const MODEL = 'gemini-3.5-flash-lite';
-export const PROMPT_VERSION = 'v4';
+export const PROMPT_VERSION = 'v5';
 export const TIMEOUT_MS = 8000;
 const GOOD_TTL_MS = 24 * 60 * 60 * 1000;
 const FAILED_TTL_MS = 5 * 60 * 1000;
@@ -47,14 +47,23 @@ const RESPONSE_SCHEMA = {
   required: ['sentences'],
 };
 
-export const SYSTEM_PROMPT = `You summarize maintenance records for a technician who has just received a machine alert.
-Rules:
-- Write 1 to ${MAX_SENTENCES} sentences. Each is one short English sentence of at most ${MAX_SENTENCE_CHARS} characters. Some records are in German: use their meaning, in English.
-- Every sentence lists in "citations" the IDs of the records that support it. Do not put record IDs in the sentence text.
-- Use only facts and numbers from the cited records. Do not count, calculate or round. Always write "demo limit", never just "limit".
-- You never decide what is wrong now. A cause may appear only as a possible cause or as something seen in a past record, and only if it is in allowed_causes. A sentence naming a cause must cite that cause's record and must say "possible" or "past record", for example: "A past record lists bearing wear as a possible cause." Never write that something was traced to, caused by or due to a cause. If you name one allowed cause, name every allowed cause and favor none. Do not mention any other cause or any other fault, including alignment.
-- Do not give instructions, inspection steps, or advice about what anyone should do.
-- If allowed_causes is empty, one sentence must be exactly: "${INSUFFICIENT_SENTENCE}" Name no cause.`;
+export const SYSTEM_PROMPT = `You help a technician who has just received a machine alert. The screen already shows the readings, limits, dates, fixes and downtime. Do not repeat any of them.
+Return at most ${MAX_SENTENCES} short English sentences, one per array item, each at most ${MAX_SENTENCE_CHARS} characters. Some records are in German: use their meaning, in English.
+
+If allowed_causes is not empty:
+- Sentence 1 says what the cited past records have in common or where they differ. It names every allowed cause, favors none, and uses the word "possible".
+- Sentence 2 says what these records cannot tell the technician about the current fault.
+
+If allowed_causes is empty:
+- Sentence 1 must be exactly: "${INSUFFICIENT_SENTENCE}"
+- Sentence 2 says what is missing from the records for this machine. Name no cause or fault.
+
+Rules for every sentence:
+- List in "citations" the IDs of the records that support it. A sentence naming a cause must cite that cause's record. Do not put record IDs in the text.
+- Write no numbers, dates or counts.
+- You never decide what is wrong now. Mention only causes in allowed_causes and no other cause or fault, including alignment. Never write traced to, caused by or due to.
+- Give no instructions, inspection steps or advice about what anyone should do.
+- Use correct singular and plural grammar. One cause is "a possible cause" and several are "possible causes". One record is "this record" and several are "these records". Verbs agree with their subjects.`;
 
 /** Only records retrieval included for this asset. Procedure steps are withheld on purpose. */
 export function buildUserPrompt(result: RetrievalResult, alert: Alert): string {

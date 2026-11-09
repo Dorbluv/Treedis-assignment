@@ -13,8 +13,8 @@ function modelReply(content: unknown): Response {
 
 const GOOD_M204 = {
   sentences: [
-    { text: 'Vibration is 8.4 mm/s against a demo limit of 4.5.', citations: ['SR-M204-01'] },
     { text: 'Past records list bearing wear and low lubricant as possible causes.', citations: ['INC-2291', 'INC-1877'] },
+    { text: 'These records cannot show which applies to the current fault.', citations: ['INC-2291', 'INC-1877'] },
   ],
 };
 
@@ -107,6 +107,7 @@ describe('fallback', () => {
     ['a confirmed cause', { sentences: [{ text: 'Bearing wear is confirmed.', citations: ['INC-2291'] }] }, 'invalid_diagnosis+cause_coverage'],
     ['a citation of INC-2310', { sentences: [{ text: 'Vibration was noted on the gearbox.', citations: ['INC-2310'] }] }, 'invalid_citation'],
     ['an added number', { sentences: [{ text: 'Vibration is 11.2 mm/s.', citations: ['SR-M204-01'] }] }, 'invalid_number'],
+    ['a restated reading', { sentences: [{ text: 'Vibration is 8.4 mm/s.', citations: ['SR-M204-01'] }] }, 'invalid_restates_reading'],
     ['an instruction', { sentences: [{ text: 'Check the bearing for play.', citations: ['SOP-014-C'] }] }, 'invalid_instruction'],
     ['the wrong shape', { text: 'hello' }, 'invalid_shape'],
   ])('falls back on %s', async (_name, reply, reason) => {
@@ -119,7 +120,7 @@ describe('fallback', () => {
 
   it('falls back when M-310 names a cause or omits the insufficient statement', async () => {
     model = vi.fn(async () => modelReply({ sentences: [{ text: 'Vibration is 6.2 mm/s.', citations: ['SR-M310-01'] }] }));
-    expect((await call('M-310')).body.reason).toBe('invalid_insufficient');
+    expect((await call('M-310')).body.reason).toBe('invalid_restates_reading+insufficient');
     cache = memoryCache();
     model = vi.fn(async () => modelReply({ sentences: [{ text: `${INSUFFICIENT_SENTENCE}`, citations: ['SR-M310-01'] }, { text: 'Bearing wear is possible.', citations: ['SR-M310-01'] }] }));
     expect((await call('M-310')).body.reason).toBe('invalid_cause');

@@ -15,9 +15,8 @@ describe('accepted summaries', () => {
   it('accepts a hedged, cited summary', () => {
     const raw = {
       sentences: [
-        { text: 'Vibration is 8.4 mm/s against a demo limit of 4.5.', citations: ['SR-M204-01'] },
         { text: 'Past records list bearing wear and low lubricant as possible causes.', citations: ['INC-2291', 'INC-1877'] },
-        { text: 'Neither cause is confirmed.', citations: ['INC-2291', 'INC-1877'] },
+        { text: 'These records cannot confirm which applies to the current fault.', citations: ['INC-2291', 'INC-1877'] },
       ],
     };
     expect(validateSummary(raw, result('M-204')).ok).toBe(true);
@@ -28,7 +27,7 @@ describe('accepted summaries', () => {
   });
 
   it('accepts a German decimal comma when the record has that number', () => {
-    expect(rules(one('Vibration is 8,4 mm/s.', 'SR-M204-01'))).toEqual([]);
+    expect(rules(one('Vibration is 8,4 mm/s.', 'SR-M204-01'))).not.toContain('number');
   });
 });
 
@@ -36,7 +35,7 @@ describe('shape', () => {
   it.each([
     ['null', null],
     ['no sentences', { sentences: [] }],
-    ['four sentences', { sentences: Array(4).fill({ text: 'Vibration is high.', citations: ['SR-M204-01'] }) }],
+    ['three sentences', { sentences: Array(3).fill({ text: 'Records are limited here.', citations: ['SR-M204-01'] }) }],
     ['no citations', one('Vibration is high.')],
     ['empty text', one(' ', 'SR-M204-01')],
   ])('rejects %s', (_name, raw) => {
@@ -79,7 +78,7 @@ describe('numbers', () => {
   });
 
   it('does not read digits in IDs as numbers', () => {
-    expect(rules(one('Vibration on M-204 is high.', 'SR-M204-01'))).toEqual([]);
+    expect(rules(one('Vibration on M-204 is high.', 'SR-M204-01'))).not.toContain('number');
   });
 
   it('accepts a date from the cited record', () => {
@@ -139,7 +138,28 @@ describe('cause coverage', () => {
 
   it('accepts naming every allowed cause, or none', () => {
     expect(rules(one('Past records list bearing wear and lubrication problem as possible causes.', 'INC-2291', 'INC-1877'))).toEqual([]);
-    expect(rules(one('Vibration is 8.4 mm/s.', 'SR-M204-01'))).toEqual([]);
+    expect(rules(one('These records cannot show the current fault.', 'SR-M204-01'))).toEqual([]);
+  });
+});
+
+describe('restated readings', () => {
+  it.each([
+    'Vibration is 8.4 mm/s.',
+    'Vibration is 8.4 mm/s against a demo limit of 4.5.',
+    'Motor housing vibration velocity is 8.4 mm/s RMS, exceeding the demo limit of 4.5.',
+    'Temperature is 78 °C with a demo limit of 75.',
+    'Vibration and temperature readings are above their demo limits on this motor.',
+    'Vibration is high.',
+  ])('rejects: %s', (text) => {
+    expect(rules(one(text, 'SR-M204-01'))).toContain('restates_reading');
+  });
+
+  it('keeps a sentence that adds something beyond the reading', () => {
+    expect(rules(one('These records cannot show why vibration rose on this motor.', 'SR-M204-01'))).not.toContain('restates_reading');
+  });
+
+  it('does not treat the insufficient-evidence statement as a reading', () => {
+    expect(rules(one(INSUFFICIENT_SENTENCE, 'SR-M310-01'), 'M-310')).not.toContain('restates_reading');
   });
 });
 
@@ -171,9 +191,15 @@ describe('prepared summary', () => {
 
   it('names causes only as possible on M-204', () => {
     expect(preparedSummary(result('M-204')).map((sentence) => sentence.text)).toEqual([
-      'Vibration is 8.4 mm/s (demo limit 4.5) and temperature is 78 °C (demo limit 75).',
-      'Past records list bearing wear and lubrication problem as possible causes.',
-      'Neither is confirmed.',
+      'Past records list different possible causes: bearing wear, lubrication problem.',
+      'They cannot show which, if either, applies to the current fault.',
+    ]);
+  });
+
+  it('uses the singular for one cause on F-118', () => {
+    expect(preparedSummary(result('F-118')).map((sentence) => sentence.text)).toEqual([
+      'A past record lists one possible cause: nozzle blockage.',
+      'It cannot show whether that applies to the current fault.',
     ]);
   });
 

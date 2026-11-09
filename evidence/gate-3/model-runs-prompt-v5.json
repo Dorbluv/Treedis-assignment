@@ -1,0 +1,239 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "promptVersion": "v5",
+  "systemPrompt": "You help a technician who has just received a machine alert. The screen already shows the readings, limits, dates, fixes and downtime. Do not repeat any of them.\nReturn at most 2 short English sentences, one per array item, each at most 110 characters. Some records are in German: use their meaning, in English.\n\nIf allowed_causes is not empty:\n- Sentence 1 says what the cited past records have in common or where they differ. It names every allowed cause, favors none, and uses the word \"possible\".\n- Sentence 2 says what these records cannot tell the technician about the current fault.\n\nIf allowed_causes is empty:\n- Sentence 1 must be exactly: \"Insufficient asset-specific evidence to recommend a likely cause.\"\n- Sentence 2 says what is missing from the records for this machine. Name no cause or fault.\n\nRules for every sentence:\n- List in \"citations\" the IDs of the records that support it. A sentence naming a cause must cite that cause's record. Do not put record IDs in the text.\n- Write no numbers, dates or counts.\n- You never decide what is wrong now. Mention only causes in allowed_causes and no other cause or fault, including alignment. Never write traced to, caused by or due to.\n- Give no instructions, inspection steps or advice about what anyone should do.\n- Use correct singular and plural grammar. One cause is \"a possible cause\" and several are \"possible causes\". One record is \"this record\" and several are \"these records\". Verbs agree with their subjects.",
+  "excerpts": {
+    "SR-M204-01": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
+    "INC-2291": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
+    "INC-1877": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
+    "INC-2310": "Vibration noted at G-204 during a routine round. An oil seal on the gearbox output shaft was leaking. Seal replaced.",
+    "ASM-0412": "Assembly check on C-204: drive train alignment between components drifted after belt replacement. Misalignment on this conveyor can raise vibration across the drive train.",
+    "NOTE-5521": "Motor on line 2 noisy near end of shift.",
+    "SOP-014-C": "Vor Beginn der Inspektion ist der Motor nach dem standortgenehmigten Verfahren freizuschalten und gegen Wiedereinschalten zu sichern.",
+    "SOP-014-B": "Motor freischalten. Lagergehäuse prüfen. Ausrichtung prüfen.",
+    "SOP-022": "Isolate and lock out M-310 using the site-approved procedure before inspection. Check bearing housing and mounting bolts.",
+    "INC-1650": "Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared.",
+    "SR-M310-01": "Motor housing: vibration velocity 6.2 mm/s RMS (demo limit 4.5).",
+    "SR-F118-01": "Nozzle bank: pressure 3.8 bar (demo limit 3.0)."
+  },
+  "runs": [
+    {
+      "assetId": "M-204",
+      "run": 1,
+      "at": "2026-11-09T17:05:26.067Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Bearing wear and lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 2038
+    },
+    {
+      "assetId": "M-204",
+      "run": 2,
+      "at": "2026-11-09T17:05:35.110Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1173
+    },
+    {
+      "assetId": "M-204",
+      "run": 3,
+      "at": "2026-11-09T17:05:43.289Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell what is happening now.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1077
+    },
+    {
+      "assetId": "M-310",
+      "run": 1,
+      "at": "2026-11-09T17:05:51.368Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022"
+            ]
+          },
+          {
+            "text": "These records lack historical failure details and previous event logs for this machine.",
+            "citations": [
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 861
+    },
+    {
+      "assetId": "M-310",
+      "run": 2,
+      "at": "2026-11-09T17:05:59.230Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "These records lack historical maintenance events and past failure details for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1240
+    },
+    {
+      "assetId": "M-310",
+      "run": 3,
+      "at": "2026-11-09T17:06:07.482Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records lack historical fault logs for this specific machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 969
+    },
+    {
+      "assetId": "F-118",
+      "run": 1,
+      "at": "2026-11-09T17:06:15.457Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot confirm if this incident applies to the current fault.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 884
+    },
+    {
+      "assetId": "F-118",
+      "run": 2,
+      "at": "2026-11-09T17:06:23.350Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the current pressure is high.",
+            "citations": [
+              "INC-1650",
+              "SR-F118-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 973
+    },
+    {
+      "assetId": "F-118",
+      "run": 3,
+      "at": "2026-11-09T17:06:31.332Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the current fault occurred.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1078
+    }
+  ]
+}
