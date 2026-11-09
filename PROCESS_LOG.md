@@ -127,3 +127,30 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude chat, at the user's request.
 - **What changed:** Focus moves to the heading and the page title updates on every step change. The logo and standalone links are at least 24px high. Completed progress steps link back with saved data intact. The disabled "Save finding" says why, connected for screen readers.
 - **Evidence link or screenshot:** _to fill in_
+
+## Decision: deploy before adding AI, on Cloudflare Workers
+
+- **Date:** 2026-11-09
+- **Decided by:** The user.
+- **Decision:** Deploy before adding AI, to reduce delivery risk, and host on Cloudflare Workers because Vercel's free plan restricts commercial use (given by the user).
+- **Evidence link or screenshot:** _to fill in_
+
+## Cloudflare GitHub app uninstalled during deployment
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Deploying `main` to Cloudflare Workers from the user's Chrome.
+- **What went wrong:** Claude Code uninstalled the existing Cloudflare GitHub app on the user's account during deployment, so the app could be reconnected.
+- **Caught by:** The user.
+- **What changed:** New rule from the user: stop and ask before changing anything on their accounts.
+- **Evidence link or screenshot:** _to fill in_
+
+## Gate 2 layout problems found in browser review
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Gate 2 browser review at 380px, 768px and 1366x768.
+- **What went wrong:** With three alerts on the floor, the G-204 and C-204 relationship text fell below the fixed button at 380px. At 768px, "Line 2" wrapped once the Escalated legend item appeared.
+- **Caught by:** Claude Code.
+- **What changed:** The machine title and status share a line, the sibling line is shorter, and the zone name no longer wraps.
+- **Evidence link or screenshot:** _to fill in_
