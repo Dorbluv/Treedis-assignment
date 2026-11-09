@@ -76,12 +76,33 @@ Test: AI makes evidence easier to understand without changing applicability or p
 ## Technical constraints
 - Vite, React and TypeScript. Records in local JSON. Saved state in localStorage.
 - `npm install` then `npm run dev` must run the app. Also deploy to a public URL.
-- The layout is a simple 2D plant plan. It is the main navigation. No 3D.
-- Must work at phone width (about 380px) as well as desktop.
+- The layout is a simple 2D plant floor. It is the main navigation. No 3D.
+- Must work on desktop, tablet (768px and up) and phone (about 380px).
 - The Gemini key lives only in a server-side function. It must never reach the browser or the repo.
-- Show one persistent banner: "Demonstration environment. Equipment readings, incidents, and procedures are synthetic. Not for operational use."
+- Show one persistent banner: "Demo with synthetic data. Not for operational use."
 - The UI says "Review and save inspection plan." Do not claim a technician reviewed it.
 - Plain language in the UI. Avoid "AI-powered", "enterprise-grade" and similar claims.
+
+## Design direction
+A modern control surface for a plant, not an admin template.
+- Dark theme with lifted blue-graphite surfaces. Tokens: page #111C28, panel #1A2937, raised #243648, text #E6EDF4, muted #A9B8C7, line #33475B (dividers only), control line #7A90A6 (control and equipment outlines), selection blue #7DB7E8, alert coral #F2786D.
+- Breezy: a technician understands each screen in seconds. Short phrases, numbers, icons and visual structure instead of sentences. Detail lives one tap away.
+- Coral is for abnormal state only, always with its triangle and text. Blue is selected, current or done. The plant floor also uses color to feel alive: tinted zones for each line and a green dot for machines with no alert. Floor status comes from alert data.
+- Depth comes from lighter surfaces, not heavy shadows. No identical card grids, decorative gradients or all-caps labels. The only motion is the conveyor belt and the alert pulse, both stopped under reduced motion.
+- One font, Archivo Variable, with tabular numerals.
+- All text and controls meet WCAG AA, with visible keyboard focus. Respect reduced motion.
+
+Layout and flow:
+- Tablet and desktop: plant floor always visible on the left, work panel on the right. Phone: one column with a compact machine header.
+- Four-step progress on every flow screen: Machine, Evidence, Plan, Finding.
+- One primary action per screen, always in the same place and in view: pinned at the bottom of the work panel, or in a fixed bottom bar on phone. The demo banner must not cover content.
+- Phone: tap targets at least 44px, note field text at least 16px, fixed bar respects the safe area.
+
+Content:
+- Evidence opens with the alert, the readings against demonstration limits, then compact cause cards. Never show confidence percentages or rank causes. Evidence groups are collapsed by default, with a count and preview.
+- A cause's check comes from the SOP step it links to. Reading status is computed from value and limit.
+- The plan shows numbered steps with short titles, and an English / Deutsch switch that shows the whole plan in one language.
+- Lead with what happened. Record IDs are secondary. Sentence case, plain verbs, no em dashes, no filler.
 
 ## Not in v1
 Predictive maintenance, live IoT or CMMS integrations, user accounts, assignment workflows, KPI dashboards, general chat, 3D twin.
@@ -92,3 +113,10 @@ Predictive maintenance, live IoT or CMMS integrations, user accounts, assignment
 - Make small commits with clear messages.
 - After each meaningful AI mistake or direction change, add an entry to `PROCESS_LOG.md`: date, tool, prompt or context, what went wrong, what changed, evidence link or screenshot. Only record things that actually happened.
 - List all third-party code, templates and data in `README.md` under Credits.
+- Never use em dashes in any file, UI text or message.
+- Every number in the UI or docs is sourced, computed, or labeled as a demonstration value.
+- Label claims in docs as given, hypothesized, assumed or synthetic. Keep each fact in one place. Do not use unverified secondhand claims.
+- Before any large change, list gaps and assumptions explicitly.
+- Keep logic checks at unit level. End-to-end checks are only for real user flows.
+- Passing tests do not prove usability. I make the final call on every gate.
+- In PROCESS_LOG.md, record who caught each issue: me, Claude Code, or another named tool.

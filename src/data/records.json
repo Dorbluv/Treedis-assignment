@@ -1,0 +1,240 @@
+[
+  {
+    "id": "SR-M204-01",
+    "kind": "sensor",
+    "title": "Readings at the alert, drive-end bearing housing",
+    "takeaway": "Vibration and temperature over limit",
+    "assetId": "M-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "en",
+    "excerpt": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
+    "englishExplanation": "Vibration and temperature are above their demonstration limits on this motor. Current is within its limit.",
+    "limitation": "Synthetic demo readings. They show what is high, not why.",
+    "readings": [
+      { "label": "Vibration", "unit": "mm/s", "value": 8.4, "limit": 4.5, "history": [3.1, 3.2, 3.2, 3.6, 4.2, 5.4, 7.0, 8.4] },
+      { "label": "Temperature", "unit": "°C", "value": 78, "limit": 75, "history": [68, 68, 69, 70, 72, 74, 76, 78] },
+      { "label": "Current", "unit": "A", "value": 12.1, "limit": 14, "history": [11.8, 11.9, 11.8, 12.0, 12.1, 12.0, 12.1, 12.1] }
+    ]
+  },
+  {
+    "id": "INC-2291",
+    "kind": "incident",
+    "title": "Bearing wear after high vibration",
+    "takeaway": "Worn bearing",
+    "assetId": "M-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "en",
+    "excerpt": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
+    "englishExplanation": "A past high-vibration event on this motor was traced to a worn bearing.",
+    "limitation": "A past incident is a possible explanation only. It does not show what is happening now.",
+    "possibleCause": { "key": "bearing_wear", "label": "Bearing wear" },
+    "occurredOn": "2025-03-12",
+    "fix": "Bearing replaced",
+    "downtimeHours": 6.5,
+    "testedByStepId": "SOP-014-C-2",
+    "noteSuggestions": ["Play at drive-end bearing", "Rough running by hand", "Housing hot to touch"]
+  },
+  {
+    "id": "INC-1877",
+    "kind": "incident",
+    "title": "Schmierungsproblem bei erhöhter Vibration",
+    "takeaway": "Low lubricant",
+    "assetId": "M-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "de",
+    "excerpt": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
+    "englishExplanation": "Increased vibration on M-204 was traced to insufficient bearing lubrication, with the lubricant below the mark. After lubricant was topped up, vibration returned to the normal range.",
+    "limitation": "A past incident is a possible explanation only. The English text is a prepared explanation, not an approved translation.",
+    "possibleCause": { "key": "lubrication", "label": "Lubrication problem" },
+    "occurredOn": "2024-09-03",
+    "fix": "Lubricant topped up",
+    "downtimeHours": 1.5,
+    "testedByStepId": "SOP-014-C-3",
+    "noteSuggestions": ["Lubricant below the mark", "Lubricant dark or dirty", "Dry at the bearing"]
+  },
+  {
+    "id": "INC-2310",
+    "kind": "incident",
+    "title": "Gearbox oil seal leak with vibration",
+    "takeaway": "Gearbox report that mentions vibration",
+    "assetId": "G-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "en",
+    "excerpt": "Vibration noted at G-204 during a routine round. An oil seal on the gearbox output shaft was leaking. Seal replaced.",
+    "englishExplanation": "A vibration event on the gearbox was traced to a leaking oil seal.",
+    "limitation": "This describes the gearbox, not the motor. It does not mention M-204."
+  },
+  {
+    "id": "ASM-0412",
+    "kind": "assembly",
+    "title": "Conveyor drive alignment check",
+    "takeaway": "Conveyor alignment drifted after belt change",
+    "assetId": "C-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "en",
+    "excerpt": "Assembly check on C-204: drive train alignment between components drifted after belt replacement. Misalignment on this conveyor can raise vibration across the drive train.",
+    "englishExplanation": "Alignment on the parent conveyor has drifted before, and misalignment can raise vibration in the drive train.",
+    "limitation": "This describes the whole conveyor. It is context and does not describe this motor directly."
+  },
+  {
+    "id": "NOTE-5521",
+    "kind": "note",
+    "title": "Shift note: motor on line 2 noisy",
+    "takeaway": "Noisy motor on line 2",
+    "assetId": null,
+    "candidateLine": "2",
+    "candidateType": "motor",
+    "linkedAssetIds": [],
+    "conditions": ["noise"],
+    "language": "en",
+    "excerpt": "Motor on line 2 noisy near end of shift.",
+    "englishExplanation": "A technician noted a noisy motor on line 2 without saying which one.",
+    "limitation": "Unverified technician observation. Line 2 has more than one motor, so this may not be about this asset."
+  },
+  {
+    "id": "SOP-014-C",
+    "kind": "sop",
+    "title": "SOP-014 Inspektion Antriebsmotor, Revision C",
+    "takeaway": "Current procedure",
+    "sopNumber": "SOP-014",
+    "revision": "C",
+    "status": "current",
+    "assetId": "M-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "de",
+    "excerpt": "Vor Beginn der Inspektion ist der Motor nach dem standortgenehmigten Verfahren freizuschalten und gegen Wiedereinschalten zu sichern.",
+    "englishExplanation": "Before the inspection starts, the motor must be isolated and locked out using the site-approved procedure. The SOP then covers bearing, lubrication and alignment checks.",
+    "limitation": "Synthetic procedure for demonstration. The English text is a prepared explanation, and the German text is the authoritative version.",
+    "steps": [
+      {
+        "id": "SOP-014-C-1",
+        "title": "Lock out the motor",
+        "titleGerman": "Motor freischalten und sichern",
+        "original": "Motor nach dem standortgenehmigten Verfahren freischalten und gegen Wiedereinschalten sichern, bevor die Inspektion beginnt.",
+        "english": "Isolate and lock out using the site-approved procedure before the inspection."
+      },
+      {
+        "id": "SOP-014-C-2",
+        "title": "Check the bearing",
+        "titleGerman": "Lager prüfen",
+        "original": "Lagergehäuse auf der Antriebsseite auf Hitzespuren und Spiel prüfen. Welle von Hand drehen und auf raues Laufen achten.",
+        "english": "Check the housing for signs of heat and play. Then turn the shaft by hand and feel for roughness.",
+        "goodEnglish": "smooth, no play",
+        "goodGerman": "gleichmäßig, kein Spiel",
+        "ifNotEnglish": "points to bearing wear",
+        "ifNotGerman": "deutet auf Lagerverschleiß hin",
+        "checkPhrase": "feel for rough running or play"
+      },
+      {
+        "id": "SOP-014-C-3",
+        "title": "Check lubrication",
+        "titleGerman": "Schmierung prüfen",
+        "original": "Schmierstoffstand und Zustand des Schmierstoffs am Lager prüfen.",
+        "english": "Check lubricant level and condition at the bearing.",
+        "goodEnglish": "at the mark, clean",
+        "goodGerman": "auf Sollstand, sauber",
+        "ifNotEnglish": "points to a lubrication problem",
+        "ifNotGerman": "deutet auf ein Schmierungsproblem hin",
+        "checkPhrase": "look for low or dirty lubricant"
+      },
+      {
+        "id": "SOP-014-C-4",
+        "title": "Check alignment",
+        "titleGerman": "Ausrichtung prüfen",
+        "original": "Ausrichtung zwischen Motor und Getriebe an der Kupplung prüfen.",
+        "english": "Check motor-to-gearbox alignment at the coupling.",
+        "checks": "alignment",
+        "contextRecordId": "ASM-0412"
+      },
+      {
+        "id": "SOP-014-C-5",
+        "title": "Record and release",
+        "titleGerman": "Festhalten und freigeben",
+        "original": "Beobachtungen festhalten. Anlage erst nach Freigabe gemäß Standortverfahren wieder in Betrieb nehmen.",
+        "english": "Record what you saw. Return to service only after site release."
+      }
+    ]
+  },
+  {
+    "id": "SOP-014-B",
+    "kind": "sop",
+    "title": "SOP-014 Inspektion Antriebsmotor, Revision B",
+    "takeaway": "Older procedure",
+    "sopNumber": "SOP-014",
+    "revision": "B",
+    "status": "superseded",
+    "assetId": "M-204",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "de",
+    "excerpt": "Motor freischalten. Lagergehäuse prüfen. Ausrichtung prüfen.",
+    "englishExplanation": "An older revision: isolate the motor, check the bearing housing, check the alignment. It has no lubrication check.",
+    "limitation": "Superseded by revision C. Do not use for inspection.",
+    "steps": [
+      {
+        "id": "SOP-014-B-1",
+        "original": "Motor freischalten und sichern.",
+        "english": "Isolate and secure the motor."
+      },
+      {
+        "id": "SOP-014-B-2",
+        "original": "Lagergehäuse prüfen.",
+        "english": "Check the bearing housing."
+      },
+      {
+        "id": "SOP-014-B-3",
+        "original": "Ausrichtung prüfen.",
+        "english": "Check the alignment."
+      }
+    ]
+  },
+  {
+    "id": "SOP-022",
+    "kind": "sop",
+    "title": "SOP-022 Motor inspection",
+    "takeaway": "Current procedure for M-310",
+    "sopNumber": "SOP-022",
+    "revision": "A",
+    "status": "current",
+    "assetId": "M-310",
+    "linkedAssetIds": [],
+    "conditions": ["vibration"],
+    "language": "en",
+    "excerpt": "Isolate and lock out M-310 using the site-approved procedure before inspection. Check bearing housing and mounting bolts.",
+    "englishExplanation": "The current inspection procedure for motor M-310.",
+    "limitation": "Synthetic procedure for demonstration. Applies to M-310 only.",
+    "steps": [
+      {
+        "id": "SOP-022-1",
+        "title": "Lock out the motor",
+        "original": "Isolate and lock out M-310 using the site-approved procedure before inspection.",
+        "english": "Isolate and lock out M-310 using the site-approved procedure before inspection."
+      },
+      {
+        "id": "SOP-022-2",
+        "title": "Check bearing and bolts",
+        "original": "Check the bearing housing and mounting bolts.",
+        "english": "Check the bearing housing and mounting bolts."
+      }
+    ]
+  },
+  {
+    "id": "INC-1650",
+    "kind": "incident",
+    "title": "Filler nozzle blockage",
+    "takeaway": "Blocked nozzle stopped the filler",
+    "assetId": "F-118",
+    "linkedAssetIds": [],
+    "conditions": ["blockage"],
+    "language": "en",
+    "excerpt": "Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared.",
+    "englishExplanation": "A past stoppage on this filler was caused by a blocked nozzle.",
+    "limitation": "A past incident is a possible explanation only."
+  }
+]
