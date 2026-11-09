@@ -279,6 +279,13 @@ textarea::placeholder { color: var(--muted); }
 .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .chip { min-height: 44px; padding: 0.2rem 0.8rem; border: 1px solid var(--muted); border-radius: 22px; background: var(--card); color: var(--ink); font: inherit; font-size: 0.8125rem; cursor: pointer; }
 
+/* Evidence summary. The height is reserved, so nothing moves when it arrives. */
+.summary { display: flex; flex-direction: column; justify-content: space-between; gap: 0.3rem; min-height: var(--summary-height, 8.25rem); margin-top: 0.3rem; padding: 0.55rem 0.75rem; background: var(--card); border: 1px solid var(--line); border-radius: 8px; }
+.summary-loading { color: var(--muted); font-size: 0.875rem; }
+.summary-list { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.9375rem; line-height: 1.35; }
+.summary-label { color: var(--muted); font-size: 0.75rem; }
+.cite { position: relative; display: inline-block; margin-left: 0.35rem; color: var(--teal); font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+
 /* Snapshot and history */
 .machine-details { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 0 0.7rem; }
 .machine-details .snapshot { border: 0; padding: 0 0 0.3rem; border-radius: 0; }
@@ -367,7 +374,8 @@ a.history-entry:hover .history-main { text-decoration: underline; }
   .compare { grid-template-columns: minmax(0, 1fr); }
   .source-link { min-height: 44px; }
   .sop-link { min-height: 44px; }
-  .step-link::after, .note-line a::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+  .summary { --summary-height: 10.5rem; }
+  .step-link::after, .note-line a::after, .cite::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
   .step-link, .note-line a { position: relative; }
   .group-preview { flex-basis: 100%; padding-left: 1.45em; text-align: left; }
   .sheet { position: fixed; z-index: 10; border-left: 0; box-shadow: none; }

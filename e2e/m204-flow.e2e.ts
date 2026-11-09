@@ -76,6 +76,14 @@ for (const viewport of VIEWPORTS) {
   test(`M-204 alert workspace at ${viewport.width}x${viewport.height}`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
 
+    // Held open so the loading state can be measured, then failed so no real model is called.
+    let releaseSummary = () => {};
+    const summaryHeld = new Promise<void>((resolve) => { releaseSummary = resolve; });
+    await page.route('**/api/summary', async (route) => {
+      await summaryHeld;
+      await route.abort();
+    });
+
     await page.goto('/');
     await expectHeading(page, '3 active alerts');
     await checkStage(page, viewport, '01-home');
@@ -83,6 +91,12 @@ for (const viewport of VIEWPORTS) {
     await page.getByRole('link', { name: 'Open M-204 alert' }).click();
     await expectHeading(page, 'M-204 abnormal vibration');
     await expect(page.getByRole('tab', { name: 'Investigate' })).toHaveAttribute('aria-selected', 'true');
+    const summary = page.locator('.summary');
+    await expect(summary).toHaveAttribute('aria-busy', 'true');
+    const loading = await summary.boundingBox();
+    releaseSummary();
+    await expect(page.locator('.summary-label')).toHaveText('Prepared summary, AI unavailable');
+    expect((await summary.boundingBox())?.height, 'summary height jumped').toBe(loading?.height);
     await checkStage(page, viewport, '02-investigate');
     await checkActionBarStaysInView(page, viewport);
 

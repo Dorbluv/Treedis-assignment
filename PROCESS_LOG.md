@@ -214,3 +214,57 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude chat.
 - **What changed:** A selected machine with no alert gets a teal-tinted body and a bright outline. Coral stays on selected machines with an active alert. A unit test covers both.
 - **Evidence link or screenshot:** src/App.test.tsx, "selection color"
+
+## Declined to record an uninstall claim it could not support
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, with the claim coming from Claude chat
+- **Prompt or context:** A log request from Claude chat, passed on by the user, said Claude Code had uninstalled the Cloudflare GitHub app during deployment without asking first.
+- **What went wrong:** The claim was inaccurate. Claude Code had asked, and the user had replied "do what ever you need to finish with it".
+- **Caught by:** Claude Code.
+- **What changed:** Claude Code refused to record the "without asking" wording. It logged the uninstall without that phrase and told the user why.
+- **Evidence link or screenshot:** The "Cloudflare GitHub app uninstalled during deployment" entry in this file.
+
+## First real Gemini runs: all 9 failed
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling the Gemini API
+- **Prompt or context:** First real run of Gate 3, 3 runs each on M-204, M-310 and F-118, with `gemini-3.8-flash`, thinking level low and the 8-second timeout.
+- **What went wrong:** 0 of 9 calls returned a summary: 7 timed out at 8 seconds and 2 returned HTTP 503. A diagnostic on M-204 with a 40-second limit, 2 calls per setup, gave: `gemini-3.8-flash` low, one 503 and one no answer in 40 seconds. `gemini-3.6-flash` minimal, one 503 and one answer in 13.5 seconds. `gemini-3.6-flash` low, one 503 and one no answer in 40 seconds. `gemini-3.5-flash-lite`, 2 answers in 1.4 to 1.8 seconds. The 503 message reported high demand on the model.
+- **Caught by:** Claude Code.
+- **What changed:** The model is now `gemini-3.5-flash-lite`, with the 8-second timeout unchanged. The diagnosis covers one afternoon of free-tier traffic, so it does not show that the other models are always slow.
+- **Evidence link or screenshot:** evidence/gate-3/model-runs-first.json, evidence/gate-3/model-diagnostic-1.json
+
+## Debugging loop: a past incident written as a diagnosis
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** First prompt (v1, saved in evidence/gate-3/model-runs-first.json) said a cause may appear "only as a possible cause or as something seen in a past record".
+- **What went wrong:** Both M-204 calls in the diagnostic returned "Increased vibration was traced to insufficient bearing lubrication." The sentence names a cause and does not mark it as possible or past. The diagnosis check rejected it, so the prepared summary would have been shown.
+- **Caught by:** Claude Code's validator, in a real model run.
+- **What changed:** The check stayed as it was. Prompt v2 requires a sentence naming a cause to say "possible" or "past record", gives one example, and forbids "traced to", "caused by" and "due to".
+- **Better output:** 9 of 9 runs passed validation in 0.8 to 4.1 seconds. M-204 returned "A past record lists bearing wear as a possible cause." M-310 returned the required insufficient-evidence sentence every time and named no cause.
+- **Remaining limit:** The model copies the prompt's example almost word for word, and M-204 no longer states its readings. Passing validation does not show that it is useful. The next entry covers two further problems with this output.
+- **Evidence link or screenshot:** evidence/gate-3/model-diagnostic-1.json, evidence/gate-3/model-runs-prompt-v2.json
+
+## Two problems the validators missed in real output
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** Reviewing real output after prompt v2 passed 9 of 9.
+- **What went wrong:** In the app, F-118 showed "Nozzle pressure is 3.8 bar with a limit of 3 bar on this filler." It passed every check but dropped the required "demo" label. After prompt v3 fixed that, one M-204 run named only bearing wear and left out lubrication, which reads as ranking the causes. It also passed every check.
+- **Caught by:** Claude Code, the first in a screenshot review and the second reading raw run output.
+- **What changed:** Two new checks: every limit must be called a demo limit, and a summary must name all allowed causes or none. Prompts v3 and v4 say the same. The final v4 run passed 8 of 9 in 0.8 to 1.8 seconds. The one failure was M-310 run 1, where the model misspelled the required sentence as "recommend a likey cause". The instruction check rejected it because the exact phrase no longer matched, so the prepared summary would have been shown. That rejection was for an accidental reason, and I did not tune the check around one typo.
+- **Evidence link or screenshot:** evidence/gate-3/limit-unlabeled-1366-F-118.png, evidence/gate-3/model-runs-prompt-v3.json (M-204 run 1), evidence/gate-3/model-runs-prompt-v4.json
+
+## Prompt v5: the summary stops repeating the screen
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** After prompt v4 the output mostly repeated the readings and cause cards.
+- **What went wrong:** The summary was valid but added little. Claude Code flagged this in its report.
+- **Caught by:** Claude Code flagged it, and the user chose the change.
+- **What changed:** Prompt v5 returns at most two sentences: what the records have in common or where they differ across all allowed causes, and what they cannot tell the technician about the current fault. M-310 keeps the insufficient-evidence sentence and then states what is missing. A new check rejects a sentence that only restates a reading. All earlier checks stay. "Cannot confirm" now counts as a negation, so stating a limit of the evidence is not read as a diagnosis. The prepared fallback was rewritten to the same job, because its old text restated readings and would have failed the new check.
+- **Result:** 9 of 9 real runs passed validation in 0.9 to 2.0 seconds.
+- **Remaining limits:** Sentence 1 usually lists the causes and does not say how the records compare. One M-204 run wrote "lubrication problem" with no article. "These records cannot tell what is happening now" is vague. None of these fail a check.
+- **Evidence link or screenshot:** evidence/gate-3/model-runs-prompt-v5.json
