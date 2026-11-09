@@ -224,3 +224,25 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code.
 - **What changed:** Claude Code refused to record the "without asking" wording. It logged the uninstall without that phrase and told the user why.
 - **Evidence link or screenshot:** The "Cloudflare GitHub app uninstalled during deployment" entry in this file.
+
+## First real Gemini runs: all 9 failed
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling the Gemini API
+- **Prompt or context:** First real run of Gate 3, 3 runs each on M-204, M-310 and F-118, with `gemini-3.8-flash`, thinking level low and the 8-second timeout.
+- **What went wrong:** 0 of 9 calls returned a summary: 7 timed out at 8 seconds and 2 returned HTTP 503. A diagnostic on M-204 with a 40-second limit, 2 calls per setup, gave: `gemini-3.8-flash` low, one 503 and one no answer in 40 seconds. `gemini-3.6-flash` minimal, one 503 and one answer in 13.5 seconds. `gemini-3.6-flash` low, one 503 and one no answer in 40 seconds. `gemini-3.5-flash-lite`, 2 answers in 1.4 to 1.8 seconds. The 503 message reported high demand on the model.
+- **Caught by:** Claude Code.
+- **What changed:** The model is now `gemini-3.5-flash-lite`, with the 8-second timeout unchanged. The diagnosis covers one afternoon of free-tier traffic, so it does not show that the other models are always slow.
+- **Evidence link or screenshot:** evidence/gate-3/model-runs-first.json, evidence/gate-3/model-diagnostic-1.json
+
+## Debugging loop: a past incident written as a diagnosis
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** First prompt (v1, saved in evidence/gate-3/model-runs-first.json) said a cause may appear "only as a possible cause or as something seen in a past record".
+- **What went wrong:** Both M-204 calls in the diagnostic returned "Increased vibration was traced to insufficient bearing lubrication." The sentence names a cause and does not mark it as possible or past. The diagnosis check rejected it, so the prepared summary would have been shown.
+- **Caught by:** Claude Code's validator, in a real model run.
+- **What changed:** The check stayed as it was. Prompt v2 requires a sentence naming a cause to say "possible" or "past record", gives one example, and forbids "traced to", "caused by" and "due to".
+- **Better output:** 9 of 9 runs passed validation in 0.8 to 4.1 seconds. M-204 returned "A past record lists bearing wear as a possible cause." M-310 returned the required insufficient-evidence sentence every time and named no cause.
+- **Remaining limit:** The model copies the prompt's example almost word for word, and M-204 no longer states its readings. The output is safer but adds little beyond the cause cards. Passing validation does not show that it is useful.
+- **Evidence link or screenshot:** evidence/gate-3/model-diagnostic-1.json, evidence/gate-3/model-runs-prompt-v2.json

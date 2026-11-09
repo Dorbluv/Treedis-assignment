@@ -1,0 +1,115 @@
+[
+  {
+    "model": "gemini-3.8-flash",
+    "level": "LOW",
+    "i": 1,
+    "status": 503,
+    "ms": 4554,
+    "error": "UNAVAILABLE: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "model": "gemini-3.8-flash",
+    "level": "LOW",
+    "i": 2,
+    "ms": 40007,
+    "status": "aborted_40s"
+  },
+  {
+    "model": "gemini-3.6-flash",
+    "level": "MINIMAL",
+    "i": 1,
+    "status": 503,
+    "ms": 2399,
+    "error": "UNAVAILABLE: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "model": "gemini-3.6-flash",
+    "level": "MINIMAL",
+    "i": 2,
+    "status": 200,
+    "ms": 13546,
+    "usage": {
+      "promptTokenCount": 1037,
+      "candidatesTokenCount": 155,
+      "totalTokenCount": 1192,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 1037
+        }
+      ],
+      "serviceTier": "standard"
+    },
+    "raw": "{\n  \"sentences\": [\n    {\n      \"text\": \"Vibration velocity was 8.4 mm/s RMS and temperature was 78 °C on drive-end bearing housing.\",\n      \"citations\": [\"SR-M204-01\"]\n    },\n    {\n      \"text\": \"A past high-vibration event on motor M-204 was caused by bearing wear.\",\n      \"citations\": [\"INC-2291\"]\n    },\n    {\n      \"text\": \"An earlier increased vibration event on M-204 was due to a lubrication problem.\",\n      \"citations\": [\"INC-1877\"]\n    }\n  ]\n}",
+    "valid": true
+  },
+  {
+    "model": "gemini-3.6-flash",
+    "level": "LOW",
+    "i": 1,
+    "status": 503,
+    "ms": 3820,
+    "error": "UNAVAILABLE: This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+  },
+  {
+    "model": "gemini-3.6-flash",
+    "level": "LOW",
+    "i": 2,
+    "ms": 40016,
+    "status": "aborted_40s"
+  },
+  {
+    "model": "gemini-3.5-flash-lite",
+    "level": null,
+    "i": 1,
+    "status": 200,
+    "ms": 1380,
+    "usage": {
+      "promptTokenCount": 1037,
+      "candidatesTokenCount": 87,
+      "totalTokenCount": 1124,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 1037
+        }
+      ],
+      "serviceTier": "standard"
+    },
+    "raw": "{\"sentences\":[{\"text\":\"Vibration velocity is 8.4 mm/s RMS and temperature is 78 degrees Celsius.\",\"citations\":[\"SR-M204-01\"]},{\"text\":\"A past high-vibration event was traced to a worn bearing.\",\"citations\":[\"INC-2291\"]},{\"text\":\"Increased vibration was traced to insufficient bearing lubrication.\",\"citations\":[\"INC-1877\"]}]}",
+    "valid": false,
+    "failures": [
+      {
+        "rule": "diagnosis",
+        "detail": "names a cause without marking it as possible or past"
+      }
+    ]
+  },
+  {
+    "model": "gemini-3.5-flash-lite",
+    "level": null,
+    "i": 2,
+    "status": 200,
+    "ms": 1751,
+    "usage": {
+      "promptTokenCount": 1037,
+      "candidatesTokenCount": 87,
+      "totalTokenCount": 1124,
+      "promptTokensDetails": [
+        {
+          "modality": "TEXT",
+          "tokenCount": 1037
+        }
+      ],
+      "serviceTier": "standard"
+    },
+    "raw": "{\"sentences\":[{\"text\":\"Vibration velocity is 8.4 mm/s RMS and temperature is 78 °C.\",\"citations\":[\"SR-M204-01\"]},{\"text\":\"A past high-vibration event was traced to a worn bearing.\",\"citations\":[\"INC-2291\"]},{\"text\":\"Increased vibration was traced to insufficient bearing lubrication.\",\"citations\":[\"INC-1877\"]}]}",
+    "valid": false,
+    "failures": [
+      {
+        "rule": "diagnosis",
+        "detail": "names a cause without marking it as possible or past"
+      }
+    ]
+  }
+]

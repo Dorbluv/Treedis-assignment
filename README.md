@@ -23,7 +23,7 @@ npm run test:e2e
 On the Investigate tab, Gemini rewrites records that retrieval already chose into up to three short sentences. It never decides what counts as evidence and never creates a procedure.
 
 - The browser sends only an asset ID to `POST /api/summary`. The Worker runs `retrieve()` on bundled data and sends only that asset's included records to the model. Inspection steps are withheld.
-- Model: `gemini-3.8-flash`, confirmed on Google's models and pricing pages on 2026-11-09. Timeout: 8 seconds.
+- Model: `gemini-3.5-flash-lite`, on the free tier per Google's pricing page and listed there for new projects, checked 2026-11-09. Timeout: 8 seconds. In testing on that date, `gemini-3.8-flash` and `gemini-3.6-flash` mostly returned 503 or timed out.
 - Each asset's result is cached on the server, 24 hours when valid and 5 minutes after a failure. Assumed: the cache is the isolate's memory plus the Cloudflare Cache API, which is per data center, so a few extra calls are possible.
 - If the call fails, times out or fails validation, the app shows a deterministic summary labeled "Prepared summary, AI unavailable". The flow never waits for AI.
 
@@ -44,7 +44,29 @@ These checks do not fully prove that each excerpt supports its sentence. They ar
 
 ### Human review
 
-Not filled yet: this table is built from the real model runs. The verdict column is for the human reviewer.
+Built from the real model runs in `evidence/gate-3/model-runs-prompt-v2.json`, one row per distinct sentence across the 9 runs. The verdict column is for the human reviewer.
+
+**M-204**
+
+| Sentence | Cited excerpt | Supported (yes or no) |
+|---|---|---|
+| A past record lists bearing wear as a possible cause. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. |  |
+| A past record lists lubrication problem as a possible cause. | INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. |  |
+
+**M-310**
+
+| Sentence | Cited excerpt | Supported (yes or no) |
+|---|---|---|
+| Insufficient asset-specific evidence to recommend a likely cause. | SR-M310-01: Motor housing: vibration velocity 6.2 mm/s RMS (demo limit 4.5). |  |
+
+**F-118**
+
+| Sentence | Cited excerpt | Supported (yes or no) |
+|---|---|---|
+| A past record lists nozzle blockage as a possible cause. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. |  |
+| Nozzle pressure is 3.8 bar with a demo limit of 3 bar. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
+| Nozzle pressure is 3.8 bar against a demo limit of 3.0 bar. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
+| Nozzle pressure is 3.8 bar with a demo limit of 3.0. | SR-F118-01: Nozzle bank: pressure 3.8 bar (demo limit 3.0). |  |
 
 ## Credits
 
