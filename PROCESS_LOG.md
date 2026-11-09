@@ -28,3 +28,12 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **What went wrong:** The tests could not start. Node reported "An Application Control policy has blocked this file" for Rollup's unsigned native binary. esbuild's binary is also unsigned.
 - **What changed:** Given the options, the user chose WASM builds. `package.json` now uses npm overrides for `@rollup/wasm-node` and `esbuild-wasm`. Smart App Control was left on.
 - **Evidence link or screenshot:** _to fill in_
+
+## Passing tests did not prove usability
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Gate 1 flow, tried by hand after the automated click-through passed.
+- **What went wrong:** The automated click-through passed, but when the user tried the flow they could not find the plan or finding steps. A browser review found the finding was hidden below the screen after saving. Passing tests did not prove usability.
+- **What changed:** The flow was changed to one action per screen.
+- **Evidence link or screenshot:** _to fill in_
