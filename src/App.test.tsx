@@ -15,17 +15,34 @@ let container: HTMLDivElement;
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 20));
 
+/** The hash the app has been told about. jsdom fires hashchange later than it updates the URL. */
+let deliveredHash = '';
+const trackHash = () => {
+  deliveredHash = window.location.hash;
+};
+
+/** A fixed wait loses this race on a busy machine, so wait for the navigation to arrive. */
+async function navigationArrived(target?: string | null) {
+  const deadline = Date.now() + 3000;
+  while (Date.now() < deadline && (deliveredHash !== window.location.hash || (target != null && deliveredHash !== target))) {
+    await settle();
+  }
+}
+
 async function go(hash: string) {
   await act(async () => {
     window.location.hash = hash;
     await settle();
+    await navigationArrived(hash);
   });
 }
 
 async function click(element: Element) {
+  const target = element.matches('a[href^="#"]') ? element.getAttribute('href') : null;
   await act(async () => {
     (element as HTMLElement).click();
     await settle();
+    await navigationArrived(target);
   });
 }
 
@@ -58,6 +75,9 @@ beforeEach(async () => {
   vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined);
   localStorage.clear();
   window.location.hash = '';
+  await settle();
+  trackHash();
+  window.addEventListener('hashchange', trackHash);
   container = document.body.appendChild(document.createElement('div'));
   root = createRoot(container);
   await act(async () => {
@@ -68,6 +88,7 @@ beforeEach(async () => {
 
 afterEach(async () => {
   await act(async () => root.unmount());
+  window.removeEventListener('hashchange', trackHash);
   container.remove();
   vi.restoreAllMocks();
 });
@@ -293,6 +314,8 @@ describe('Plant floor', () => {
     for (const id of ['C-204', 'M-204', 'G-204', 'M-310']) expect(zone2.textContent).toContain(id);
     expect(container.querySelectorAll('.zone-2 .zone-name')).toHaveLength(1);
     expect(container.querySelector('.zone-1')?.textContent).toContain('F-118');
+    expect(container.querySelector('.legend')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('No alert Alert Inspected');
+    expect(container.querySelector('.legend .status-inspected')).not.toBeNull();
     expect(container.querySelector('.zone-1')?.classList.contains('zone-strip')).toBe(true);
     expect(container.querySelector('.zone-2')?.classList.contains('zone-strip')).toBe(false);
     expect(container.querySelectorAll('.belt .belt-track')).toHaveLength(1);
@@ -468,12 +491,12 @@ describe('Reset demo', () => {
     await click(primary());
     await click(outcomeButton('Bearing wear'));
     await click(primary());
-    expect(container.querySelector('.status-inspected')).not.toBeNull();
+    expect(container.querySelector('.machine .status-inspected')).not.toBeNull();
 
     await click(container.querySelector('button.reset') as Element);
 
     const machine = container.querySelector('.machine.has-alert') as HTMLElement;
-    expect(container.querySelector('.status-inspected')).toBeNull();
+    expect(container.querySelector('.machine .status-inspected')).toBeNull();
     expect(machine.querySelector('.status-alert')).not.toBeNull();
     expect(machine.querySelector('.machine-alert-text')?.textContent).toBe('Abnormal vibration');
     expect(primary().textContent).toBe('Open M-204 alert');
