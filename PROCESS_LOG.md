@@ -174,3 +174,33 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code.
 - **What changed:** On phone, a selected machine shows only its own group on the floor. The blocked step has more room.
 - **Evidence link or screenshot:** _to fill in_
+
+## Wizard replaced with an alert workspace
+
+- **Date:** 2026-11-09
+- **Tool:** Claude for comparing design directions, Claude Code for the rebuild
+- **Prompt or context:** User review of the working Gate 2 wizard.
+- **What went wrong:** The user rejected the working wizard as too junior to be a real product.
+- **Caught by:** The user.
+- **What changed:** We kept the tested logic and replaced the UI model with an alert workspace, after comparing three design directions in Claude.
+- **Evidence link or screenshot:** evidence/1366-02-investigate.png
+
+## Saved data could have shown a procedure on F-118
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Writing the test that F-118 can never reach a plan.
+- **What went wrong:** The first workspace code used the SOP named in a saved plan before checking that the machine had an applicable SOP. A saved entry for F-118 naming another SOP would have unlocked its plan tab.
+- **Caught by:** Claude Code.
+- **What changed:** A saved plan is only read when an applicable SOP exists. A unit test covers forged saved data.
+- **Evidence link or screenshot:** src/App.test.tsx, "can never reach a plan through forged saved data"
+
+## Screenshot review of the workspace
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Reviewing the workspace at 380px, 768px and 1366x768 after all tests passed.
+- **What went wrong:** The Line 1 and Line 2 names were hidden behind machines. On phone, coral appeared without a triangle, the activity text was cut mid-word, and Home said "Plant floor" twice. The headline lost the machine ID after a save. Script focus drew a box around the h1.
+- **Caught by:** Claude Code.
+- **What changed:** Zone names moved to open floor and are hidden when a crop would cut them. The coral text now has a triangle or uses a neutral color. The activity line wraps on phone, the location line names the machine after a save, and the h1 has no focus box because it is not a tab stop.
+- **Evidence link or screenshot:** evidence/380-05-saved.png

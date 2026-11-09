@@ -32,6 +32,7 @@ Third-party code, all installed through npm:
 
 Font:
 
-- Archivo Variable by Omnibus-Type (SIL Open Font License 1.1), through @fontsource-variable/archivo
+- Sora Variable by The Sora Project Authors (SIL Open Font License 1.1), through @fontsource-variable/sora
+- Instrument Sans Variable by The Instrument Sans Project Authors (SIL Open Font License 1.1), through @fontsource-variable/instrument-sans
 
-No templates or third-party data are used. The plant floor, icons, meters and sparklines are hand-written HTML, CSS and SVG, and every equipment record is synthetic and written for this project.
+No templates or third-party data are used. The plant floor, icons, readings and sparklines are hand-written HTML, CSS and SVG, and every equipment record is synthetic and written for this project.

@@ -336,6 +336,9 @@ a.history-entry:hover .history-main { text-decoration: underline; }
   .app[data-state='machine'] .floor-head h2 { display: none; }
   .legend { font-size: 0.75rem; gap: 0.1rem 0.6rem; }
   .activity { padding: 0.15rem 0.5rem 0; }
+  .activity-list { height: auto; }
+  .activity-list li { white-space: normal; }
+  .activity-list li:not(:first-child) { display: none; }
   .reset { min-height: 44px; }
 
   .panel-body { padding-bottom: calc(var(--bar-height) + env(safe-area-inset-bottom, 0px)); }
