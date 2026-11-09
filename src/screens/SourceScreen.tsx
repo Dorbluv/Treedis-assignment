@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
 import type { RetrievalResult } from '../domain/types';
+import { recordLine } from './format';
 
 export function SourceScreen({
   result,
@@ -29,6 +30,7 @@ export function SourceScreen({
   if (!item) {
     return (
       <Screen action={action}>
+        <h1>Source not found</h1>
         <p>This source is not part of the records for {result.asset.id}.</p>
       </Screen>
     );
@@ -40,7 +42,7 @@ export function SourceScreen({
 
   return (
     <Screen action={action}>
-      <h1>{record.takeaway}</h1>
+      <h1>{recordLine(record)}</h1>
       <p className="row-meta">
         <span className="tag">{item.label}</span>
         <span className="row-id">{record.title}</span>

@@ -1,4 +1,4 @@
-import { localDate, outcomeOptions, shortDate } from '../screens/format';
+import { formatDate, formatDay, outcomeOptions } from '../screens/format';
 import type { Finding, RetrievalResult } from '../domain/types';
 
 /** A technician finding: what was observed in this inspection. It is never evidence. */
@@ -8,7 +8,7 @@ export function FindingEntry({ result, finding }: { result: RetrievalResult; fin
   const label = finding.outcome === 'neither' ? 'Neither cause found' : outcome?.label ?? finding.outcome;
   return (
     <div className="history-entry">
-      <span className="history-date">{localDate(finding.savedAt)}</span>
+      <span className="history-date">{formatDate(finding.savedAt)}</span>
       <span className="history-main">
         <strong>{label}</strong>
         {finding.note && <span className="history-note">{finding.note}</span>}
@@ -32,7 +32,7 @@ export function MachineHistory({ result, finding }: { result: RetrievalResult; f
       {finding && <FindingEntry result={result} finding={finding} />}
       {incidents.map(({ record }) => (
         <a className="history-entry" key={record.id} href={`#/asset/${asset.id}/evidence/source/${record.id}`}>
-          <span className="history-date">{record.occurredOn ? shortDate(record.occurredOn) : 'Past'}</span>
+          <span className="history-date">{record.occurredOn ? formatDay(record.occurredOn) : 'Past'}</span>
           <span className="history-main">{record.takeaway}</span>
           <span className="tag">Past incident</span>
         </a>

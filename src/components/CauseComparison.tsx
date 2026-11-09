@@ -1,5 +1,5 @@
 import type { CauseComparisonItem } from '../domain/causes';
-import { shortDate } from '../screens/format';
+import { formatDay } from '../screens/format';
 
 export function CauseComparison({
   items,
@@ -16,7 +16,7 @@ export function CauseComparison({
         <article className="cause" key={cause.key}>
           <h3>{cause.label}</h3>
           <dl className="stats">
-            <div><dt>Last seen</dt><dd>{shortDate(record.occurredOn ?? '')}</dd></div>
+            <div><dt>Last seen</dt><dd>{formatDay(record.occurredOn ?? '')}</dd></div>
             <div><dt>Fix</dt><dd>{record.fix}</dd></div>
             <div><dt>Downtime</dt><dd>{record.downtimeHours} h</dd></div>
           </dl>

@@ -1,4 +1,5 @@
 import type { EvidenceItem } from '../domain/types';
+import { recordLine } from '../screens/format';
 import { NoEntryMark } from './Icons';
 
 /**
@@ -20,7 +21,7 @@ export function EvidenceRow({
       <span className="row-top">
         <span className="row-lead">
           {tone === 'excluded' && <NoEntryMark />}
-          {record.takeaway}
+          {recordLine(record)}
         </span>
         <span className={`tag${tone === 'uncertain' ? ' tag-dashed' : ''}`}>{label}</span>
       </span>

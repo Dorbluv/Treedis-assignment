@@ -8,7 +8,7 @@ import { alertFor, records } from '../data';
 import { readingStatus } from '../domain/causes';
 import { inspectionStatus } from '../domain/status';
 import type { RetrievalResult, SavedPlan } from '../domain/types';
-import { time } from './format';
+import { formatDateTime, recordLine } from './format';
 
 export function DoneScreen({
   result,
@@ -52,7 +52,7 @@ export function DoneScreen({
       )}
 
       <div className="groups">
-        <EvidenceGroup title="Plan" count={steps.length} preview={`${planName}, saved ${time(saved.savedAt)}`}>
+        <EvidenceGroup title="Plan" count={steps.length} preview={`${planName}, saved ${formatDateTime(saved.savedAt)}`}>
           <ul className="ref-list">
             {steps.map((step) => (
               <li key={step.id}>
@@ -65,13 +65,16 @@ export function DoneScreen({
         </EvidenceGroup>
         <EvidenceGroup title="Evidence used" count={saved.evidenceIds.length} preview="Records this plan cites">
           <ul className="ref-list">
-            {saved.evidenceIds.map((id) => (
-              <li key={id}>
-                <a className="tap-link" href={`#/asset/${asset.id}/done/source/${id}`}>
-                  {records.find((record) => record.id === id)?.takeaway ?? id}
-                </a>
-              </li>
-            ))}
+            {saved.evidenceIds.map((id) => {
+              const record = records.find((candidate) => candidate.id === id);
+              return (
+                <li key={id}>
+                  <a className="tap-link" href={`#/asset/${asset.id}/done/source/${id}`}>
+                    {record ? recordLine(record) : id}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </EvidenceGroup>
       </div>

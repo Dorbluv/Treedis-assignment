@@ -1,20 +1,46 @@
-import type { RetrievalResult } from '../domain/types';
+import type { MaintenanceRecord, RetrievalResult } from '../domain/types';
 
-export function time(iso: string): string {
-  return new Date(iso).toLocaleString();
+/** One date format everywhere: "9 Nov 2026", or "9 Nov 2026, 14:22" when time matters. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function pad(value: number): string {
+  return String(value).padStart(2, '0');
 }
 
-export function shortDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-GB', {
-    timeZone: 'UTC',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+/** For a calendar date stored as YYYY-MM-DD, which has no time zone. */
+export function formatDay(isoDate: string): string {
+  const [year, month, day] = isoDate.split('-').map(Number);
+  return `${day} ${MONTHS[month - 1]} ${year}`;
 }
 
-export function localDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+/** For a moment in time, shown in local time. */
+export function formatDate(iso: string): string {
+  const date = new Date(iso);
+  return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+export function formatDateTime(iso: string): string {
+  const date = new Date(iso);
+  return `${formatDate(iso)}, ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/** The one-line summary of a record, with its date where it has one. */
+export function recordLine(record: MaintenanceRecord): string {
+  return record.occurredOn ? `${record.takeaway}, ${formatDay(record.occurredOn)}` : record.takeaway;
+}
+
+const VIEW_NAMES: Record<string, string> = {
+  selected: 'Machine',
+  evidence: 'Evidence',
+  source: 'Source',
+  plan: 'Plan',
+  finding: 'Finding',
+  done: 'Summary',
+};
+
+export function pageTitle(view: string, assetId: string | null): string {
+  const app = 'Maintenance Copilot';
+  return assetId ? `${VIEW_NAMES[view] ?? 'Machine'}, ${assetId}, ${app}` : `Plant floor, ${app}`;
 }
 
 export interface OutcomeOption {

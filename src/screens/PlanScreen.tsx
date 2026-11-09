@@ -5,8 +5,14 @@ import { Screen } from '../components/Screen';
 import { records } from '../data';
 import type { RetrievalResult, SavedPlan, SopRecord } from '../domain/types';
 import { savePlan } from '../storage/plans';
+import { recordLine } from './format';
 
 type PlanLanguage = 'en' | 'de';
+
+function lineFor(id: string): string {
+  const record = records.find((candidate) => candidate.id === id);
+  return record ? recordLine(record) : id;
+}
 
 const COPY = {
   en: {
@@ -135,7 +141,7 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
             {evidenceIds.map((id) => (
               <li key={id}>
                 <a className="tap-link" href={sourceHref(id)}>
-                  {german ? id : records.find((record) => record.id === id)?.takeaway ?? id}
+                  {german ? id : lineFor(id)}
                 </a>
               </li>
             ))}
