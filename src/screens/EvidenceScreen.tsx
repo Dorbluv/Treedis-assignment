@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { CauseComparison } from '../components/CauseComparison';
 import { EvidenceGroup } from '../components/EvidenceGroup';
 import { EvidenceRow } from '../components/EvidenceRow';
@@ -10,25 +9,20 @@ import { alertFor } from '../data';
 import {
   causeComparison,
   contextStepNotes,
-  leftOutSummary,
   listPreview,
   separatingSentence,
   usedPreview,
 } from '../domain/causes';
 import type { EvidenceItem, RetrievalResult } from '../domain/types';
 
-const LEFT_OUT_ID = 'left-out';
-
 export function EvidenceScreen({ result }: { result: RetrievalResult }) {
   const { asset, parent, included, uncertain, excluded, applicableSop } = result;
-  const [leftOutOpen, setLeftOutOpen] = useState(false);
   const alert = alertFor(asset.id);
   const readings = included.find((item) => item.record.id === alert?.sensorRecordId)?.record.readings ?? [];
   const sourceHref = (id: string) => `#/asset/${asset.id}/evidence/source/${id}`;
   const stepHref = (stepId: string) => `${sourceHref(applicableSop?.id ?? '')}/step/${stepId}`;
   const items = causeComparison(result);
   const notes = contextStepNotes(result);
-  const leftOut = leftOutSummary(result);
   const hasIncident = included.some((item) => item.record.kind === 'incident');
   const noCauseMessage =
     alert || !hasIncident
@@ -39,15 +33,6 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
     return list.map((item) => (
       <EvidenceRow key={item.record.id} item={item} sourceHref={sourceHref(item.record.id)} tone={tone} />
     ));
-  }
-
-  function showLeftOut() {
-    setLeftOutOpen(true);
-    requestAnimationFrame(() => {
-      const section = document.getElementById(LEFT_OUT_ID);
-      section?.scrollIntoView?.({ block: 'start' });
-      section?.querySelector('summary')?.focus({ preventScroll: true });
-    });
   }
 
   return (
@@ -85,12 +70,6 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
               <a className="tap-link" href={sourceHref(note.recordId)}>{note.checks}</a>. No past incident on this {note.assetType} points to it.
             </p>
           ))}
-
-          {leftOut && (
-            <p className="note-line">
-              <button type="button" className="text-button" onClick={showLeftOut}>{leftOut}</button>
-            </p>
-          )}
         </section>
       )}
 
@@ -122,14 +101,7 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
         )}
 
         {excluded.length > 0 && (
-          <EvidenceGroup
-            id={LEFT_OUT_ID}
-            title="Left out"
-            count={excluded.length}
-            preview={listPreview(excluded)}
-            open={leftOutOpen}
-            onToggle={setLeftOutOpen}
-          >
+          <EvidenceGroup title="Left out" count={excluded.length} preview={listPreview(excluded)}>
             {rows(excluded, 'excluded')}
           </EvidenceGroup>
         )}

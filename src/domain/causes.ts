@@ -90,9 +90,3 @@ export function usedPreview(items: EvidenceItem[]): string {
   ].filter(Boolean);
   return capitalize(parts.join(', '));
 }
-
-export function leftOutSummary(result: RetrievalResult): string | null {
-  const count = result.excluded.length;
-  if (count === 0) return null;
-  return `${count} record${count > 1 ? 's' : ''} left out: ${lowerFirst(listPreview(result.excluded))}.`;
-}

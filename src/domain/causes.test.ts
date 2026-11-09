@@ -3,7 +3,6 @@ import { alertFor, dataset } from '../data';
 import {
   causeComparison,
   contextStepNotes,
-  leftOutSummary,
   listPreview,
   readingStatus,
   separatingSentence,
@@ -60,7 +59,6 @@ describe('alignment note', () => {
 describe('group previews', () => {
   it('previews the left-out records', () => {
     expect(listPreview(result.excluded)).toBe('Gearbox report that mentions vibration, older procedure');
-    expect(leftOutSummary(result)).toBe('2 records left out: gearbox report that mentions vibration, older procedure.');
   });
 
   it('previews the used records by kind', () => {
