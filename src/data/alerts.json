@@ -1,0 +1,10 @@
+[
+  {
+    "id": "ALERT-M204-01",
+    "assetId": "M-204",
+    "title": "Abnormal vibration",
+    "conditions": ["vibration"],
+    "keywords": ["vibration"],
+    "sensorRecordId": "SR-M204-01"
+  }
+]

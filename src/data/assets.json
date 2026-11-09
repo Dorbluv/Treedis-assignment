@@ -1,0 +1,42 @@
+[
+  {
+    "id": "C-204",
+    "name": "Conveyor C-204",
+    "type": "conveyor",
+    "parentId": null,
+    "line": "2",
+    "mapPosition": { "x": 20, "y": 150, "width": 320, "height": 120 }
+  },
+  {
+    "id": "M-204",
+    "name": "Motor M-204",
+    "type": "motor",
+    "parentId": "C-204",
+    "line": "2",
+    "mapPosition": { "x": 40, "y": 190, "width": 120, "height": 64 }
+  },
+  {
+    "id": "G-204",
+    "name": "Gearbox G-204",
+    "type": "gearbox",
+    "parentId": "C-204",
+    "line": "2",
+    "mapPosition": { "x": 200, "y": 190, "width": 120, "height": 64 }
+  },
+  {
+    "id": "M-310",
+    "name": "Motor M-310",
+    "type": "motor",
+    "parentId": null,
+    "line": "2",
+    "mapPosition": { "x": 20, "y": 310, "width": 140, "height": 64 }
+  },
+  {
+    "id": "F-118",
+    "name": "Filler F-118",
+    "type": "filler",
+    "parentId": null,
+    "line": "1",
+    "mapPosition": { "x": 20, "y": 40, "width": 140, "height": 64 }
+  }
+]
