@@ -137,6 +137,11 @@ export interface Finding {
   savedAt: string;
 }
 
+export interface Escalation {
+  assetId: string;
+  escalatedAt: string;
+}
+
 export interface SavedPlan {
   assetId: string;
   sopRecordId: string;

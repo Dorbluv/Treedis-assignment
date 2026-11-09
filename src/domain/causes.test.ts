@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { alertFor, dataset } from '../data';
 import {
   causeComparison,
+  causesWithoutStep,
   contextStepNotes,
+  hasReviewableEvidence,
   listPreview,
   readingStatus,
   separatingSentence,
@@ -44,6 +46,29 @@ describe('cause comparison', () => {
 
   it('builds the separating sentence from the linked steps', () => {
     expect(separatingSentence(items)).toBe('Neither is confirmed. Steps 2 and 3 tell them apart.');
+  });
+});
+
+describe('causes without a procedure step', () => {
+  it('finds none on M-204, where every cause links to a step', () => {
+    expect(causesWithoutStep(result)).toEqual([]);
+  });
+
+  it('keeps the F-118 cause, with no step to link to', () => {
+    const f118 = retrieve('F-118', alertFor('F-118'), dataset);
+    expect(causeComparison(f118)).toEqual([]);
+    expect(causesWithoutStep(f118).map((item) => item.record.id)).toEqual(['INC-1650']);
+  });
+});
+
+describe('reviewable evidence', () => {
+  it('is true for every machine in the dataset', () => {
+    for (const { id } of dataset.assets) expect(hasReviewableEvidence(retrieve(id, alertFor(id), dataset))).toBe(true);
+  });
+
+  it('is false for a machine with no records of its own', () => {
+    const empty = { assets: dataset.assets, records: dataset.records.filter((record) => record.assetId === 'M-204') };
+    expect(hasReviewableEvidence(retrieve('C-204', alertFor('C-204'), empty))).toBe(false);
   });
 });
 
