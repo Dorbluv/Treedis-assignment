@@ -6,15 +6,62 @@
     "takeaway": "Vibration and temperature over limit",
     "assetId": "M-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "en",
     "excerpt": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
     "englishExplanation": "Vibration and temperature are above their demonstration limits on this motor. Current is within its limit.",
     "limitation": "Synthetic demo readings. They show what is high, not why.",
     "readings": [
-      { "label": "Vibration", "unit": "mm/s", "value": 8.4, "limit": 4.5, "history": [3.1, 3.2, 3.2, 3.6, 4.2, 5.4, 7.0, 8.4] },
-      { "label": "Temperature", "unit": "°C", "value": 78, "limit": 75, "history": [68, 68, 69, 70, 72, 74, 76, 78] },
-      { "label": "Current", "unit": "A", "value": 12.1, "limit": 14, "history": [11.8, 11.9, 11.8, 12.0, 12.1, 12.0, 12.1, 12.1] }
+      {
+        "label": "Vibration",
+        "unit": "mm/s",
+        "value": 8.4,
+        "limit": 4.5,
+        "history": [
+          3.1,
+          3.2,
+          3.2,
+          3.6,
+          4.2,
+          5.4,
+          7,
+          8.4
+        ]
+      },
+      {
+        "label": "Temperature",
+        "unit": "°C",
+        "value": 78,
+        "limit": 75,
+        "history": [
+          68,
+          68,
+          69,
+          70,
+          72,
+          74,
+          76,
+          78
+        ]
+      },
+      {
+        "label": "Current",
+        "unit": "A",
+        "value": 12.1,
+        "limit": 14,
+        "history": [
+          11.8,
+          11.9,
+          11.8,
+          12,
+          12.1,
+          12,
+          12.1,
+          12.1
+        ]
+      }
     ]
   },
   {
@@ -24,17 +71,26 @@
     "takeaway": "Worn bearing",
     "assetId": "M-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "en",
     "excerpt": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
     "englishExplanation": "A past high-vibration event on this motor was traced to a worn bearing.",
     "limitation": "A past incident is a possible explanation only. It does not show what is happening now.",
-    "possibleCause": { "key": "bearing_wear", "label": "Bearing wear" },
+    "possibleCause": {
+      "key": "bearing_wear",
+      "label": "Bearing wear"
+    },
     "occurredOn": "2025-03-12",
     "fix": "Bearing replaced",
     "downtimeHours": 6.5,
     "testedByStepId": "SOP-014-C-2",
-    "noteSuggestions": ["Play at drive-end bearing", "Rough running by hand", "Housing hot to touch"]
+    "noteSuggestions": [
+      "Play at drive-end bearing",
+      "Rough running by hand",
+      "Housing hot to touch"
+    ]
   },
   {
     "id": "INC-1877",
@@ -43,17 +99,26 @@
     "takeaway": "Low lubricant",
     "assetId": "M-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "de",
     "excerpt": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
     "englishExplanation": "Increased vibration on M-204 was traced to insufficient bearing lubrication, with the lubricant below the mark. After lubricant was topped up, vibration returned to the normal range.",
     "limitation": "A past incident is a possible explanation only. The English text is a prepared explanation, not an approved translation.",
-    "possibleCause": { "key": "lubrication", "label": "Lubrication problem" },
+    "possibleCause": {
+      "key": "lubrication",
+      "label": "Lubrication problem"
+    },
     "occurredOn": "2024-09-03",
     "fix": "Lubricant topped up",
     "downtimeHours": 1.5,
     "testedByStepId": "SOP-014-C-3",
-    "noteSuggestions": ["Lubricant below the mark", "Lubricant dark or dirty", "Dry at the bearing"]
+    "noteSuggestions": [
+      "Lubricant below the mark",
+      "Lubricant dark or dirty",
+      "Dry at the bearing"
+    ]
   },
   {
     "id": "INC-2310",
@@ -62,11 +127,14 @@
     "takeaway": "Gearbox report that mentions vibration",
     "assetId": "G-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "en",
     "excerpt": "Vibration noted at G-204 during a routine round. An oil seal on the gearbox output shaft was leaking. Seal replaced.",
     "englishExplanation": "A vibration event on the gearbox was traced to a leaking oil seal.",
-    "limitation": "This describes the gearbox, not the motor. It does not mention M-204."
+    "limitation": "This describes the gearbox, not the motor. It does not mention M-204.",
+    "occurredOn": "2025-06-20"
   },
   {
     "id": "ASM-0412",
@@ -75,11 +143,14 @@
     "takeaway": "Conveyor alignment drifted after belt change",
     "assetId": "C-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "en",
     "excerpt": "Assembly check on C-204: drive train alignment between components drifted after belt replacement. Misalignment on this conveyor can raise vibration across the drive train.",
     "englishExplanation": "Alignment on the parent conveyor has drifted before, and misalignment can raise vibration in the drive train.",
-    "limitation": "This describes the whole conveyor. It is context and does not describe this motor directly."
+    "limitation": "This describes the whole conveyor. It is context and does not describe this motor directly.",
+    "occurredOn": "2025-01-14"
   },
   {
     "id": "NOTE-5521",
@@ -90,7 +161,9 @@
     "candidateLine": "2",
     "candidateType": "motor",
     "linkedAssetIds": [],
-    "conditions": ["noise"],
+    "conditions": [
+      "noise"
+    ],
     "language": "en",
     "excerpt": "Motor on line 2 noisy near end of shift.",
     "englishExplanation": "A technician noted a noisy motor on line 2 without saying which one.",
@@ -106,7 +179,9 @@
     "status": "current",
     "assetId": "M-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "de",
     "excerpt": "Vor Beginn der Inspektion ist der Motor nach dem standortgenehmigten Verfahren freizuschalten und gegen Wiedereinschalten zu sichern.",
     "englishExplanation": "Before the inspection starts, the motor must be isolated and locked out using the site-approved procedure. The SOP then covers bearing, lubrication and alignment checks.",
@@ -171,7 +246,9 @@
     "status": "superseded",
     "assetId": "M-204",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "de",
     "excerpt": "Motor freischalten. Lagergehäuse prüfen. Ausrichtung prüfen.",
     "englishExplanation": "An older revision: isolate the motor, check the bearing housing, check the alignment. It has no lubrication check.",
@@ -204,7 +281,9 @@
     "status": "current",
     "assetId": "M-310",
     "linkedAssetIds": [],
-    "conditions": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
     "language": "en",
     "excerpt": "Isolate and lock out M-310 using the site-approved procedure before inspection. Check bearing housing and mounting bolts.",
     "englishExplanation": "The current inspection procedure for motor M-310.",
@@ -231,10 +310,85 @@
     "takeaway": "Blocked nozzle stopped the filler",
     "assetId": "F-118",
     "linkedAssetIds": [],
-    "conditions": ["blockage"],
+    "conditions": [
+      "blockage"
+    ],
     "language": "en",
     "excerpt": "Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared.",
     "englishExplanation": "A past stoppage on this filler was caused by a blocked nozzle.",
-    "limitation": "A past incident is a possible explanation only."
+    "limitation": "A past incident is a possible explanation only.",
+    "occurredOn": "2025-08-05",
+    "fix": "Nozzle cleared",
+    "downtimeHours": 1,
+    "possibleCause": {
+      "key": "nozzle_blockage",
+      "label": "Nozzle blockage"
+    }
+  },
+  {
+    "id": "SR-M310-01",
+    "kind": "sensor",
+    "title": "Readings at the alert, motor housing",
+    "takeaway": "Vibration over limit",
+    "assetId": "M-310",
+    "linkedAssetIds": [],
+    "conditions": [
+      "vibration"
+    ],
+    "language": "en",
+    "excerpt": "Motor housing: vibration velocity 6.2 mm/s RMS (demo limit 4.5).",
+    "englishExplanation": "Vibration is above its demonstration limit on this motor.",
+    "limitation": "Synthetic demo reading. It shows what is high, not why.",
+    "readings": [
+      {
+        "label": "Vibration",
+        "unit": "mm/s",
+        "value": 6.2,
+        "limit": 4.5,
+        "history": [
+          2.7,
+          2.8,
+          2.9,
+          2.9,
+          3.4,
+          4.3,
+          5.3,
+          6.2
+        ]
+      }
+    ]
+  },
+  {
+    "id": "SR-F118-01",
+    "kind": "sensor",
+    "title": "Readings at the alert, filler nozzle bank",
+    "takeaway": "Nozzle pressure over limit",
+    "assetId": "F-118",
+    "linkedAssetIds": [],
+    "conditions": [
+      "blockage"
+    ],
+    "language": "en",
+    "excerpt": "Nozzle bank: pressure 3.8 bar (demo limit 3.0).",
+    "englishExplanation": "Nozzle pressure is above its demonstration limit on this filler.",
+    "limitation": "Synthetic demo reading. It shows what is high, not why.",
+    "readings": [
+      {
+        "label": "Nozzle pressure",
+        "unit": "bar",
+        "value": 3.8,
+        "limit": 3,
+        "history": [
+          2.4,
+          2.4,
+          2.5,
+          2.5,
+          2.7,
+          3,
+          3.4,
+          3.8
+        ]
+      }
+    ]
   }
 ]

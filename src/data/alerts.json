@@ -3,8 +3,36 @@
     "id": "ALERT-M204-01",
     "assetId": "M-204",
     "title": "Abnormal vibration",
-    "conditions": ["vibration"],
-    "keywords": ["vibration"],
+    "conditions": [
+      "vibration"
+    ],
+    "keywords": [
+      "vibration"
+    ],
     "sensorRecordId": "SR-M204-01"
+  },
+  {
+    "id": "ALERT-M310-01",
+    "assetId": "M-310",
+    "title": "Abnormal vibration",
+    "conditions": [
+      "vibration"
+    ],
+    "keywords": [
+      "vibration"
+    ],
+    "sensorRecordId": "SR-M310-01"
+  },
+  {
+    "id": "ALERT-F118-01",
+    "assetId": "F-118",
+    "title": "High nozzle pressure",
+    "conditions": [
+      "blockage"
+    ],
+    "keywords": [
+      "blockage"
+    ],
+    "sensorRecordId": "SR-F118-01"
   }
 ]

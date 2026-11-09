@@ -42,6 +42,12 @@ describe('dataset integrity', () => {
     }
   });
 
+  it('gives every incident a real date', () => {
+    const incidents = records.filter((record) => record.kind === 'incident');
+    expect(incidents.length).toBeGreaterThan(0);
+    for (const record of incidents) expect(record.occurredOn).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
   it('starts SOP-014 rev C with site-approved isolation and lockout', () => {
     const sop = records.find((record) => record.id === 'SOP-014-C') as SopRecord;
     expect(sop.steps[0].english).toMatch(/isolate and lock out/i);

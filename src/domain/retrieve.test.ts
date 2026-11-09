@@ -68,7 +68,7 @@ describe('M-204 with the real dataset', () => {
   it('keeps another motor SOP as comparison and never applicable', () => {
     expect(result.applicableSop?.id).not.toBe('SOP-022');
     expect(ids(result.included)).not.toContain('SOP-022');
-    expect(ids(result.comparison)).toEqual(['SOP-022']);
+    expect(ids(result.comparison)).toEqual(['SOP-022', 'SR-M310-01']);
   });
 });
 
@@ -93,6 +93,41 @@ describe('scoping', () => {
     );
     const result = retrieve('M-204', alert, data);
     expect(ids(result.uncertain)).toEqual(['NOTE-5521']);
+  });
+});
+
+describe('Gate 2 assets', () => {
+  const m310 = retrieve('M-310', alertFor('M-310'), dataset);
+  const f118 = retrieve('F-118', alertFor('F-118'), dataset);
+
+  it('excludes INC-2310 on M-204 and treats it as direct history on G-204', () => {
+    expect(ids(retrieve('M-204', alert, dataset).excluded)).toContain('INC-2310');
+    const g204 = retrieve('G-204', alertFor('G-204'), dataset);
+    expect(find(g204.included, 'INC-2310')?.label).toBe('Direct asset history');
+    expect(ids(g204.excluded)).not.toContain('INC-2310');
+    expect(g204.applicableSop).toBeNull();
+  });
+
+  it('gives M-310 no causes, and keeps M-204 incidents out of its history', () => {
+    expect(m310.possibleCauses).toEqual([]);
+    expect(ids(m310.included)).toEqual(['SOP-022', 'SR-M310-01']);
+    expect(ids(m310.included)).not.toContain('INC-2291');
+    expect(ids(m310.included)).not.toContain('INC-1877');
+    expect(m310.applicableSop?.id).toBe('SOP-022');
+  });
+
+  it('gives F-118 its own cause and never an applicable SOP', () => {
+    expect(f118.possibleCauses).toEqual([{ key: 'nozzle_blockage', label: 'Nozzle blockage', recordId: 'INC-1650' }]);
+    expect(f118.applicableSop).toBeNull();
+    expect(f118.included.some((item) => item.record.kind === 'sop')).toBe(false);
+  });
+
+  it('never makes a superseded SOP applicable on any asset', () => {
+    for (const { id } of dataset.assets) {
+      const result = retrieve(id, alertFor(id), dataset);
+      expect(result.applicableSop?.status ?? 'current').toBe('current');
+      expect(ids(result.included)).not.toContain('SOP-014-B');
+    }
   });
 });
 
