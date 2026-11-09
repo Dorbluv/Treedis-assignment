@@ -4,7 +4,7 @@ import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
 import type { RetrievalResult, SavedPlan } from '../domain/types';
 import { saveFinding } from '../storage/plans';
-import { outcomeOptions, time } from './format';
+import { formatDateTime, outcomeOptions } from './format';
 
 export function FindingScreen({ result, saved }: { result: RetrievalResult; saved: SavedPlan }) {
   const { asset } = result;
@@ -38,8 +38,8 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
   }
 
   return (
-    <Screen action={<PrimaryAction label="Save finding" onClick={handleSave} disabled={!outcome} />}>
-      <p className="confirm" role="status"><CheckMark /> <strong>Plan saved</strong> <span className="num">{time(saved.savedAt)}</span></p>
+    <Screen action={<PrimaryAction label="Save finding" onClick={handleSave} disabled={!outcome} hint="Pick one to save" />}>
+      <p className="confirm" role="status"><CheckMark /> <strong>Plan saved</strong> <span className="num">{formatDateTime(saved.savedAt)}</span></p>
       <h1>Record finding</h1>
       <div className="outcomes" role="group" aria-label="Finding outcome">
         {options.map((option) => (

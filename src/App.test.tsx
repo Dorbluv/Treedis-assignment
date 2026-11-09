@@ -112,7 +112,75 @@ describe('one action per screen', () => {
       'Inconclusive',
     ]);
     expect(primary().textContent).toBe('Save finding');
-    expect((primary() as HTMLButtonElement).disabled).toBe(true);
+    expect(primary().getAttribute('aria-disabled')).toBe('true');
+  });
+
+  it('explains the disabled Save finding, connected for screen readers', async () => {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    const id = primary().getAttribute('aria-describedby') as string;
+    expect(document.getElementById(id)?.textContent).toBe('Pick one to save');
+
+    await click(primary());
+    expect(heading()).toBe('Record finding');
+
+    await click(outcomeButton('Neither'));
+    expect(primary().hasAttribute('aria-disabled')).toBe(false);
+    expect(primary().hasAttribute('aria-describedby')).toBe(false);
+  });
+
+  it('moves focus to the heading and names the page on every step change', async () => {
+    const expected: [string, string][] = [
+      ['#/asset/M-204', 'Machine, M-204, Maintenance Copilot'],
+      ['#/asset/M-204/evidence', 'Evidence, M-204, Maintenance Copilot'],
+      ['#/asset/M-204/plan', 'Plan, M-204, Maintenance Copilot'],
+      ['#/asset/M-310', 'Machine, M-310, Maintenance Copilot'],
+      ['#/', 'Plant floor, Maintenance Copilot'],
+    ];
+    for (const [hash, title] of expected) {
+      await go(hash);
+      expect(document.title).toBe(title);
+      expect(document.activeElement).toBe(container.querySelector('.panel-col h1'));
+    }
+  });
+
+  it('links completed steps only, and returns with saved data intact', async () => {
+    const links = () => [...container.querySelectorAll('.progress a')].map((item) => item.getAttribute('href'));
+
+    expect(links()).toEqual([]);
+    await go('#/asset/M-204/plan');
+    expect(links()).toEqual(['#/asset/M-204', '#/asset/M-204/evidence']);
+
+    await click(primary());
+    await click(outcomeButton('Lubrication problem'));
+    await typeNote('Below the mark');
+    await click(primary());
+    expect(links()).toEqual([
+      '#/asset/M-204',
+      '#/asset/M-204/evidence',
+      '#/asset/M-204/plan',
+      '#/asset/M-204/finding',
+    ]);
+
+    await click(container.querySelector('.progress a[href="#/asset/M-204/finding"]') as Element);
+    expect(heading()).toBe('Record finding');
+    expect(container.querySelector('.outcome[aria-pressed="true"]')?.textContent?.trim()).toBe('Lubrication problem');
+    expect((container.querySelector('textarea') as HTMLTextAreaElement).value).toBe('Below the mark');
+
+    await click(container.querySelector('.progress a[href="#/asset/M-204/plan"]') as Element);
+    expect(heading()).toBe('Review and save inspection plan');
+    expect(primary().textContent).toBe('Continue to finding');
+  });
+
+  it('uses one date format', async () => {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    expect(container.querySelector('.confirm .num')?.textContent).toMatch(/^\d{1,2} [A-Z][a-z]{2} \d{4}, \d{2}:\d{2}$/);
+    await go('#/asset/M-204/evidence');
+    expect(container.querySelector('.compare')?.textContent).toContain('12 Mar 2025');
+    expect(container.querySelectorAll('.cause')[1].textContent).toContain('3 Sep 2024');
+    expect(body()).toContain('Worn bearing, 12 Mar 2025');
+    expect(body()).not.toMatch(/March|September|Sept /);
   });
 
   it('walks the whole flow with exactly one primary action on each screen', async () => {

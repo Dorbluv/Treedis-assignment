@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { alertFor, assets, dataset } from './data';
 import { retrieve } from './domain/retrieve';
 import type { SavedPlan } from './domain/types';
@@ -7,6 +7,7 @@ import { MachineHeader } from './components/MachineHeader';
 import { PlantFloor } from './components/PlantFloor';
 import { Progress, type ProgressStep } from './components/Progress';
 import { clearPlans, hasSavedPlans, loadAllPlans, loadPlan, type PlanMap } from './storage/plans';
+import { pageTitle } from './screens/format';
 import { DoneScreen } from './screens/DoneScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { FindingScreen } from './screens/FindingScreen';
@@ -161,12 +162,36 @@ export function App() {
   // The summary keeps the floor in view, so the change to the machine can be seen.
   const onFloor = view === 'map' || view === 'selected' || view === 'done';
 
+  const stepHrefs = asset
+    ? {
+        machine: `#/asset/${asset.id}`,
+        evidence: `#/asset/${asset.id}/evidence`,
+        plan: `#/asset/${asset.id}/plan`,
+        finding: `#/asset/${asset.id}/finding`,
+      }
+    : {};
+
+  // On every step change, tell assistive technology where the user has landed.
+  const assetId = asset?.id ?? null;
+  const pageKey = `${hash}|${resetCount}`;
+  const lastPage = useRef(pageKey);
+  useEffect(() => {
+    document.title = pageTitle(view, assetId);
+    if (lastPage.current === pageKey) return;
+    lastPage.current = pageKey;
+    const heading = document.querySelector<HTMLElement>('.panel-col h1');
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.focus({ preventScroll: true });
+    }
+  }, [pageKey, view, assetId]);
+
   return (
     <div className="app" data-view={view} data-resets={resetCount}>
       <Banner />
       <header className="topbar">
         <a href="#/" className="wordmark">Maintenance Copilot</a>
-        <Progress current={step} />
+        <Progress current={step} hrefs={stepHrefs} />
       </header>
       <main className="workspace">
         <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">
