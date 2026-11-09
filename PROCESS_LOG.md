@@ -117,3 +117,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** The user.
 - **What changed:** The check mark was replaced with a plain blue status dot beside the "Inspected" text, and removed from the phone header and Home panel.
 - **Evidence link or screenshot:** _to fill in_
+
+## UX review against WCAG 2.2 and Nielsen's heuristics
+
+- **Date:** 2026-11-09
+- **Tool:** Claude chat
+- **Prompt or context:** UX review of `gate-1`, requested by the user.
+- **What went wrong:** The review found focus, target-size and navigation gaps.
+- **Caught by:** Claude chat, at the user's request.
+- **What changed:** Focus moves to the heading and the page title updates on every step change. The logo and standalone links are at least 24px high. Completed progress steps link back with saved data intact. The disabled "Save finding" says why, connected for screen readers.
+- **Evidence link or screenshot:** _to fill in_
