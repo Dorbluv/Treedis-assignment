@@ -94,6 +94,15 @@ export function PlantMap({ selectedId }: { selectedId: string | null }) {
         const line = connector(asset, bar);
         return <line key={asset.id} x1={line.x} x2={line.x} y1={line.y1} y2={line.y2} className="map-link" />;
       })}
+      {bar && members.length > 1 && (
+        <line
+          x1={Math.min(...members.map((asset) => connector(asset, bar).x))}
+          x2={Math.max(...members.map((asset) => connector(asset, bar).x))}
+          y1={bar.mapPosition.y + 30}
+          y2={bar.mapPosition.y + 30}
+          className="map-link"
+        />
+      )}
     </svg>
   );
 }
