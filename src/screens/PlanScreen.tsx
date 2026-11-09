@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronMark } from '../components/Icons';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
 import { records } from '../data';
@@ -42,14 +43,18 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
     return (
       <Screen action={<PrimaryAction label="Back to evidence" href={`#/asset/${asset.id}/evidence`} />}>
         <h1>{COPY.en.title}</h1>
-        <p>There is no applicable procedure for {asset.id}, so no plan can be created.</p>
+        <div className="gap" role="status">
+          <p><strong>No applicable procedure for {asset.id}</strong></p>
+          <p>No plan can be created. Escalate through your site-approved process.</p>
+        </div>
       </Screen>
     );
   }
 
   const procedure = sop;
-  const copy = COPY[language];
-  const german = language === 'de';
+  const translated = procedure.language === 'de';
+  const copy = COPY[translated ? language : 'en'];
+  const german = translated && language === 'de';
   const evidenceIds = saved ? saved.evidenceIds : included.map((item) => item.record.id);
   const steps = saved ? procedure.steps.filter((step) => saved.stepIds.includes(step.id)) : procedure.steps;
   const findingHref = `#/asset/${asset.id}/finding`;
@@ -83,21 +88,23 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
         <h1>{copy.title}</h1>
         <div className="plan-meta">
           <p className="fine">
-            {copy.source}: <a className="tap-link solo" href={sourceHref(procedure.id)}>{procedure.sopNumber} rev {procedure.revision}</a>
+            {translated ? copy.source : 'Source'}: <a className="tap-link solo" href={sourceHref(procedure.id)}>{procedure.sopNumber} rev {procedure.revision}</a>
           </p>
-          <div className="switch" role="group" aria-label="Plan language">
-            {(['en', 'de'] as const).map((option) => (
-              <button
-                type="button"
-                key={option}
-                lang={option}
-                aria-pressed={language === option}
-                onClick={() => setLanguage(option)}
-              >
-                {option === 'en' ? 'English' : 'Deutsch'}
-              </button>
-            ))}
-          </div>
+          {translated && (
+            <div className="switch" role="group" aria-label="Plan language">
+              {(['en', 'de'] as const).map((option) => (
+                <button
+                  type="button"
+                  key={option}
+                  lang={option}
+                  aria-pressed={language === option}
+                  onClick={() => setLanguage(option)}
+                >
+                  {option === 'en' ? 'English' : 'Deutsch'}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <h2>{copy.steps} ({steps.length})</h2>
@@ -121,6 +128,7 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
 
         <details className="group">
           <summary>
+            <ChevronMark />
             <span className="group-title">{copy.references} ({evidenceIds.length})</span>
           </summary>
           <ul className="ref-list">

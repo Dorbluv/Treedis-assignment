@@ -26,12 +26,10 @@ function HomeAlert() {
 
 export function LayoutScreen({
   asset,
-  hasEvidenceView,
   showReset,
   onReset,
 }: {
   asset: Asset | null;
-  hasEvidenceView: boolean;
   showReset: boolean;
   onReset: () => void;
 }) {
@@ -53,14 +51,8 @@ export function LayoutScreen({
   const children = assets.filter((candidate) => candidate.parentId === asset.id);
   const hasRelations = parent || siblings.length > 0 || children.length > 0;
 
-  const action = hasEvidenceView ? (
-    <PrimaryAction label="Review evidence" href={`#/asset/${asset.id}/evidence`} />
-  ) : (
-    <PrimaryAction label="Go to M-204 alert" href={ALERT_HREF} />
-  );
-
   return (
-    <Screen action={action}>
+    <Screen action={<PrimaryAction label="Review evidence" href={`#/asset/${asset.id}/evidence`} />}>
       <h1>{asset.name}</h1>
       {hasRelations ? (
         <ul className="relations">
@@ -73,7 +65,6 @@ export function LayoutScreen({
       ) : (
         <p className="muted">No connected equipment on record.</p>
       )}
-      {!hasEvidenceView && <p className="muted">Only M-204 has an evidence view in this version.</p>}
     </Screen>
   );
 }

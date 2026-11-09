@@ -212,11 +212,13 @@
     "steps": [
       {
         "id": "SOP-022-1",
+        "title": "Lock out the motor",
         "original": "Isolate and lock out M-310 using the site-approved procedure before inspection.",
         "english": "Isolate and lock out M-310 using the site-approved procedure before inspection."
       },
       {
         "id": "SOP-022-2",
+        "title": "Check bearing and bolts",
         "original": "Check the bearing housing and mounting bolts.",
         "english": "Check the bearing housing and mounting bolts."
       }

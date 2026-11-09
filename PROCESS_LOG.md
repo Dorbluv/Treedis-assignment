@@ -77,3 +77,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** The user.
 - **What changed:** Short phrases and collapsed evidence, numbered plan steps with titles, an English / Deutsch switch, and a rebuilt plant floor. Decision: the rule that color appears only on abnormal things was reversed to make the floor feel alive, with tinted zones and normal status color. Coral stays for alerts only.
 - **Evidence link or screenshot:** _to fill in_
+
+## Other machines led back to M-204
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** The user selected other machines on the plant floor.
+- **What went wrong:** Every machine except M-204 showed "Go to M-204 alert", because Claude Code had limited the evidence view to M-204 for Gate 1. The user expected "Review evidence", to see past issues on that machine.
+- **Caught by:** The user.
+- **What changed:** Every machine now has "Review evidence". This brought forward the M-310 and F-118 states from Gate 2.
+- **Evidence link or screenshot:** _to fill in_

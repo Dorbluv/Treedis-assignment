@@ -27,6 +27,10 @@ export function savePlan(plan: SavedPlan, storage: StorageLike = localStorage): 
   storage.setItem(STORAGE_KEY, JSON.stringify(all));
 }
 
+export function hasSavedPlans(storage: StorageLike = localStorage): boolean {
+  return Object.keys(readAll(storage)).length > 0;
+}
+
 export function clearPlans(storage: StorageLike = localStorage): void {
   storage.removeItem(STORAGE_KEY);
 }

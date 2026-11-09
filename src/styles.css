@@ -232,6 +232,7 @@ a { color: var(--blue); }
 .confirm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; padding: 0.45rem 0.7rem; background: var(--raised); border-left: 4px solid var(--blue); border-radius: 4px; }
 .confirm .icon { color: var(--blue); }
 .confirm .num { color: var(--muted); font-size: var(--size-meta); }
+.gap { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.55rem 0.7rem; background: var(--raised); border-left: 4px solid var(--text); border-radius: 4px; }
 
 section { display: flex; flex-direction: column; gap: 0.45rem; }
 

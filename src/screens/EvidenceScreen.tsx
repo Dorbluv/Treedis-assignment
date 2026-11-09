@@ -29,6 +29,11 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
   const items = causeComparison(result);
   const notes = contextStepNotes(result);
   const leftOut = leftOutSummary(result);
+  const hasIncident = included.some((item) => item.record.kind === 'incident');
+  const noCauseMessage =
+    alert || !hasIncident
+      ? 'Insufficient asset-specific evidence to recommend a likely cause.'
+      : `No active alert on ${asset.id}. Past records are below.`;
 
   function rows(list: EvidenceItem[], tone: 'included' | 'uncertain' | 'excluded') {
     return list.map((item) => (
@@ -46,7 +51,15 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
   }
 
   return (
-    <Screen action={<PrimaryAction label="Continue to inspection plan" href={`#/asset/${asset.id}/plan`} />}>
+    <Screen
+      action={
+        applicableSop ? (
+          <PrimaryAction label="Continue to inspection plan" href={`#/asset/${asset.id}/plan`} />
+        ) : (
+          <PrimaryAction label="Back to plant layout" href="#/" />
+        )
+      }
+    >
       <p className="path">{parent && `${parent.id} > `}{asset.id}</p>
       <h1>Evidence for {asset.id}</h1>
       {alert && <p className="alert-title wide-only"><AlertMark /> {alert.title} on {asset.id}</p>}
@@ -81,10 +94,26 @@ export function EvidenceScreen({ result }: { result: RetrievalResult }) {
         </section>
       )}
 
+      {items.length === 0 && <p className="separate">{noCauseMessage}</p>}
+
+      {!applicableSop && (
+        <div className="gap" role="status">
+          <p><strong>No applicable procedure for {asset.id}</strong></p>
+          <p>No plan can be created. Escalate through your site-approved process.</p>
+        </div>
+      )}
+
       <div className="groups">
-        <EvidenceGroup title="Used as evidence" count={included.length} preview={usedPreview(included)}>
-          {rows(included, 'included')}
-        </EvidenceGroup>
+        {included.length > 0 && (
+          <EvidenceGroup
+            title="Used as evidence"
+            count={included.length}
+            preview={usedPreview(included)}
+            open={items.length === 0 || undefined}
+          >
+            {rows(included, 'included')}
+          </EvidenceGroup>
+        )}
 
         {uncertain.length > 0 && (
           <EvidenceGroup title="Not sure it applies" count={uncertain.length} preview={listPreview(uncertain)}>

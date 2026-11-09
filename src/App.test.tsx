@@ -304,6 +304,68 @@ describe('Plant floor', () => {
   });
 });
 
+describe('Other machines', () => {
+  it.each(['C-204', 'G-204', 'M-310', 'F-118'])('offers Review evidence on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(primary().textContent).toBe('Review evidence');
+    expect(primary().getAttribute('href')).toBe(`#/asset/${id}/evidence`);
+  });
+
+  it('shows M-310 as insufficient evidence, with its SOP still available', async () => {
+    await go('#/asset/M-310/evidence');
+    expect(heading()).toBe('Evidence for M-310');
+    expect(container.querySelector('.separate')?.textContent).toBe(
+      'Insufficient asset-specific evidence to recommend a likely cause.',
+    );
+    expect(container.querySelector('.compare')).toBeNull();
+    expect(container.querySelector('.gap')).toBeNull();
+    expect(body()).toContain('Current procedure for M-310');
+    expect(body()).not.toContain('Worn bearing');
+
+    await click(primary());
+    expect(body()).toContain('Lock out the motor');
+    expect(body()).toContain('SOP-022 rev A');
+    expect(container.querySelector('.switch')).toBeNull();
+    expect(body()).not.toContain('Translated from German');
+  });
+
+  it('saves a finding on M-310 without naming causes it does not have', async () => {
+    await go('#/asset/M-310/plan');
+    await click(primary());
+    expect([...container.querySelectorAll('button.outcome')].map((item) => item.textContent?.trim())).toEqual([
+      'Issue found',
+      'No issue found',
+      'Inconclusive',
+    ]);
+    await click(outcomeButton('No issue found'));
+    await click(primary());
+    expect(heading()).toBe('Finding saved for M-310');
+    expect(body()).toContain('SOP-022 rev A');
+  });
+
+  it('shows F-118 history with no plan, and routes to escalation', async () => {
+    await go('#/asset/F-118/evidence');
+    expect(container.querySelector('.gap')?.textContent).toContain('No applicable procedure for F-118');
+    expect(container.querySelector('.gap')?.textContent).toContain('site-approved');
+    expect(container.querySelector('.compare')).toBeNull();
+    expect(body()).toContain('Blocked nozzle stopped the filler');
+    expect(primary().textContent).toBe('Back to plant layout');
+
+    await go('#/asset/F-118/plan');
+    expect(container.querySelector('.gap')).not.toBeNull();
+    expect(body()).not.toContain('Save inspection plan');
+  });
+
+  it('carries no state from M-204 when switching machines', async () => {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    await go('#/asset/M-310/plan');
+    expect(primary().textContent).toBe('Save inspection plan');
+    await go('#/asset/M-310/finding');
+    expect(heading()).toBe('Review and save inspection plan');
+  });
+});
+
 describe('Reset demo', () => {
   it('clears saved data from the summary and returns to the plant floor', async () => {
     await go('#/asset/M-204/plan');

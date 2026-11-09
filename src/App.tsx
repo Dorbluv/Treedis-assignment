@@ -6,16 +6,13 @@ import { Banner } from './components/Banner';
 import { MachineHeader } from './components/MachineHeader';
 import { PlantFloor } from './components/PlantFloor';
 import { Progress, type ProgressStep } from './components/Progress';
-import { clearPlans, loadPlan } from './storage/plans';
+import { clearPlans, hasSavedPlans, loadPlan } from './storage/plans';
 import { DoneScreen } from './screens/DoneScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { FindingScreen } from './screens/FindingScreen';
 import { LayoutScreen } from './screens/LayoutScreen';
 import { PlanScreen } from './screens/PlanScreen';
 import { SourceScreen } from './screens/SourceScreen';
-
-/** Gate 1 covers the M-204 flow only. */
-const EVIDENCE_ASSET = 'M-204';
 
 type FlowScreen = 'evidence' | 'plan' | 'finding' | 'done';
 type SourceParent = 'evidence' | 'plan' | 'done';
@@ -80,12 +77,20 @@ function readPlan(assetId: string): SavedPlan | null {
   }
 }
 
+function anySavedPlans(): boolean {
+  try {
+    return hasSavedPlans();
+  } catch {
+    return false;
+  }
+}
+
 export function App() {
   const [route, hash] = useRoute();
   const [resetCount, setResetCount] = useState(0);
   const asset = assets.find((candidate) => candidate.id === route.assetId) ?? null;
   const result = useMemo(
-    () => (asset?.id === EVIDENCE_ASSET ? retrieve(asset.id, alertFor(asset.id), dataset) : null),
+    () => (asset ? retrieve(asset.id, alertFor(asset.id), dataset) : null),
     [asset],
   );
   // Read on every render: each route change re-renders, so this is never stale.
@@ -112,8 +117,7 @@ export function App() {
     panel = (
       <LayoutScreen
         asset={asset}
-        hasEvidenceView={Boolean(result)}
-        showReset={!asset && readPlan(EVIDENCE_ASSET) !== null}
+        showReset={!asset && anySavedPlans()}
         onReset={resetDemo}
       />
     );
