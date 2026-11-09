@@ -293,3 +293,27 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code's validators, in real model runs.
 - **What happened next:** v6 was left unmerged on the `summary-v6` branch at cae457f, and the live v5 was kept. The prompt was not adjusted and rerun, because that would have bypassed the agreed bar.
 - **Evidence link or screenshot:** evidence/gate-3/model-runs-prompt-v6.json
+
+## Final v6 retry (prompt v7) missed the bar and was not shipped
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, calling `gemini-3.5-flash-lite`
+- **Prompt or context:** One final retry on `summary-v6`, to merge only if at least 5 of 6 real runs passed, with no further retry if it missed.
+- **What changed on the branch:** Removed the prompt line "Say that these are from a past record". Raised the sentence cap to 130 characters. Added a check that rejects record IDs in the sentence text. M-310 gets no summary and no model call. Fixed the reserved height, with no jump at 380px, 768px, 1024px or 1366px on the longest allowed text. The prompt version was already part of the cache key, and a new test proves answers from an older prompt are not served. Prompt version v7.
+- **What went wrong:** 2 of 6 runs passed. M-204 runs 2 and 3 went over 130 characters. F-118 runs 1 and 2 returned "A blocked nozzle was found when the filler stopped on low flow.", which the diagnosis check rejected for naming a cause with no sign that it is past or possible. Removing the prompt line also removed the instruction that had produced that sign. Tests, Playwright, the build and the unchanged `retrieve.ts` all passed, so the pass rate was the only miss.
+- **Caught by:** Claude Code's validators, in real model runs.
+- **What happened next:** Not merged. The branch stays at dd6e8cc and v5 stays the live version. As instructed, no further retry. The post-deploy steps did not run, so the README review table was not changed and the "Reviewed by Claude chat" label was not applied.
+- **Assignment PDF:** Not in the repo. No PDF has ever been committed on any branch, none is tracked, none is on GitHub main, and none is in the working folder outside node_modules.
+- **Evidence link or screenshot:** evidence/gate-3/model-runs-prompt-v7.json
+
+## Live site lost the Gemini key after a docs-only push
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, with requests to the public URL
+- **Prompt or context:** Commit 73f0eb8 changed only docs and evidence, and was pushed at the user's request. Cloudflare rebuilds from `main`.
+- **What went wrong:** At 17:49 UTC, 11 minutes after that push, `POST /api/summary` returned `"source":"prepared","reason":"no_key"` for M-204, F-118 and M-310, and again on 3 repeat M-204 calls. Before the push the same route returned Gemini summaries. The Worker no longer sees `GEMINI_API_KEY`. The site still works and shows its labeled fallback.
+- **Cause:** Not verified. Hypothesized: the deploy replaced a value kept only in the dashboard. Cloudflare's configuration page says Wrangler overrides dashboard variable changes, and the page on secrets does not say whether a plain deploy keeps them. The dashboard was not inspected.
+- **Effect on the cache question:** None. The `no_key` path returns before the cache is read, so this says nothing about the Cache API on `workers.dev`.
+- **Caught by:** Claude Code.
+- **What changed:** Nothing yet. The dashboard is the user's to change.
+- **Evidence link or screenshot:** The response quoted above, read from the public URL.
