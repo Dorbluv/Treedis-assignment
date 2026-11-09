@@ -30,4 +30,4 @@ Font:
 
 - Archivo Variable by Omnibus-Type (SIL Open Font License 1.1), through @fontsource-variable/archivo
 
-No templates or third-party data are used. The plant floor, meters and sparklines are hand-written SVG, and every equipment record is synthetic and written for this project.
+No templates or third-party data are used. The plant floor, icons, meters and sparklines are hand-written HTML, CSS and SVG, and every equipment record is synthetic and written for this project.

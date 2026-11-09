@@ -3,6 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
+import { records } from './data';
+import type { SopRecord } from './domain/types';
 import { STORAGE_KEY } from './storage/plans';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
@@ -111,7 +113,7 @@ describe('one action per screen', () => {
     await click(primary());
     await click(outcomeButton('Bearing wear'));
     await typeNote('Rough running');
-    expect(container.querySelectorAll('.note button')).toHaveLength(0);
+    expect([...container.querySelectorAll('button')].map((item) => item.textContent)).not.toContain('Save note');
 
     await click(primary());
     expect(window.location.hash).toBe('#/asset/M-204/done');
@@ -142,7 +144,7 @@ describe('Evidence screen', () => {
 
   it('puts the alert and readings before the separating sentence and the evidence groups', () => {
     const text = body();
-    const order = ['Abnormal vibration on M-204', 'Limits are demonstration values', 'Neither is confirmed. Steps 2 and 3', 'Used as evidence'].map(
+    const order = ['Abnormal vibration on M-204', 'Demo limits. Last 48 hours.', 'Neither is confirmed. Steps 2 and 3 tell them apart.', 'Used as evidence'].map(
       (part) => text.indexOf(part),
     );
     expect(order.every((position) => position >= 0)).toBe(true);
@@ -160,9 +162,7 @@ describe('Evidence screen', () => {
 
   it('links the alignment line to the SOP step and ASM-0412', () => {
     const line = [...container.querySelectorAll('.note-line')].find((item) => item.textContent?.includes('alignment'));
-    expect(line?.textContent).toBe(
-      'Step 4 also checks alignment because of a conveyor-level record. It is not listed as a cause because no incident on this motor supports it.',
-    );
+    expect(line?.textContent).toBe('Step 4 also checks alignment. No past incident on this motor points to it.');
     const hrefs = [...(line?.querySelectorAll('a') ?? [])].map((link) => link.getAttribute('href'));
     expect(hrefs).toEqual([
       '#/asset/M-204/evidence/source/SOP-014-C/step/SOP-014-C-4',
@@ -170,13 +170,36 @@ describe('Evidence screen', () => {
     ]);
   });
 
-  it('shows the left-out summary, and keeps INC-2310 visible with its keyword and reason', () => {
-    expect(container.querySelector('.text-button')?.textContent).toBe(
-      '1 record left out: gearbox report that also mentions vibration.',
-    );
-    const row = [...container.querySelectorAll('.row-excluded')].find((item) => item.textContent?.includes('INC-2310'));
+  it('collapses every group by default, with a count and preview', () => {
+    const groups = [...container.querySelectorAll('.groups details')];
+    expect(groups).toHaveLength(3);
+    for (const group of groups) expect(group.hasAttribute('open')).toBe(false);
+    expect([...container.querySelectorAll('.groups .group-title')].map((item) => item.textContent)).toEqual([
+      'Used as evidence (5)',
+      'Not sure it applies (1)',
+      'Left out (2)',
+    ]);
+    expect(groups[2].querySelector('.group-preview')?.textContent).toBe('Gearbox report that mentions vibration, older procedure');
+  });
+
+  it('opens Left out from the summary line, keeping the INC-2310 keyword and reason', async () => {
+    const leftOut = container.querySelector('#left-out') as HTMLDetailsElement;
+    expect(leftOut.open).toBe(false);
+    await click(container.querySelector('.text-button') as Element);
+    expect(leftOut.open).toBe(true);
+    expect(leftOut.querySelectorAll('.row')).toHaveLength(2);
+    const row = [...leftOut.querySelectorAll('.row-excluded')].find((item) => item.textContent?.includes('INC-2310'));
     expect(row?.querySelector('mark')?.textContent).toBe('vibration');
     expect(row?.textContent).toContain('does not link to M-204');
+  });
+
+  it('removes the prose rows from the cause cards', () => {
+    const cards = [...container.querySelectorAll('.cause')];
+    expect(cards).toHaveLength(2);
+    expect(cards[0].textContent).toContain('12 Mar 2025');
+    expect(cards[0].textContent).toContain('6.5 h');
+    expect(cards[0].querySelector('.check')?.textContent).toBe('Check: Step 2, feel for rough running or play');
+    expect(container.querySelector('.compare')?.textContent).not.toMatch(/Unconfirmed|Why it is on the list/);
   });
 
   it('shows no generic reason on included rows, and keeps it as relevance in the source', async () => {
@@ -192,11 +215,92 @@ describe('Evidence screen', () => {
 });
 
 describe('Plan screen', () => {
-  it('keeps German one tap away', async () => {
+  const languageButton = (label: string) =>
+    [...container.querySelectorAll('.switch button')].find((item) => item.textContent === label) as HTMLElement;
+
+  beforeEach(() => go('#/asset/M-204/plan'));
+
+  it('shows numbered steps with titles and compact expected results', () => {
+    expect(container.querySelector('.plan h2')?.textContent).toBe('Inspection steps (5)');
+    expect([...container.querySelectorAll('.step-title')].map((item) => item.textContent)).toEqual([
+      'Lock out the motor',
+      'Check the bearing',
+      'Check lubrication',
+      'Check alignment',
+      'Record and release',
+    ]);
+    const checks = [...container.querySelectorAll('.step-check')].map((item) => item.textContent);
+    expect(checks).toContain('Good: smooth, no play');
+    expect(checks).toContain('If not: points to bearing wear');
+  });
+
+  it('switches the whole plan to German, with nothing added below the English', async () => {
+    expect(languageButton('English').getAttribute('aria-pressed')).toBe('true');
+    await click(languageButton('Deutsch'));
+    expect(languageButton('Deutsch').getAttribute('aria-pressed')).toBe('true');
+    const plan = container.querySelector('.plan') as HTMLElement;
+    expect(plan.getAttribute('lang')).toBe('de');
+    expect(plan.textContent).toContain('Inspektionsschritte (5)');
+    expect(plan.textContent).toContain('Motor freischalten und sichern');
+    expect(plan.textContent).toContain('Gut: gleichmäßig, kein Spiel');
+    expect(plan.textContent).not.toMatch(/Lock out|Isolate and lock out|Check the bearing|Good:/);
+  });
+
+  it('has a German title and expected result wherever there is an English one', () => {
+    const sop = records.find((record) => record.id === 'SOP-014-C') as SopRecord;
+    for (const step of sop.steps) {
+      expect(step.title).toBeTruthy();
+      expect(step.titleGerman).toBeTruthy();
+      expect(Boolean(step.goodEnglish)).toBe(Boolean(step.goodGerman));
+      expect(Boolean(step.ifNotEnglish)).toBe(Boolean(step.ifNotGerman));
+    }
+  });
+});
+
+describe('Finding screen', () => {
+  beforeEach(async () => {
     await go('#/asset/M-204/plan');
-    expect(container.querySelector('.german')).toBeNull();
-    await click([...container.querySelectorAll('button')].find((item) => item.textContent === 'Show German text') as Element);
-    expect(container.querySelector('.german')?.textContent).toContain('freischalten');
+    await click(primary());
+  });
+
+  const area = () => container.querySelector('textarea') as HTMLTextAreaElement;
+  const chips = () => [...container.querySelectorAll('.chip')];
+
+  it('starts with an empty note and no suggestions', () => {
+    expect(area().value).toBe('');
+    expect(area().placeholder).toBe('Add a note');
+    expect(chips()).toHaveLength(0);
+  });
+
+  it('marks the selected outcome for screen readers and offers suggestions without prefilling', async () => {
+    await click(outcomeButton('Bearing wear'));
+    const pressed = [...container.querySelectorAll('.outcome[aria-pressed="true"]')];
+    expect(pressed.map((item) => item.textContent?.trim())).toEqual(['Bearing wear']);
+    expect(pressed[0].querySelector('svg')).not.toBeNull();
+    expect(area().value).toBe('');
+    expect(chips().map((chip) => chip.textContent)).toContain('Play at drive-end bearing');
+
+    await click(chips()[0]);
+    expect(area().value).toBe('Play at drive-end bearing');
+  });
+});
+
+describe('Plant floor', () => {
+  it('shows each machine in its line, with the alert from data', () => {
+    const zone2 = container.querySelector('.zone-2') as HTMLElement;
+    for (const id of ['C-204', 'M-204', 'G-204', 'M-310']) expect(zone2.textContent).toContain(id);
+    expect(container.querySelectorAll('.zone-2 .zone-name')).toHaveLength(1);
+    expect(container.querySelector('.zone-1')?.textContent).toContain('F-118');
+    const alertMachines = [...container.querySelectorAll('.machine.has-alert')];
+    expect(alertMachines).toHaveLength(1);
+    expect(alertMachines[0].textContent).toContain('8.4 mm/s');
+    expect(alertMachines[0].textContent).toContain('Abnormal vibration');
+  });
+
+  it('marks the selected machine and uses plain words for related ones', async () => {
+    await go('#/asset/M-204');
+    expect(container.querySelector('.machine[aria-pressed="true"]')?.textContent).toContain('M-204');
+    expect(container.querySelector('.machine.is-sibling')?.textContent).toContain('Gearbox on the same conveyor');
   });
 });
 

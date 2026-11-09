@@ -76,9 +76,11 @@ export function SourceScreen({
           <ol className="source-steps">
             {record.steps.map((step) => (
               <li key={step.id} ref={step.id === stepId ? target : undefined} className={step.id === stepId ? 'is-target' : undefined}>
+                {step.title && <p className="step-title">{step.title}</p>}
                 <p>{step.english}</p>
-                {step.expectedEnglish && <p className="expected">You should see: {step.expectedEnglish}</p>}
-                <p className="german" lang={record.language}>{step.original}{step.expectedOriginal ? ` ${step.expectedOriginal}` : ''}</p>
+                {step.goodEnglish && <p className="step-check">Good: {step.goodEnglish}</p>}
+                {step.ifNotEnglish && <p className="step-check">If not: {step.ifNotEnglish}</p>}
+                <p className="german" lang={record.language}>{step.original}</p>
               </li>
             ))}
           </ol>

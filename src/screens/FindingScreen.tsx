@@ -12,6 +12,17 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
   const [note, setNote] = useState(saved.finding?.note ?? '');
   const [error, setError] = useState<string | null>(null);
 
+  const options = outcomeOptions(result);
+  const suggestions = options.find((option) => option.key === outcome)?.suggestions ?? [];
+
+  function insert(suggestion: string) {
+    setNote((current) => {
+      const text = current.trim();
+      if (text.includes(suggestion)) return current;
+      return text ? `${text}. ${suggestion}` : suggestion;
+    });
+  }
+
   function handleSave() {
     if (!outcome) return;
     try {
@@ -30,9 +41,8 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
     <Screen action={<PrimaryAction label="Save finding" onClick={handleSave} disabled={!outcome} />}>
       <p className="confirm" role="status"><CheckMark /> <strong>Plan saved</strong> <span className="num">{time(saved.savedAt)}</span></p>
       <h1>Record finding</h1>
-      <p className="muted">What did you observe in this inspection?</p>
       <div className="outcomes" role="group" aria-label="Finding outcome">
-        {outcomeOptions(result).map((option) => (
+        {options.map((option) => (
           <button
             type="button"
             key={option.key}
@@ -40,16 +50,30 @@ export function FindingScreen({ result, saved }: { result: RetrievalResult; save
             aria-pressed={outcome === option.key}
             onClick={() => setOutcome(option.key)}
           >
-            {outcome === option.key && <CheckMark />} {option.label}
+            {outcome === option.key && <CheckMark />}
+            {option.label}
           </button>
         ))}
       </div>
-      <label className="note">
-        Note (optional)
-        <textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} />
-      </label>
+      <div className="note">
+        <textarea
+          rows={2}
+          aria-label="Note (optional)"
+          placeholder="Add a note"
+          value={note}
+          onChange={(event) => setNote(event.target.value)}
+        />
+        {suggestions.length > 0 && (
+          <div className="chips" role="group" aria-label="Note suggestions">
+            {suggestions.map((suggestion) => (
+              <button type="button" className="chip" key={suggestion} onClick={() => insert(suggestion)}>
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       {error && <p className="error" role="alert">{error}</p>}
-      {!outcome && <p className="muted">Choose one outcome to save.</p>}
     </Screen>
   );
 }

@@ -1,15 +1,39 @@
 import { useState } from 'react';
-import { LockMark } from '../components/Icons';
 import { PrimaryAction } from '../components/PrimaryAction';
 import { Screen } from '../components/Screen';
 import { records } from '../data';
 import type { RetrievalResult, SavedPlan, SopRecord } from '../domain/types';
 import { savePlan } from '../storage/plans';
 
+type PlanLanguage = 'en' | 'de';
+
+const COPY = {
+  en: {
+    title: 'Review and save inspection plan',
+    source: 'Translated from German',
+    steps: 'Inspection steps',
+    good: 'Good:',
+    ifNot: 'If not:',
+    references: 'Evidence references',
+    save: 'Save inspection plan',
+    next: 'Continue to finding',
+  },
+  de: {
+    title: 'Inspektionsplan prüfen und speichern',
+    source: 'Originaltext',
+    steps: 'Inspektionsschritte',
+    good: 'Gut:',
+    ifNot: 'Wenn nicht:',
+    references: 'Belege',
+    save: 'Inspektionsplan speichern',
+    next: 'Weiter zum Befund',
+  },
+};
+
 export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: SavedPlan | null }) {
   const { asset, parent, applicableSop, included } = result;
   const [error, setError] = useState<string | null>(null);
-  const [showGerman, setShowGerman] = useState(false);
+  const [language, setLanguage] = useState<PlanLanguage>('en');
 
   const savedSop = saved ? records.find((record) => record.id === saved.sopRecordId) : undefined;
   const sop = (savedSop?.kind === 'sop' ? savedSop : applicableSop) as SopRecord | null;
@@ -17,13 +41,15 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
   if (!sop) {
     return (
       <Screen action={<PrimaryAction label="Back to evidence" href={`#/asset/${asset.id}/evidence`} />}>
-        <h1>Review and save inspection plan</h1>
+        <h1>{COPY.en.title}</h1>
         <p>There is no applicable procedure for {asset.id}, so no plan can be created.</p>
       </Screen>
     );
   }
 
   const procedure = sop;
+  const copy = COPY[language];
+  const german = language === 'de';
   const evidenceIds = saved ? saved.evidenceIds : included.map((item) => item.record.id);
   const steps = saved ? procedure.steps.filter((step) => saved.stepIds.includes(step.id)) : procedure.steps;
   const findingHref = `#/asset/${asset.id}/finding`;
@@ -45,55 +71,71 @@ export function PlanScreen({ result, saved }: { result: RetrievalResult; saved: 
   }
 
   const action = saved ? (
-    <PrimaryAction label="Continue to finding" href={findingHref} />
+    <PrimaryAction label={copy.next} href={findingHref} />
   ) : (
-    <PrimaryAction label="Save inspection plan" onClick={handleSave} />
+    <PrimaryAction label={copy.save} onClick={handleSave} />
   );
 
   return (
     <Screen action={action}>
-      <p className="path">{parent && `${parent.id} > `}{asset.id}</p>
-      <h1>Review and save inspection plan</h1>
-      <p className="muted">
-        Steps come only from <a className="tap-link solo" href={sourceHref(procedure.id)}>{procedure.sopNumber} rev {procedure.revision}</a>, the current procedure for {asset.id}. The English is a prepared explanation. The German text is the authoritative version.
-      </p>
+      <div lang={german ? 'de' : 'en'} className="plan">
+        <p className="path">{parent && `${parent.id} > `}{asset.id}</p>
+        <h1>{copy.title}</h1>
+        <div className="plan-meta">
+          <p className="fine">
+            {copy.source}: <a className="tap-link solo" href={sourceHref(procedure.id)}>{procedure.sopNumber} rev {procedure.revision}</a>
+          </p>
+          <div className="switch" role="group" aria-label="Plan language">
+            {(['en', 'de'] as const).map((option) => (
+              <button
+                type="button"
+                key={option}
+                lang={option}
+                aria-pressed={language === option}
+                onClick={() => setLanguage(option)}
+              >
+                {option === 'en' ? 'English' : 'Deutsch'}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <button
-        type="button"
-        className="secondary-button"
-        aria-expanded={showGerman}
-        onClick={() => setShowGerman((value) => !value)}
-      >
-        {showGerman ? 'Hide German text' : 'Show German text'}
-      </button>
+        <h2>{copy.steps} ({steps.length})</h2>
+        <ol className="steps">
+          {steps.map((step, index) => {
+            const good = german ? step.goodGerman : step.goodEnglish;
+            const ifNot = german ? step.ifNotGerman : step.ifNotEnglish;
+            return (
+              <li key={step.id}>
+                <span className="step-num" aria-hidden="true">{index + 1}</span>
+                <div className="step-body">
+                  <p className="step-title">{german ? step.titleGerman : step.title}</p>
+                  <p className="step-text">{german ? step.original : step.english}</p>
+                  {good && <p className="step-check"><span>{copy.good}</span> {good}</p>}
+                  {ifNot && <p className="step-check"><span>{copy.ifNot}</span> {ifNot}</p>}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
 
-      <ol className="steps">
-        {steps.map((step, index) => (
-          <li key={step.id} className={index === 0 ? 'step-first' : undefined}>
-            {index === 0 && <p className="step-flag"><LockMark /> Do this first</p>}
-            <p className="step-english">{step.english}</p>
-            {step.expectedEnglish && <p className="expected">You should see: {step.expectedEnglish}</p>}
-            {showGerman && (
-              <p className="german" lang={procedure.language}>
-                {step.original}{step.expectedOriginal ? ` ${step.expectedOriginal}` : ''}
-              </p>
-            )}
-          </li>
-        ))}
-      </ol>
+        <details className="group">
+          <summary>
+            <span className="group-title">{copy.references} ({evidenceIds.length})</span>
+          </summary>
+          <ul className="ref-list">
+            {evidenceIds.map((id) => (
+              <li key={id}>
+                <a className="tap-link" href={sourceHref(id)}>
+                  {german ? id : records.find((record) => record.id === id)?.takeaway ?? id}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </details>
 
-      <details className="refs-box">
-        <summary>Evidence references ({evidenceIds.length})</summary>
-        <ul className="ref-list">
-          {evidenceIds.map((id) => (
-            <li key={id}>
-              <a className="tap-link" href={sourceHref(id)}>{records.find((record) => record.id === id)?.takeaway ?? id}</a>
-            </li>
-          ))}
-        </ul>
-      </details>
-
-      {error && <p className="error" role="alert">{error}</p>}
+        {error && <p className="error" role="alert">{error}</p>}
+      </div>
     </Screen>
   );
 }

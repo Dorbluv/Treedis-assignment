@@ -4,19 +4,29 @@ export function time(iso: string): string {
   return new Date(iso).toLocaleString();
 }
 
-export function longDate(isoDate: string): string {
+export function shortDate(isoDate: string): string {
   return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-GB', {
     timeZone: 'UTC',
     day: 'numeric',
-    month: 'long',
+    month: 'short',
     year: 'numeric',
   });
 }
 
-export function outcomeOptions(result: RetrievalResult): { key: string; label: string }[] {
+export interface OutcomeOption {
+  key: string;
+  label: string;
+  suggestions: string[];
+}
+
+export function outcomeOptions(result: RetrievalResult): OutcomeOption[] {
   return [
-    ...result.possibleCauses.map((cause) => ({ key: cause.key, label: cause.label })),
-    { key: 'neither', label: 'Neither' },
-    { key: 'inconclusive', label: 'Inconclusive' },
+    ...result.possibleCauses.map((cause) => ({
+      key: cause.key,
+      label: cause.label,
+      suggestions: result.included.find((item) => item.record.id === cause.recordId)?.record.noteSuggestions ?? [],
+    })),
+    { key: 'neither', label: 'Neither', suggestions: ['Bearing and lubricant normal', 'Alignment off at coupling'] },
+    { key: 'inconclusive', label: 'Inconclusive', suggestions: ['Could not reach the bearing', 'Needs a second inspection'] },
   ];
 }

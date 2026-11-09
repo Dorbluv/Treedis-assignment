@@ -2,8 +2,8 @@ import type { EvidenceItem } from '../domain/types';
 import { NoEntryMark } from './Icons';
 
 /**
- * One compact record, with its detail one tap away.
- * Included records show takeaway and label only. Excluded and uncertain ones also say why.
+ * One line plus its label, with detail one tap away.
+ * Excluded and uncertain records also say why, because that is required.
  */
 export function EvidenceRow({
   item,
@@ -17,13 +17,12 @@ export function EvidenceRow({
   const { record, label, reason, keywordMatch } = item;
   return (
     <a className={`row row-${tone}`} href={sourceHref}>
-      <span className="row-lead">
-        {tone === 'excluded' && <NoEntryMark />}
-        {record.takeaway}
-      </span>
-      <span className="row-meta">
+      <span className="row-top">
+        <span className="row-lead">
+          {tone === 'excluded' && <NoEntryMark />}
+          {record.takeaway}
+        </span>
         <span className={`tag${tone === 'uncertain' ? ' tag-dashed' : ''}`}>{label}</span>
-        <span className="row-id">{record.id}{record.language === 'de' ? ', German' : ''}</span>
       </span>
       {tone !== 'included' && (
         <span className="row-reason">
@@ -33,6 +32,7 @@ export function EvidenceRow({
               {' '}Keyword match: <mark>{keywordMatch}</mark>. A keyword alone does not make this evidence.
             </>
           )}
+          <span className="row-id"> {record.id}</span>
         </span>
       )}
     </a>

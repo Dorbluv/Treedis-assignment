@@ -1,6 +1,7 @@
-import type { KeyboardEvent, ReactNode } from 'react';
-import { alerts, assets } from '../data';
+import { alerts, assets, records } from '../data';
+import { machineStatus } from '../domain/floor';
 import type { Asset } from '../domain/types';
+import { AlertMark, TypeIcon } from './Icons';
 
 type Role = 'selected' | 'parent' | 'sibling' | 'child' | null;
 
@@ -17,142 +18,108 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Plain words for how a piece of equipment relates to the selected one. */
-function stationLines(asset: Asset, role: Role, selected: Asset | null): string[] {
+/** Plain words for what a machine is, and how it relates to the selected one. */
+function describe(asset: Asset, role: Role, selected: Asset | null): string {
   if (role === 'sibling' && selected) {
     const parent = assets.find((candidate) => candidate.id === selected.parentId);
-    return [`${capitalize(asset.type)} on the`, `same ${parent?.type ?? 'line'}`];
+    return `${capitalize(asset.type)} on the same ${parent?.type ?? 'line'}`;
   }
-  if (role === 'child') return ['Part of this', 'conveyor'];
-  return [capitalize(asset.type)];
+  if (role === 'parent' && selected) return `Conveyor this ${selected.type} is part of`;
+  if (role === 'child') return 'Part of this conveyor';
+  return capitalize(asset.type);
 }
 
 function open(id: string) {
   window.location.hash = `#/asset/${id}`;
 }
 
-function onKey(event: KeyboardEvent, id: string) {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault();
-    open(id);
-  }
-}
-
-function Control({ asset, role, label, children }: { asset: Asset; role: Role; label: string; children: ReactNode }) {
+function MachineBody({ asset, role, selected }: { asset: Asset; role: Role; selected: Asset | null }) {
+  const { alert, value } = machineStatus(asset, alerts, records);
   return (
-    <g
-      className={`floor-asset${role ? ` is-${role}` : ''}`}
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      aria-pressed={role === 'selected'}
-      onClick={() => open(asset.id)}
-      onKeyDown={(event) => onKey(event, asset.id)}
-    >
-      {children}
-    </g>
+    <>
+      <span className="machine-top">
+        <TypeIcon type={asset.type} />
+        <span className="machine-id">{asset.id}</span>
+        {alert ? (
+          <span className="status-alert"><span className="pulse" /><AlertMark /></span>
+        ) : (
+          <span className="status-dot" />
+        )}
+      </span>
+      <span className="machine-desc">{describe(asset, role, selected)}</span>
+      {value && <span className={`machine-value${alert ? ' is-abnormal' : ''}`}>{value}</span>}
+      {alert && <span className="machine-alert-text">{alert.title}</span>}
+    </>
   );
 }
 
-const Y_ALERT_TEXT = 126;
+function controlProps(asset: Asset, role: Role, selected: Asset | null) {
+  const { alert, value } = machineStatus(asset, alerts, records);
+  const parts = [asset.name, alert ? alert.title : 'no alert', value, role && role !== 'selected' ? describe(asset, role, selected) : null];
+  return {
+    type: 'button' as const,
+    'aria-pressed': role === 'selected',
+    'aria-label': parts.filter(Boolean).join(', '),
+    onClick: () => open(asset.id),
+  };
+}
+
+function Machine({ asset, selected, row }: { asset: Asset; selected: Asset | null; row?: boolean }) {
+  const role = roleOf(asset, selected);
+  const hasAlert = alerts.some((alert) => alert.assetId === asset.id);
+  const classes = ['machine', role ? `is-${role}` : '', hasAlert ? 'has-alert' : '', row ? 'machine-row' : ''];
+  return (
+    <button className={classes.filter(Boolean).join(' ')} {...controlProps(asset, role, selected)}>
+      <MachineBody asset={asset} role={role} selected={selected} />
+    </button>
+  );
+}
+
+function Assembly({ belt, selected }: { belt: Asset; selected: Asset | null }) {
+  const stations = assets.filter((asset) => asset.parentId === belt.id);
+  const role = roleOf(belt, selected);
+  return (
+    <div className={`assembly${role ? ' is-lit' : ''}`}>
+      <div className="drive">
+        {stations.map((station, index) => (
+          <div className="drive-part" key={station.id}>
+            {index > 0 && <span className="shaft"><span className="coupling" /></span>}
+            <div className="station">
+              <Machine asset={station} selected={selected} />
+              <span className="stem" />
+            </div>
+          </div>
+        ))}
+      </div>
+      <button className={`machine belt${role ? ` is-${role}` : ''}`} {...controlProps(belt, role, selected)}>
+        <MachineBody asset={belt} role={role} selected={selected} />
+        <span className="belt-track" aria-hidden="true" />
+      </button>
+    </div>
+  );
+}
 
 export function PlantFloor({ selectedId }: { selectedId: string | null }) {
   const selected = assets.find((asset) => asset.id === selectedId) ?? null;
-  const belt = assets.find((asset) => assets.some((other) => other.parentId === asset.id));
-  const stations = assets.filter((asset) => asset.id !== belt?.id);
-  const onBelt = stations
-    .filter((asset) => asset.parentId === belt?.id)
-    .sort((a, b) => a.mapPosition.x - b.mapPosition.x);
-  const beltRole = belt ? roleOf(belt, selected) : null;
-  const pathLit = beltRole !== null;
+  const lines = [...new Set(assets.map((asset) => asset.line))].sort();
+  const isParent = (asset: Asset) => assets.some((other) => other.parentId === asset.id);
 
   return (
-    <svg className="plant-floor" viewBox="0 0 380 294" role="group" aria-label="Plant floor. Select equipment to see how it connects.">
-      <text x="14" y="20" className="floor-zone">Line 1</text>
-      <text x="206" y="20" className="floor-zone">Line 2</text>
-      <text x="14" y="112" className="floor-zone">Line 2</text>
-
-      {belt && (() => {
-        const { x, y, width, height } = belt.mapPosition;
-        const radius = height / 2;
-        const middle = y + radius;
-        const chevrons = [];
-        for (let at = x + 56; at < x + width - 40; at += 34) chevrons.push(at);
-        const text =
-          beltRole === 'parent' && selected
-            ? `${belt.id} conveyor this ${selected.type} is part of`
-            : `${belt.id} conveyor`;
+    <div className="floor">
+      {lines.map((line) => {
+        const top = assets.filter((asset) => asset.line === line && asset.parentId === null);
         return (
-          <Control asset={belt} role={beltRole} label={`${belt.name}. ${text}`}>
-            <rect className="floor-hit" x={x} y={y - 4} width={width} height={height + 8} rx={radius + 4} />
-            <rect className="belt" x={x} y={y} width={width} height={height} rx={radius} />
-            <circle className="roller" cx={x + radius} cy={middle} r={radius - 8} />
-            <circle className="roller" cx={x + width - radius} cy={middle} r={radius - 8} />
-            {chevrons.map((at) => (
-              <path key={at} className="chevron" d={`M${at} ${middle + 8}l5 4 -5 4`} />
-            ))}
-            <text x={x + 52} y={middle - 3} className="belt-label">{text}</text>
-          </Control>
-        );
-      })()}
-
-      {/* Each drive station stands on the belt. */}
-      {belt && onBelt.map((asset) => {
-        const cx = asset.mapPosition.x + asset.mapPosition.width / 2;
-        const bottom = asset.mapPosition.y + asset.mapPosition.height;
-        return <line key={asset.id} className={`stem${pathLit ? ' is-lit' : ''}`} x1={cx} x2={cx} y1={bottom} y2={belt.mapPosition.y} />;
-      })}
-
-      {/* The drive shaft joins the motor to the gearbox. */}
-      {onBelt.length === 2 && (
-        <g className={`shaft${pathLit ? ' is-lit' : ''}`}>
-          <line
-            x1={onBelt[0].mapPosition.x + onBelt[0].mapPosition.width}
-            x2={onBelt[1].mapPosition.x}
-            y1={onBelt[0].mapPosition.y + onBelt[0].mapPosition.height / 2}
-            y2={onBelt[0].mapPosition.y + onBelt[0].mapPosition.height / 2}
-          />
-          <rect
-            x={(onBelt[0].mapPosition.x + onBelt[0].mapPosition.width + onBelt[1].mapPosition.x) / 2 - 5}
-            y={onBelt[0].mapPosition.y + onBelt[0].mapPosition.height / 2 - 8}
-            width="10"
-            height="16"
-            rx="2"
-          />
-        </g>
-      )}
-
-      {stations.map((asset) => {
-        const { x, y, width, height } = asset.mapPosition;
-        const role = roleOf(asset, selected);
-        const lines = stationLines(asset, role, selected);
-        const nameY = lines.length > 1 ? y + 21 : y + height / 2 - 2;
-        return (
-          <Control asset={asset} role={role} label={`${asset.name}. ${lines.join(' ')}`} key={asset.id}>
-            <rect className="station" x={x} y={y} width={width} height={height} rx="6" />
-            <text x={x + 12} y={nameY} className="floor-name">{asset.id}</text>
-            {lines.map((line, index) => (
-              <text key={line} x={x + 12} y={nameY + 18 + index * 15} className="floor-detail">{line}</text>
-            ))}
-          </Control>
+          <section className={`zone zone-${line}`} key={line} aria-label={`Line ${line}`}>
+            <h2 className="zone-name">Line {line}</h2>
+            {top.filter(isParent).map((asset) => <Assembly belt={asset} selected={selected} key={asset.id} />)}
+            {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} selected={selected} row key={asset.id} />)}
+          </section>
         );
       })}
-
-      {alerts.map((alert) => {
-        const asset = assets.find((candidate) => candidate.id === alert.assetId);
-        if (!asset) return null;
-        const cx = asset.mapPosition.x + 46;
-        return (
-          <g key={alert.id} className="floor-alert">
-            <line x1={cx} x2={cx} y1={Y_ALERT_TEXT + 6} y2={asset.mapPosition.y} />
-            <circle className="pulse" cx={cx} cy={Y_ALERT_TEXT - 4} r="11" />
-            <path d={`M${cx} ${Y_ALERT_TEXT - 13}l9 16h-18Z`} className="alert-shape" />
-            <rect x={cx - 1} y={Y_ALERT_TEXT - 7} width="2" height="6" className="alert-bang" />
-            <rect x={cx - 1} y={Y_ALERT_TEXT} width="2" height="2" className="alert-bang" />
-            <text x={cx + 16} y={Y_ALERT_TEXT + 1} className="floor-alert-text">{alert.title}</text>
-          </g>
-        );
-      })}
-    </svg>
+      <p className="legend">
+        <span><span className="status-dot" /> No alert</span>
+        <span><AlertMark /> Alert</span>
+      </p>
+    </div>
   );
 }

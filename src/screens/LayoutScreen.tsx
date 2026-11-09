@@ -16,9 +16,7 @@ function HomeAlert() {
         return (
           <div className="alert-hero" key={alert.id}>
             <p className="alert-title"><AlertMark /> {alert.title} on {alert.assetId}</p>
-            {reading && (
-              <p className="num">{reading.label} {reading.value} {reading.unit} against a limit of {reading.limit}.</p>
-            )}
+            {reading && <p className="num">{reading.value} {reading.unit}, limit {reading.limit}</p>}
           </div>
         );
       })}
@@ -42,7 +40,7 @@ export function LayoutScreen({
       <Screen action={<PrimaryAction label="Open M-204 alert" href={ALERT_HREF} />}>
         <h1>Plant floor</h1>
         <HomeAlert />
-        <p className="muted">Open the alert, or select equipment on the floor.</p>
+        <p className="muted">Or pick a machine on the floor.</p>
         {showReset && <button type="button" className="reset" onClick={onReset}>Reset demo</button>}
       </Screen>
     );
@@ -66,15 +64,11 @@ export function LayoutScreen({
       <h1>{asset.name}</h1>
       {hasRelations ? (
         <ul className="relations">
-          {parent && <li>It is part of {parent.type} {parent.id}.</li>}
+          {parent && <li>Part of {parent.type} {parent.id}</li>}
           {siblings.map((sibling) => (
-            <li key={sibling.id}>
-              {sibling.type === 'gearbox' ? 'Gearbox' : sibling.name} {sibling.id} is on the same {parent?.type}. Its records are not used for this {asset.type} unless they link to it.
-            </li>
+            <li key={sibling.id}>{sibling.name} shares the {parent?.type}. Its records stay out unless linked.</li>
           ))}
-          {children.map((child) => (
-            <li key={child.id}>{child.name} is part of it.</li>
-          ))}
+          {children.map((child) => <li key={child.id}>{child.name} is part of it</li>)}
         </ul>
       ) : (
         <p className="muted">No connected equipment on record.</p>
