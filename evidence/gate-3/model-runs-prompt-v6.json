@@ -1,0 +1,234 @@
+{
+  "model": "gemini-3.5-flash-lite",
+  "promptVersion": "v6",
+  "systemPrompt": "You help a technician who has just received a machine alert. The screen already shows the readings, limits, dates, fixes and downtime.\nReturn at most 2 short English sentences, one per array item, each at most 110 characters. Some records are in German: use their meaning, in English.\n\nIf allowed_causes is not empty:\n- Sentence 1 compares what was physically found in the past incidents, using their symptoms and found_condition, so the technician can see what differs between the causes. Cover every allowed cause, rank none, and never say which applies now. With one allowed cause, say what was physically found. Say that these are from a past record. Do not repeat a reading, limit, date, fix or downtime.\n- Sentence 2 picks one topic from gaps_you_may_name and says that no reading or record covers it today. Cite the IDs listed with that topic. If gaps_you_may_name is empty, return only sentence 1.\n\nIf allowed_causes is empty:\n- Return one sentence saying what is missing, using gaps_you_may_name. Do not use the word \"insufficient\". Name no cause or fault.\n\nRules for every sentence:\n- List in \"citations\" the IDs of the records that support it. A sentence naming a cause or its finding must cite that incident. Do not put record IDs in the text.\n- Use only facts from the cited records. Do not count, calculate or round. Always write \"demo limit\", never just \"limit\".\n- You never decide what is wrong now. Mention only causes in allowed_causes and no other cause or fault, including alignment. Never write traced to, caused by or due to.\n- Give no instructions, inspection steps or advice about what anyone should do.\n- Use correct singular and plural grammar, and make verbs agree with their subjects.",
+  "excerpts": {
+    "SR-M204-01": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
+    "INC-2291": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
+    "INC-1877": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
+    "INC-2310": "Vibration noted at G-204 during a routine round. An oil seal on the gearbox output shaft was leaking. Seal replaced.",
+    "ASM-0412": "Assembly check on C-204: drive train alignment between components drifted after belt replacement. Misalignment on this conveyor can raise vibration across the drive train.",
+    "NOTE-5521": "Motor on line 2 noisy near end of shift.",
+    "SOP-014-C": "Vor Beginn der Inspektion ist der Motor nach dem standortgenehmigten Verfahren freizuschalten und gegen Wiedereinschalten zu sichern.",
+    "SOP-014-B": "Motor freischalten. Lagergehäuse prüfen. Ausrichtung prüfen.",
+    "SOP-022": "Isolate and lock out M-310 using the site-approved procedure before inspection. Check bearing housing and mounting bolts.",
+    "INC-1650": "Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared.",
+    "SR-M310-01": "Motor housing: vibration velocity 6.2 mm/s RMS (demo limit 4.5).",
+    "SR-F118-01": "Nozzle bank: pressure 3.8 bar (demo limit 3.0)."
+  },
+  "runs": [
+    {
+      "assetId": "M-204",
+      "run": 1,
+      "at": "2026-11-09T17:29:52.895Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Past incidents found outer race wear with a rough shaft and play, or lubricant below the mark.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "No reading or record covers play or rough running at the bearing today.",
+            "citations": [
+              "SR-M204-01",
+              "INC-2291"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1413
+    },
+    {
+      "assetId": "M-204",
+      "run": 2,
+      "at": "2026-11-09T17:30:01.320Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "In past records, bearing wear had a rough shaft with play and outer race wear, while lubrication had low lubricant.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "No reading or record covers play or rough running at the bearing today.",
+            "citations": [
+              "SR-M204-01",
+              "INC-2291"
+            ]
+          }
+        ]
+      },
+      "valid": false,
+      "failures": [
+        {
+          "rule": "shape",
+          "detail": "sentence is too long"
+        }
+      ],
+      "latencyMs": 1037
+    },
+    {
+      "assetId": "M-204",
+      "run": 3,
+      "at": "2026-11-09T17:30:09.367Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Past records found outer race wear with play and a rough shaft, or the lubricant below the mark.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "No reading or record covers the play or rough running at the bearing today.",
+            "citations": [
+              "SR-M204-01",
+              "INC-2291"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1110
+    },
+    {
+      "assetId": "M-310",
+      "run": 1,
+      "at": "2026-11-09T17:30:17.481Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "No past incidents or failure findings on this machine are covered by the records today.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1165
+    },
+    {
+      "assetId": "M-310",
+      "run": 2,
+      "at": "2026-11-09T17:30:25.655Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Past incidents or failure findings on this machine are missing today.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 977
+    },
+    {
+      "assetId": "M-310",
+      "run": 3,
+      "at": "2026-11-09T17:30:33.641Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Past incidents or failure findings on this machine are missing today.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 776
+    },
+    {
+      "assetId": "F-118",
+      "run": 1,
+      "at": "2026-11-09T17:30:41.418Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "A past incident showed a blocked nozzle on this filler. These are from a past record.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "No reading or record covers flow through the nozzles today.",
+            "citations": [
+              "SR-F118-01",
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": false,
+      "failures": [
+        {
+          "rule": "shape",
+          "detail": "one entry holds more than one sentence"
+        }
+      ],
+      "latencyMs": 1149
+    },
+    {
+      "assetId": "F-118",
+      "run": 2,
+      "at": "2026-11-09T17:30:49.582Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "Past incident INC-1650 showed a filler stoppage on low flow where a blocked nozzle was found.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "No reading or record covers flow through the nozzles today.",
+            "citations": [
+              "SR-F118-01",
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 993
+    },
+    {
+      "assetId": "F-118",
+      "run": 3,
+      "at": "2026-11-09T17:30:57.578Z",
+      "raw": {
+        "sentences": [
+          {
+            "text": "A past incident found a blocked nozzle when the filler stopped on low flow.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "No reading or record covers flow through the nozzles today.",
+            "citations": [
+              "SR-F118-01",
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "valid": true,
+      "latencyMs": 1147
+    }
+  ]
+}

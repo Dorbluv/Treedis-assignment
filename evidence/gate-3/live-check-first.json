@@ -1,0 +1,842 @@
+{
+  "label": "first",
+  "at": "2026-11-09T17:11:48.670Z",
+  "calls": [
+    {
+      "assetId": "M-204",
+      "ms": 1410,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 1
+    },
+    {
+      "assetId": "M-204",
+      "ms": 16,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 2
+    },
+    {
+      "assetId": "M-204",
+      "ms": 15,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 3
+    },
+    {
+      "assetId": "M-204",
+      "ms": 17,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 4
+    },
+    {
+      "assetId": "M-204",
+      "ms": 10,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 5
+    },
+    {
+      "assetId": "M-204",
+      "ms": 20,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      },
+      "i": 6
+    },
+    {
+      "assetId": "M-310",
+      "ms": 839,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 1
+    },
+    {
+      "assetId": "M-310",
+      "ms": 13,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 2
+    },
+    {
+      "assetId": "M-310",
+      "ms": 19,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 3
+    },
+    {
+      "assetId": "M-310",
+      "ms": 14,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 4
+    },
+    {
+      "assetId": "M-310",
+      "ms": 10,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 5
+    },
+    {
+      "assetId": "M-310",
+      "ms": 25,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Insufficient asset-specific evidence to recommend a likely cause.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          },
+          {
+            "text": "The records do not contain historical fault occurrences for this machine.",
+            "citations": [
+              "SOP-022",
+              "SR-M310-01"
+            ]
+          }
+        ]
+      },
+      "i": 6
+    },
+    {
+      "assetId": "F-118",
+      "ms": 1009,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 1
+    },
+    {
+      "assetId": "F-118",
+      "ms": 11,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 2
+    },
+    {
+      "assetId": "F-118",
+      "ms": 11,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 3
+    },
+    {
+      "assetId": "F-118",
+      "ms": 14,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 4
+    },
+    {
+      "assetId": "F-118",
+      "ms": 13,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 5
+    },
+    {
+      "assetId": "F-118",
+      "ms": 10,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Nozzle blockage is a possible cause.",
+            "citations": [
+              "INC-1650"
+            ]
+          },
+          {
+            "text": "These records cannot tell the technician why the pressure is high now.",
+            "citations": [
+              "INC-1650"
+            ]
+          }
+        ]
+      },
+      "i": 6
+    },
+    {
+      "assetId": "G-204",
+      "ms": 11,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 1
+    },
+    {
+      "assetId": "G-204",
+      "ms": 28,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 2
+    },
+    {
+      "assetId": "G-204",
+      "ms": 10,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 3
+    },
+    {
+      "assetId": "G-204",
+      "ms": 13,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 4
+    },
+    {
+      "assetId": "G-204",
+      "ms": 10,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 5
+    },
+    {
+      "assetId": "G-204",
+      "ms": 12,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 6
+    },
+    {
+      "assetId": "C-204",
+      "ms": 13,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 1
+    },
+    {
+      "assetId": "C-204",
+      "ms": 14,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 2
+    },
+    {
+      "assetId": "C-204",
+      "ms": 12,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 3
+    },
+    {
+      "assetId": "C-204",
+      "ms": 14,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 4
+    },
+    {
+      "assetId": "C-204",
+      "ms": 12,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 5
+    },
+    {
+      "assetId": "C-204",
+      "ms": 14,
+      "status": 200,
+      "body": {
+        "source": "none"
+      },
+      "i": 6
+    }
+  ],
+  "burst": [
+    {
+      "assetId": "M-204",
+      "ms": 18,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 31,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 36,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 36,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 36,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 40,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 36,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 37,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 35,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 35,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 35,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "assetId": "M-204",
+      "ms": 28,
+      "status": 200,
+      "body": {
+        "source": "gemini",
+        "sentences": [
+          {
+            "text": "Bearing wear and a lubrication problem are possible causes in these records.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          },
+          {
+            "text": "These records cannot tell whether either applies to the current fault.",
+            "citations": [
+              "INC-2291",
+              "INC-1877"
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

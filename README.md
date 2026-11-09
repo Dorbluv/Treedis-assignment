@@ -2,12 +2,15 @@
 
 A working prototype for the Treedis AI PM take-home. It goes from a machine alert to an evidence-backed inspection plan. All data is synthetic and it is not for operational use.
 
+Live demo: https://maintenance-copilot.dor-bluvshtain.workers.dev/
+
 ## Run
 
 ```
-npm install
-npm run dev
+npm install && npm run dev
 ```
+
+In Windows PowerShell 5.1, use `;` in place of `&&`. No key is needed: without one the app shows its prepared summary.
 
 ## Test
 
