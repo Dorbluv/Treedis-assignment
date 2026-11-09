@@ -67,3 +67,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude chat.
 - **What changed:** A line under the comparison explains why step 4 checks alignment and links to the SOP step and ASM-0412. The ASM-0412 takeaway now states what happened on the conveyor without suggesting a cause on this motor.
 - **Evidence link or screenshot:** _to fill in_
+
+## Redesign rejected for density, steps, translation and plant floor
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Review of the dark redesign on `gate-1`.
+- **What went wrong:** The user reviewed the redesign and rejected the text density, the unclear steps, the translation handling and the plant floor.
+- **Caught by:** The user.
+- **What changed:** Short phrases and collapsed evidence, numbered plan steps with titles, an English / Deutsch switch, and a rebuilt plant floor. Decision: the rule that color appears only on abnormal things was reversed to make the floor feel alive, with tinted zones and normal status color. Coral stays for alerts only.
+- **Evidence link or screenshot:** _to fill in_
