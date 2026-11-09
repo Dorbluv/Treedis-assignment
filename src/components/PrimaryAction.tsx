@@ -6,16 +6,23 @@ interface PrimaryActionProps {
   href?: string;
   onClick?: () => void;
   disabled?: boolean;
+  /** Replaces the Next line while the action is disabled, and says why. */
   hint?: string;
+  next?: string;
+  nextLabel?: string;
 }
 
-/** The one primary action: top right on desktop, fixed at the bottom below that. */
-export function PrimaryAction({ label, href, onClick, disabled, hint }: PrimaryActionProps) {
+/** The one primary action, in a bar that stays in view while the panel scrolls. */
+export function PrimaryAction({ label, href, onClick, disabled, hint, next, nextLabel = 'Next:' }: PrimaryActionProps) {
   const showHint = Boolean(disabled && hint);
   return (
     <div className="action-bar">
       <div className="action-row">
-        {showHint && <span id={HINT_ID} className="action-hint">{hint}</span>}
+        {showHint ? (
+          <span id={HINT_ID} className="action-next">{hint}</span>
+        ) : (
+          next && <span className="action-next"><strong>{nextLabel}</strong> {next}</span>
+        )}
         {href ? (
           <a className="button" data-primary href={href}>{label}</a>
         ) : (

@@ -18,6 +18,9 @@ interface Faces {
 
 const NORMAL: Faces = { top: '#7FA3B8', left: '#4E7186', right: '#3B596C' };
 const SELECTED: Faces = { top: '#FF8F7E', left: '#BF5A4C', right: '#94433A' };
+/** Selected with no active alert. Coral means abnormal, so a healthy machine never gets it. */
+const SELECTED_CLEAR: Faces = { top: '#5FBDB2', left: '#2F8279', right: '#22635D' };
+const SELECTED_CLEAR_OUTLINE = '#7FE0D3';
 const CONVEYOR: Faces = { top: '#46586B', left: '#2C3A49', right: '#223040' };
 
 interface Geometry {
@@ -76,10 +79,10 @@ function useIsPhone(): boolean {
   return isPhone;
 }
 
-function Box({ g, faces, outline }: { g: Geometry; faces: Faces; outline?: string }) {
+function Box({ g, faces, outline, width = 2 }: { g: Geometry; faces: Faces; outline?: string; width?: number }) {
   const [x0, x1] = g.x;
   const [y0, y1] = g.y;
-  const stroke = outline ? { stroke: outline, strokeWidth: 2 } : {};
+  const stroke = outline ? { stroke: outline, strokeWidth: width } : {};
   return (
     <>
       <polygon points={pts([[x0, y0, g.z], [x1, y0, g.z], [x1, y1, g.z], [x0, y1, g.z]])} fill={faces.top} {...stroke} />
@@ -225,8 +228,10 @@ export function IsoFloor({
     const isSelected = selectedId === id;
     const connected = isConnected(state.asset, selected);
     const base = id === 'C-204' ? CONVEYOR : NORMAL;
-    const faces = isSelected ? SELECTED : base;
-    const outline = connected ? '#EAF1F6' : id === 'C-204' && !isSelected ? '#75899C' : undefined;
+    const selectedClear = isSelected && !state.alert;
+    const faces = selectedClear ? SELECTED_CLEAR : isSelected ? SELECTED : base;
+    let outline = connected ? '#EAF1F6' : id === 'C-204' && !isSelected ? '#75899C' : undefined;
+    if (selectedClear) outline = SELECTED_CLEAR_OUTLINE;
     return (
       <g
         key={id}
@@ -238,7 +243,7 @@ export function IsoFloor({
         onClick={() => open(id)}
         onKeyDown={(event) => onKey(event, id)}
       >
-        <Box g={g} faces={faces} outline={outline} />
+        <Box g={g} faces={faces} outline={outline} width={selectedClear ? 3 : 2} />
         {id === 'C-204' && <BeltMarks g={g} />}
       </g>
     );

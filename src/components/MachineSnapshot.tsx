@@ -3,20 +3,23 @@ import { machineSnapshot } from '../domain/snapshot';
 import { followUp } from '../domain/status';
 import type { Escalation, RetrievalResult, SavedPlan } from '../domain/types';
 import { recordLine } from '../screens/format';
-import { AlertMark } from './Icons';
+import { AlertMark, ChevronMark } from './Icons';
 
 export function MachineSnapshot({
   result,
   saved,
   escalation,
+  open = false,
 }: {
   result: RetrievalResult;
   saved: SavedPlan | null;
   escalation?: Escalation;
+  /** Open where the snapshot is the main content, on machines with no active alert. */
+  open?: boolean;
 }) {
   const alert = alertFor(result.asset.id);
   const next = alert ? followUp(saved?.finding, escalation, records) : null;
-  const { reading, incidentCount, latestIncident, procedure, connected } = machineSnapshot(result, assets);
+  const { reading, recordCount, latestRecord, procedure, connected } = machineSnapshot(result, assets);
 
   let status;
   if (next) status = <span className="inspected-title">{next.text}</span>;
@@ -24,6 +27,11 @@ export function MachineSnapshot({
   else status = <span>No active alert</span>;
 
   return (
+    <details className="group machine-details" open={open}>
+      <summary>
+        <ChevronMark />
+        <span className="group-title">Machine details</span>
+      </summary>
     <dl className="snapshot">
       <div>
         <dt>Status</dt>
@@ -38,11 +46,11 @@ export function MachineSnapshot({
         </dd>
       </div>
       <div>
-        <dt>Past incidents</dt>
+        <dt>Past records</dt>
         <dd>
-          {latestIncident
-            ? `${incidentCount}. Latest: ${recordLine(latestIncident)}`
-            : 'No past incidents on this machine'}
+          {latestRecord
+            ? `${recordCount}. Latest: ${recordLine(latestRecord)}`
+            : 'No past records on this machine'}
         </dd>
       </div>
       <div>
@@ -54,5 +62,6 @@ export function MachineSnapshot({
         <dd>{connected}</dd>
       </div>
     </dl>
+    </details>
   );
 }

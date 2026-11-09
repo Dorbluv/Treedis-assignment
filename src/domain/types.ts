@@ -17,9 +17,8 @@ export interface Alert {
   conditions: string[];
   keywords: string[];
   sensorRecordId: string;
-  /** Synthetic: when the alert started and how long ago, for the queue and activity strip. */
-  raisedAt: string;
-  age: string;
+  /** Synthetic: how old the alert is when the app loads. Its start time is computed from this. */
+  ageHours: number;
 }
 
 export type RecordKind = 'sensor' | 'incident' | 'assembly' | 'note' | 'sop';

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { alertFor, records } from '../data';
+import { machineHistory } from '../domain/snapshot';
 import { causeComparison, causesWithoutStep, contextStepNotes, separatingSentence } from '../domain/causes';
 import { ESCALATION_HEADLINE, inspectionStatus } from '../domain/status';
 import type { Alert, Escalation, RetrievalResult, SavedPlan, SopRecord } from '../domain/types';
@@ -33,6 +34,8 @@ const COPY = {
     ifNot: 'If not:',
     references: 'Evidence references',
     save: 'Save inspection plan',
+    nextLabel: 'Next:',
+    nextAfterSave: 'do the steps, then record a finding',
   },
   de: {
     lead: 'Inspektionsplan prüfen und speichern',
@@ -42,6 +45,8 @@ const COPY = {
     ifNot: 'Wenn nicht:',
     references: 'Belege',
     save: 'Inspektionsplan speichern',
+    nextLabel: 'Weiter:',
+    nextAfterSave: 'Schritte ausführen, dann Befund erfassen',
   },
 };
 
@@ -91,7 +96,12 @@ function InvestigateTab({
         </section>
       )}
 
-      {alert && noCauses && <p className="separate">Insufficient asset-specific evidence to recommend a likely cause.</p>}
+      {alert && noCauses && (
+        <div className="insufficient">
+          <p className="separate">Insufficient asset-specific evidence to recommend a likely cause.</p>
+          {machineHistory(result).length === 0 && <p className="note-line">No past incidents on this machine</p>}
+        </div>
+      )}
       {!applicableSop && <NoProcedureCallout assetId={asset.id} hasAlert escalated={Boolean(escalation)} />}
 
       <EvidenceRecords result={result} sourceHref={sourceHref} />
@@ -343,12 +353,27 @@ export function AlertPanel({
   }
 
   let action;
-  if (kind === 'start-plan') action = <PrimaryAction label="Start inspection plan" onClick={() => goTab('plan')} />;
-  else if (kind === 'save-plan') action = <PrimaryAction label={COPY[german ? 'de' : 'en'].save} onClick={handleSavePlan} />;
-  else if (kind === 'save-finding') {
-    action = <PrimaryAction label="Save finding" onClick={handleSaveFinding} disabled={tab === 'finding' && !outcome} hint="Pick one to save" />;
-  } else if (kind === 'escalate') action = <PrimaryAction label="Escalate through site process" onClick={handleEscalate} />;
-  else action = <PrimaryAction label="Back to plant floor" href="#/" />;
+  if (kind === 'start-plan') {
+    action = <PrimaryAction label="Start inspection plan" onClick={() => goTab('plan')} next="check the inspection steps" />;
+  } else if (kind === 'save-plan') {
+    const copy = COPY[german ? 'de' : 'en'];
+    action = <PrimaryAction label={copy.save} onClick={handleSavePlan} next={copy.nextAfterSave} nextLabel={copy.nextLabel} />;
+  } else if (kind === 'save-finding') {
+    action = (
+      <PrimaryAction
+        label="Save finding"
+        onClick={handleSaveFinding}
+        disabled={tab === 'finding' && !outcome}
+        hint="Pick one to save"
+        next="record what you found"
+      />
+    );
+  } else if (kind === 'escalate') {
+    action = <PrimaryAction label="Escalate through site process" onClick={handleEscalate} next="send it to site review" />;
+  } else {
+    const after = saved?.finding ? inspectionStatus(saved.finding.outcome, records).next : 'wait for site review';
+    action = <PrimaryAction label="Back to plant floor" href="#/" next={after} />;
+  }
 
   const headline = escalated
     ? ESCALATION_HEADLINE
@@ -367,14 +392,9 @@ export function AlertPanel({
   return (
     <>
       <header className="panel-head">
-        <div className="head-row">
-          <div className="head-text">
-            <p className="location">{moved ? `${asset.id}, line` : 'Line'} {asset.line}{parent ? `, ${parent.type} ${parent.id}` : ''}</p>
-            <h1 tabIndex={-1}>{headline}</h1>
-            <p className="status-line">{statusLine}</p>
-          </div>
-          {action}
-        </div>
+        <p className="location">{moved ? `${asset.id}, line` : 'Line'} {asset.line}{parent ? `, ${parent.type} ${parent.id}` : ''}</p>
+        <h1 tabIndex={-1}>{headline}</h1>
+        <p className="status-line">{statusLine}</p>
         <ol className="pills" aria-label="Machine status">
           {pills.map((pill) => (
             <li key={pill.label} className={`pill pill-${pill.state}`} aria-current={pill.state === 'current' ? 'step' : undefined}>
@@ -385,6 +405,7 @@ export function AlertPanel({
       </header>
 
       <div className="panel-body">
+        <div className="panel-main">
         <div className="panel-scroll" ref={scroll}>
           <div className="panel-content">
             <div className="area-tabs">
@@ -423,6 +444,8 @@ export function AlertPanel({
           </div>
         </div>
         {sourceId && <SourceSheet result={result} recordId={sourceId} backHref={tab === 'investigate' ? base : `${base}/${tab}`} />}
+        </div>
+        {action}
       </div>
     </>
   );

@@ -3,9 +3,11 @@ import { alerts, dataset, records } from '../data';
 import type { SopRecord } from './types';
 import {
   activityEvents,
+  alertStartedAt,
   causeHeading,
   primaryActionKind,
   recordsChecked,
+  relativeAge,
   resolveTab,
   safetyMessage,
   statusPills,
@@ -96,11 +98,35 @@ describe('safety message', () => {
   });
 });
 
+describe('alert time', () => {
+  const HOUR = 3_600_000;
+
+  it('stores an age, never a fixed date', () => {
+    expect(alerts.map((alert) => alert.ageHours)).toEqual([2, 5, 20]);
+    expect(JSON.stringify(alerts)).not.toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
+
+  it('computes the start from the load time, so it always looks current', () => {
+    for (const loadedAt of [Date.UTC(2026, 0, 1), Date.UTC(2031, 5, 15)]) {
+      expect(alertStartedAt(alerts[0], loadedAt)).toBe(loadedAt - 2 * HOUR);
+      expect(relativeAge(alertStartedAt(alerts[2], loadedAt), loadedAt)).toBe('20 h');
+    }
+  });
+
+  it('writes relative time in minutes, hours or days', () => {
+    expect(relativeAge(0, 20_000)).toBe('1 min');
+    expect(relativeAge(0, 45 * 60_000)).toBe('45 min');
+    expect(relativeAge(0, 5 * HOUR + 59 * 60_000)).toBe('5 h');
+    expect(relativeAge(0, 72 * HOUR)).toBe('3 d');
+  });
+});
+
 describe('activity', () => {
   it('lists only alerts when nothing has been saved', () => {
     const events = activityEvents(alerts, {}, {}, records);
     expect(events).toHaveLength(alerts.length);
     expect(events[0].text).toBe('M-204 abnormal vibration');
+    expect(events.every((event) => event.kind === 'alert')).toBe(true);
   });
 
   it('puts saved events first, using their timestamps', () => {
@@ -119,5 +145,12 @@ describe('activity', () => {
       'M-204 inspected: bearing wear',
       'M-204 plan saved',
     ]);
+    expect(events[0].at).toBe(Date.parse(escalation.escalatedAt));
+  });
+
+  it('lists old saved actions before alerts whose start moved with this load', () => {
+    const plan = { assetId: 'M-204', sopRecordId: 'SOP-014-C', stepIds: [], evidenceIds: [], savedAt: '2020-01-01T10:00:00.000Z' };
+    const events = activityEvents(alerts, { 'M-204': plan }, {}, records);
+    expect(events[0].text).toBe('M-204 plan saved');
   });
 });

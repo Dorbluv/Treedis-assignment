@@ -1,5 +1,5 @@
 import { alerts, records } from '../data';
-import { activityEvents } from '../domain/workspace';
+import { activityEvents, relativeAge } from '../domain/workspace';
 import { formatDateTime } from '../screens/format';
 import type { EscalationMap, PlanMap } from '../storage/plans';
 import { AlertMark } from './Icons';
@@ -28,7 +28,7 @@ export function FloorColumn({
         <ul className="legend" aria-label="Legend">
           <li><span className="mark-normal" /> No alert</li>
           <li><AlertMark /> Alert</li>
-          <li><span className="mark-selected" /> Selected</li>
+          <li><span className="mark-selected" /><span className="mark-selected-clear" /> Selected</li>
           <li><span className="mark-inspected" /> Inspected</li>
           <li><span className="mark-escalated" /> Escalated</li>
         </ul>
@@ -40,7 +40,10 @@ export function FloorColumn({
         <ol className="activity-list" aria-label="Activity">
           {events.map((event) => (
             <li key={`${event.at}-${event.text}`}>
-              <span className="activity-time">{formatDateTime(event.at)}</span> {event.text}
+              <span className="activity-time">
+                {event.kind === 'alert' ? `${relativeAge(event.at)} ago` : formatDateTime(new Date(event.at).toISOString())}
+              </span>{' '}
+              {event.text}
             </li>
           ))}
         </ol>

@@ -62,7 +62,7 @@ async function mount() {
 }
 
 function primary(): HTMLElement {
-  const found = [...container.querySelectorAll('.panel-head [data-primary]')];
+  const found = [...container.querySelectorAll('.panel-body > .action-bar [data-primary]')];
   expect(found).toHaveLength(1);
   return found[0] as HTMLElement;
 }
@@ -76,7 +76,7 @@ const pills = () => [...container.querySelectorAll('.pill')].map((pill) => pill.
 const currentPill = () => container.querySelector('.pill-current')?.textContent;
 const machineButton = (id: string) =>
   [...container.querySelectorAll('.iso-machine')].find((el) => el.getAttribute('aria-label')?.includes(id)) as HTMLElement;
-const groupTitles = () => [...container.querySelectorAll('.group-title')].map((el) => el.textContent);
+const groupTitles = () => [...container.querySelectorAll('.records .group-title')].map((el) => el.textContent);
 
 function outcomeButton(label: string): Element {
   const button = [...container.querySelectorAll('button.outcome')].find((item) => item.textContent?.trim() === label);
@@ -130,7 +130,7 @@ describe('home', () => {
     const items = [...container.querySelectorAll('.queue-item')];
     expect(items).toHaveLength(alerts.length);
     expect(items[0].textContent).toContain('M-204');
-    expect(items[0].textContent).toContain(alerts[0].age);
+    expect(items[0].textContent).toContain('2 h');
     expect(container.querySelector('.topbar')?.textContent).toContain('Demo with synthetic data. Not for operational use.');
   });
 
@@ -184,6 +184,126 @@ describe('plant floor', () => {
     await saveFindingFor('M-204', 'Bearing wear');
     expect(container.querySelectorAll('.label-triangle')).toHaveLength(alerts.length - 1);
     expect(container.querySelectorAll('.label-inspected')).toHaveLength(1);
+  });
+});
+
+describe('selection color', () => {
+  const CORAL_TOP = '#FF8F7E';
+  const fills = (id: string) => [...machineButton(id).querySelectorAll('polygon')].map((face) => face.getAttribute('fill'));
+  const coralFaces = ['#FF8F7E', '#BF5A4C', '#94433A'];
+
+  it.each(['G-204', 'C-204'])('never gives %s coral, because it has no alert', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(machineButton(id).getAttribute('aria-pressed')).toBe('true');
+    expect(fills(id).some((fill) => coralFaces.includes(fill as string))).toBe(false);
+    expect(fills(id)[0]).toBe('#5FBDB2');
+    expect(machineButton(id).querySelector('polygon')?.getAttribute('stroke')).toBe('#7FE0D3');
+  });
+
+  it.each(['M-204', 'M-310', 'F-118'])('keeps coral on %s, which has an active alert', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(fills(id)[0]).toBe(CORAL_TOP);
+  });
+
+  it('keeps coral after a finding, because the alert is still active', async () => {
+    await saveFindingFor('M-204', 'Bearing wear');
+    expect(fills('M-204')[0]).toBe(CORAL_TOP);
+  });
+
+  it('shows both selection colors in the one legend entry', () => {
+    const item = [...container.querySelectorAll('.legend li')].find((li) => li.textContent?.trim() === 'Selected') as Element;
+    expect(item.querySelector('.mark-selected')).not.toBeNull();
+    expect(item.querySelector('.mark-selected-clear')).not.toBeNull();
+  });
+});
+
+describe('alert time', () => {
+  const strip = () => [...container.querySelectorAll('.activity-list li')].map((item) => item.textContent?.trim());
+
+  it('shows computed relative ages in the queue', () => {
+    expect([...container.querySelectorAll('.queue-age')].map((age) => age.textContent)).toEqual(['2 h', '5 h', '20 h']);
+  });
+
+  it('shows alerts in the activity strip as relative time, with no fixed date', () => {
+    expect(strip()).toEqual([
+      '2 h ago M-204 abnormal vibration',
+      '5 h ago M-310 abnormal vibration',
+      '20 h ago F-118 high nozzle pressure',
+    ]);
+  });
+
+  it('keeps real timestamps for saved actions', async () => {
+    await savePlanFor('M-204');
+    const year = String(new Date().getFullYear());
+    expect(strip()[0]).toContain(year);
+    expect(strip()[0]).toContain('M-204 plan saved');
+    expect(strip()[1]).toBe('2 h ago M-204 abnormal vibration');
+  });
+});
+
+describe('machine details', () => {
+  const details = () => container.querySelector('.machine-details') as HTMLDetailsElement;
+
+  it.each(['M-204', 'M-310', 'F-118'])('is one closed row on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(details().querySelector('summary')?.textContent).toBe('Machine details');
+    expect(details().open).toBe(false);
+  });
+
+  it.each(['G-204', 'C-204'])('stays open on %s', async (id) => {
+    await go(`#/asset/${id}`);
+    expect(details().open).toBe(true);
+  });
+
+  it('keeps the M-310 no-incidents fact visible next to the evidence message', async () => {
+    await go('#/asset/M-310');
+    const line = container.querySelector('.tabpanel .insufficient') as HTMLElement;
+    expect(line.textContent).toContain('Insufficient asset-specific evidence to recommend a likely cause.');
+    expect(line.textContent).toContain('No past incidents on this machine');
+    expect(line.closest('details')).toBeNull();
+  });
+});
+
+describe('action bar', () => {
+  const next = () => container.querySelector('.action-next')?.textContent;
+
+  it('sits outside the title row and the scrolling content', async () => {
+    await go('#/asset/M-204');
+    expect(container.querySelector('.panel-head [data-primary]')).toBeNull();
+    expect(container.querySelector('.panel-scroll .action-bar')).toBeNull();
+    expect(container.querySelector('.panel-scroll [data-primary]')).toBeNull();
+  });
+
+  it('gives each state one action and a Next hint', async () => {
+    expect(next()).toBe('Next: start with the newest alert');
+    await go('#/asset/M-204');
+    expect(next()).toBe('Next: check the inspection steps');
+    await click(primary());
+    expect(next()).toBe('Next: do the steps, then record a finding');
+    await click(primary());
+    expect(next()).toBe('Pick one to save');
+    await click(outcomeButton('Bearing wear'));
+    expect(next()).toBe('Next: record what you found');
+    await click(primary());
+    expect(next()).toBe('Next: repair needed');
+    expect(primary().textContent).toBe('Back to plant floor');
+  });
+
+  it.each([
+    ['Inconclusive', 'Next: reinspect or escalate'],
+    ['Neither', 'Next: escalate through the site process'],
+  ])('shows the next step for %s', async (outcome, text) => {
+    await saveFindingFor('M-204', outcome);
+    expect(next()).toBe(text);
+  });
+
+  it('shows the escalation path on F-118, and a plain hint on machines with no alert', async () => {
+    await go('#/asset/F-118');
+    expect(next()).toBe('Next: send it to site review');
+    await click(primary());
+    expect(next()).toBe('Next: wait for site review');
+    await go('#/asset/G-204');
+    expect(next()).toBe('Next: choose a machine with an alert');
   });
 });
 
@@ -584,10 +704,11 @@ describe('every machine has a snapshot', () => {
     ['F-118', 'No approved procedure'],
     ['G-204', 'Gearbox'],
     ['C-204', 'No approved procedure'],
+    ['C-204', '1. Latest: Conveyor alignment drifted after belt change'],
   ])('fills the snapshot on %s', async (id, text) => {
     await go(`#/asset/${id}`);
     const snapshot = container.querySelector('.snapshot') as HTMLElement;
-    expect([...snapshot.querySelectorAll('dt')].map((dt) => dt.textContent)).toEqual(['Status', 'Past incidents', 'Procedure', 'Connected']);
+    expect([...snapshot.querySelectorAll('dt')].map((dt) => dt.textContent)).toEqual(['Status', 'Past records', 'Procedure', 'Connected']);
     expect(panelText()).toContain(text);
   });
 

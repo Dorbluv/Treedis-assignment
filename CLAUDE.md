@@ -92,13 +92,13 @@ Tokens:
 - Light work panel: surface #F3F6F8, card #FFFFFF, line #D6DFE6 (dividers only), ink #17242F, secondary #2C3D4B, muted #4F6170 (also control borders, for 3:1).
 - Action teal #0F6E66, hover #0A524C. Done pill #D9EDE9 with #0A524C. Future pill #E2E9EE with #3E505F.
 - Alert coral on dark #FF8F7E, light text on dark #FFB4A8, alert on light #A63A2B.
-- Machine faces, normal: top #7FA3B8, left #4E7186, right #3B596C. Selected: top #FF8F7E, left #BF5A4C, right #94433A. Conveyor: top #46586B, left #2C3A49, right #223040, belt marks and outline #75899C.
+- Machine faces, normal: top #7FA3B8, left #4E7186, right #3B596C. Selected with an active alert: top #FF8F7E, left #BF5A4C, right #94433A. Selected with no alert: top #5FBDB2, left #2F8279, right #22635D, outline #7FE0D3. Conveyor: top #46586B, left #2C3A49, right #223040, belt marks and outline #75899C.
 - Line 1 zone #1F4A52 at 40%, stroke #3E8A86, label #7FE0D3. Line 2 zone #2A3B5E at 50%, stroke #6C7FC4, label #B4C0F0.
 
 Type and color rules:
 - Sora 500 and 600 for headings and big numbers. Instrument Sans 400 to 600 for everything else. Packaged, credited in the README, tabular numerals.
 - Sentence case. No all-caps, no em dashes.
-- Coral is for abnormal state only, always with its triangle and text. Only the selected machine gets the coral body. Connected equipment gets a light outline.
+- Coral is for abnormal state only, always with its triangle and text. Only a selected machine with an active alert gets the coral body. A selected machine with no alert gets the teal body and outline. Connected equipment gets a light outline.
 - The only motion is the conveyor belt marks and the marker appearing after a save, both stopped under reduced motion.
 - All text and controls meet WCAG AA, with visible keyboard focus. Measure before changing a token.
 
@@ -106,7 +106,7 @@ Layout:
 - Desktop, 1024px and up, no page scroll where it fits: dark top bar with the alert queue and demo text. Left: plant floor with one legend and a one-line activity strip. Right: light panel, 520 to 620px, scrolling internally.
 - Tablet, 768 to 1023px: floor on top at limited height, panel below, primary action fixed at the bottom.
 - Phone, under 768px: dark header with "3 alerts", h1, status line and the floor cropped to the selected machine. Readings, safety callout, tabs, then content. Home shows the full floor. Primary action fixed at the bottom, safe-area aware.
-- One primary action, chosen by state: Start inspection plan, Save inspection plan, Save finding, Back to plant floor. Top right of the panel on desktop.
+- One primary action, chosen by state: Start inspection plan, Save inspection plan, Save finding, Back to plant floor. It lives in an action bar pinned to the bottom of the work panel, at least 48px high, with a short "Next:" hint on the left. It never scrolls away. After a finding, the hint shows the outcome's next step.
 - Tabs are real ARIA tabs: Investigate, Inspection plan, Finding. Finding is inactive until the plan is saved. With no applicable SOP the plan tab reads "No procedure" and is blocked, whatever the URL or saved data says.
 - Status pills come from saved state: Alert raised, Investigating, Inspected, Repair, Closed. With no procedure: Alert raised, Investigating, Escalated, Site review, Closed. Nothing ever claims the machine is solved.
 - A source opens as a slide-over, full screen on phone.
@@ -117,8 +117,8 @@ Content:
 - A cause's check comes from the SOP step it links to. Reading status is computed from value and limit. The records checked count is computed from the data.
 - The safety callout appears only when the applicable SOP's first step is lockout.
 - The plan shows numbered steps with short titles, and an English / Deutsch switch that shows the whole plan in one language.
-- Activity shows only real events. Alert age and start time are synthetic data fields. Save events use real timestamps.
-- Every machine panel shows a snapshot: status and key reading, past incidents, procedure, connected equipment.
+- Activity shows only real events. Each alert stores a synthetic age. Its start is computed at app load and shown as relative time. Save events use real timestamps.
+- Every machine panel has a snapshot: status and key reading, past records, procedure, connected equipment. It is one closed "Machine details" row on alert machines and open on machines with no alert. If an alert machine has no past incidents, that fact sits next to the evidence message.
 - Lead with what happened. Record IDs are secondary. Plain verbs, no filler.
 
 ## Not in v1

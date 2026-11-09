@@ -204,3 +204,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code.
 - **What changed:** Zone names moved to open floor and are hidden when a crop would cut them. The coral text now has a triangle or uses a neutral color. The activity line wraps on phone, the location line names the machine after a save, and the h1 has no focus box because it is not a tab stop.
 - **Evidence link or screenshot:** evidence/380-05-saved.png
+
+## Coral on a selected machine with no alert
+
+- **Date:** 2026-11-09
+- **Tool:** Claude chat for the design spec, Claude Code for the build
+- **Prompt or context:** Review of the alert workspace on the redesign branch.
+- **What went wrong:** Selecting G-204 or C-204 painted a healthy machine coral, although coral must mean abnormal only. The error was in Claude chat's own design spec, which gave every selected machine the coral body, and Claude Code built it as written.
+- **Caught by:** Claude chat.
+- **What changed:** A selected machine with no alert gets a teal-tinted body and a bright outline. Coral stays on selected machines with an active alert. A unit test covers both.
+- **Evidence link or screenshot:** src/App.test.tsx, "selection color"

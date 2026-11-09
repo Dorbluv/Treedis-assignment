@@ -11,26 +11,28 @@ export interface InspectionStatus {
   headline: string;
   /** Short lower-case text for "Inspected: ..." on the plant floor. */
   short: string;
+  /** What has to happen next, for the action bar. */
+  next: string;
 }
 
 export function inspectionStatus(outcome: string, records: MaintenanceRecord[]): InspectionStatus {
   if (outcome === 'neither') {
-    return { headline: 'Cause still open. Escalate through the site process.', short: 'cause still open' };
+    return { headline: 'Cause still open. Escalate through the site process.', short: 'cause still open', next: 'escalate through the site process' };
   }
   if (outcome === 'inconclusive') {
-    return { headline: 'Inconclusive. Reinspect or escalate.', short: 'inconclusive' };
+    return { headline: 'Inconclusive. Reinspect or escalate.', short: 'inconclusive', next: 'reinspect or escalate' };
   }
   if (outcome === 'fault_found') {
-    return { headline: 'Fault found. Repair needed.', short: 'fault found' };
+    return { headline: 'Fault found. Repair needed.', short: 'fault found', next: 'repair needed' };
   }
   if (outcome === 'no_fault') {
-    return { headline: 'No fault found. Cause still open. Reinspect or escalate.', short: 'no fault found' };
+    return { headline: 'No fault found. Cause still open. Reinspect or escalate.', short: 'no fault found', next: 'reinspect or escalate' };
   }
   const label = records.find((record) => record.possibleCause?.key === outcome)?.possibleCause?.label;
   if (label) {
-    return { headline: `${label} found. Repair needed.`, short: label.toLowerCase() };
+    return { headline: `${label} found. Repair needed.`, short: label.toLowerCase(), next: 'repair needed' };
   }
-  return { headline: 'Finding recorded.', short: 'finding recorded' };
+  return { headline: 'Finding recorded.', short: 'finding recorded', next: 'follow the site process' };
 }
 
 export interface FollowUp {

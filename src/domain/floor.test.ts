@@ -30,8 +30,7 @@ describe('plant floor status', () => {
       conditions: ['temperature'],
       keywords: ['temperature'],
       sensorRecordId: 'none',
-      raisedAt: '2026-11-09T06:40:00',
-      age: '2 h',
+      ageHours: 2,
     };
     const status = machineStatus(asset('G-204'), [...alerts, extra], records);
     expect(status.alert?.title).toBe('High temperature');

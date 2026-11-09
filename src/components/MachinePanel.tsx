@@ -12,24 +12,22 @@ export function MachinePanel({ result, sourceId }: { result: RetrievalResult; so
   return (
     <>
       <header className="panel-head">
-        <div className="head-row">
-          <div className="head-text">
-            <p className="location">Line {asset.line}{parent ? `, ${parent.type} ${parent.id}` : ''}</p>
-            <h1 tabIndex={-1}>{asset.name}</h1>
-            <p className="status-line status-line-always">No active alert</p>
-          </div>
-          <PrimaryAction label="Back to plant floor" href="#/" />
-        </div>
+        <p className="location">Line {asset.line}{parent ? `, ${parent.type} ${parent.id}` : ''}</p>
+        <h1 tabIndex={-1}>{asset.name}</h1>
+        <p className="status-line status-line-always">No active alert</p>
       </header>
       <div className="panel-body">
+        <div className="panel-main">
         <div className="panel-scroll">
           <div className="panel-content">
-            <MachineSnapshot result={result} saved={null} />
+            <MachineSnapshot result={result} saved={null} open />
             <EvidenceRecords result={result} sourceHref={(id) => `${base}/investigate/source/${id}`} openUsed />
             <MachineHistory result={result} />
           </div>
         </div>
         {sourceId && <SourceSheet result={result} recordId={sourceId} backHref={base} />}
+        </div>
+        <PrimaryAction label="Back to plant floor" href="#/" next="choose a machine with an alert" />
       </div>
     </>
   );

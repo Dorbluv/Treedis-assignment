@@ -1,5 +1,6 @@
 import { alerts, records } from '../data';
 import { followUp } from '../domain/status';
+import { alertAge } from '../domain/workspace';
 import type { EscalationMap, PlanMap } from '../storage/plans';
 import { AlertMark } from './Icons';
 import { DEMO_TEXT } from './PrimaryAction';
@@ -30,7 +31,7 @@ export function TopBar({
               {next ? <span className={`mark-${next.kind}`} /> : <AlertMark />}
               <span className="queue-id">{alert.assetId}</span>
               <span className="queue-title">{alert.title}</span>
-              <span className="queue-age">{alert.age}</span>
+              <span className="queue-age">{alertAge(alert)}</span>
             </a>
           );
         })}

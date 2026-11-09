@@ -1,6 +1,7 @@
 import { alerts, records } from '../data';
 import { readingStatus } from '../domain/causes';
 import { followUp } from '../domain/status';
+import { alertAge } from '../domain/workspace';
 import type { EscalationMap, PlanMap } from '../storage/plans';
 import { AlertMark } from './Icons';
 import { PrimaryAction } from './PrimaryAction';
@@ -9,14 +10,10 @@ export function HomePanel({ plans, escalations }: { plans: PlanMap; escalations:
   return (
     <>
       <header className="panel-head">
-        <div className="head-row">
-          <div className="head-text">
-            <h1 tabIndex={-1}>{alerts.length} active alerts</h1>
-          </div>
-          <PrimaryAction label="Open M-204 alert" href="#/asset/M-204" />
-        </div>
+        <h1 tabIndex={-1}>{alerts.length} active alerts</h1>
       </header>
       <div className="panel-body">
+        <div className="panel-main">
         <div className="panel-scroll">
           <ul className="alert-list" aria-label="Active alerts">
             {alerts.map((alert) => {
@@ -32,7 +29,7 @@ export function HomePanel({ plans, escalations }: { plans: PlanMap; escalations:
                     </span>
                     <span className="alert-row-meta">
                       {reading && <>{reading.value} {reading.unit}, demo limit {reading.limit}. </>}
-                      {alert.age} ago
+                      {alertAge(alert)} ago
                     </span>
                   </a>
                 </li>
@@ -40,6 +37,8 @@ export function HomePanel({ plans, escalations }: { plans: PlanMap; escalations:
             })}
           </ul>
         </div>
+        </div>
+        <PrimaryAction label="Open M-204 alert" href="#/asset/M-204" next="start with the newest alert" />
       </div>
     </>
   );

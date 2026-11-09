@@ -4,14 +4,14 @@ import { ESCALATION_HEADLINE, followUp, inspectionStatus } from './status';
 
 describe('inspection status', () => {
   it.each([
-    ['bearing_wear', 'Bearing wear found. Repair needed.', 'bearing wear'],
-    ['lubrication', 'Lubrication problem found. Repair needed.', 'lubrication problem'],
-    ['neither', 'Cause still open. Escalate through the site process.', 'cause still open'],
-    ['inconclusive', 'Inconclusive. Reinspect or escalate.', 'inconclusive'],
-    ['fault_found', 'Fault found. Repair needed.', 'fault found'],
-    ['no_fault', 'No fault found. Cause still open. Reinspect or escalate.', 'no fault found'],
-  ])('maps %s to the right status', (outcome, headline, short) => {
-    expect(inspectionStatus(outcome, records)).toEqual({ headline, short });
+    ['bearing_wear', 'Bearing wear found. Repair needed.', 'bearing wear', 'repair needed'],
+    ['lubrication', 'Lubrication problem found. Repair needed.', 'lubrication problem', 'repair needed'],
+    ['neither', 'Cause still open. Escalate through the site process.', 'cause still open', 'escalate through the site process'],
+    ['inconclusive', 'Inconclusive. Reinspect or escalate.', 'inconclusive', 'reinspect or escalate'],
+    ['fault_found', 'Fault found. Repair needed.', 'fault found', 'repair needed'],
+    ['no_fault', 'No fault found. Cause still open. Reinspect or escalate.', 'no fault found', 'reinspect or escalate'],
+  ])('maps %s to the right status', (outcome, headline, short, next) => {
+    expect(inspectionStatus(outcome, records)).toEqual({ headline, short, next });
   });
 
   it('never says an outcome is fixed, solved or closed', () => {

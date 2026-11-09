@@ -10,8 +10,7 @@
       "vibration"
     ],
     "sensorRecordId": "SR-M204-01",
-    "raisedAt": "2026-11-09T06:40:00",
-    "age": "2 h"
+    "ageHours": 2
   },
   {
     "id": "ALERT-M310-01",
@@ -24,8 +23,7 @@
       "vibration"
     ],
     "sensorRecordId": "SR-M310-01",
-    "raisedAt": "2026-11-09T04:15:00",
-    "age": "5 h"
+    "ageHours": 5
   },
   {
     "id": "ALERT-F118-01",
@@ -38,7 +36,6 @@
       "blockage"
     ],
     "sensorRecordId": "SR-F118-01",
-    "raisedAt": "2026-11-08T13:05:00",
-    "age": "20 h"
+    "ageHours": 20
   }
 ]

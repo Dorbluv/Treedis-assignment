@@ -4,10 +4,20 @@ import type { Asset, MaintenanceRecord, RetrievalResult } from './types';
 /** A compact summary of one machine, built only from its data. */
 export interface MachineSnapshot {
   reading: { text: string; above: boolean } | null;
-  incidentCount: number;
-  latestIncident: MaintenanceRecord | null;
+  recordCount: number;
+  latestRecord: MaintenanceRecord | null;
   procedure: string | null;
   connected: string;
+}
+
+const HISTORY_KINDS = ['incident', 'assembly'];
+
+/** Dated records about this machine itself, newest first. The history list and the snapshot count share this. */
+export function machineHistory(result: RetrievalResult): MaintenanceRecord[] {
+  return result.included
+    .map((item) => item.record)
+    .filter((record) => HISTORY_KINDS.includes(record.kind) && record.assetId === result.asset.id && record.occurredOn)
+    .sort((a, b) => (b.occurredOn ?? '').localeCompare(a.occurredOn ?? ''));
 }
 
 export function machineSnapshot(result: RetrievalResult, assets: Asset[]): MachineSnapshot {
@@ -17,10 +27,7 @@ export function machineSnapshot(result: RetrievalResult, assets: Asset[]): Machi
   const reading = readings.find((item) => readingStatus(item) === 'above') ?? readings[0];
   const above = reading ? readingStatus(reading) === 'above' : false;
 
-  const incidents = included
-    .filter((item) => item.record.kind === 'incident' && item.record.assetId === asset.id)
-    .map((item) => item.record)
-    .sort((a, b) => (b.occurredOn ?? '').localeCompare(a.occurredOn ?? ''));
+  const history = machineHistory(result);
 
   const children = assets.filter((candidate) => candidate.parentId === asset.id).map((child) => child.id);
   let connected = 'Standalone machine';
@@ -43,8 +50,8 @@ export function machineSnapshot(result: RetrievalResult, assets: Asset[]): Machi
 
   return {
     reading: readingSummary,
-    incidentCount: incidents.length,
-    latestIncident: incidents[0] ?? null,
+    recordCount: history.length,
+    latestRecord: history[0] ?? null,
     procedure: applicableSop ? `${applicableSop.sopNumber} rev ${applicableSop.revision} available` : null,
     connected,
   };

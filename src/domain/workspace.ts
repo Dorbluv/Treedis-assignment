@@ -76,33 +76,61 @@ export function safetyMessage(sop: SopRecord | null, language: 'en' | 'de' = 'en
   return `${first.title} before you inspect it.`;
 }
 
+/** Alert times are computed once, when the app loads, so a synthetic alert always looks current. */
+export const APP_LOADED_AT = Date.now();
+
+export function alertStartedAt(alert: Alert, loadedAt: number = APP_LOADED_AT): number {
+  return loadedAt - alert.ageHours * 3_600_000;
+}
+
+export function relativeAge(startedAt: number, now: number = Date.now()): string {
+  const minutes = Math.floor((now - startedAt) / 60_000);
+  if (minutes < 60) return `${Math.max(minutes, 1)} min`;
+  const hours = Math.floor(minutes / 60);
+  return hours < 48 ? `${hours} h` : `${Math.floor(hours / 24)} d`;
+}
+
+export function alertAge(alert: Alert): string {
+  return relativeAge(alertStartedAt(alert));
+}
+
 export interface ActivityEvent {
-  at: string;
+  kind: 'alert' | 'action';
+  at: number;
   text: string;
 }
 
-/** Only real events: synthetic alert times, and saved timestamps for everything else. */
+const newestFirst = (a: ActivityEvent, b: ActivityEvent) => b.at - a.at;
+
+/**
+ * Only real events: alerts with a computed start, and saved actions with their real timestamps.
+ * Actions always list first. Alert times move with each load, and an action never precedes its alert.
+ */
 export function activityEvents(
   alerts: Alert[],
   plans: Record<string, SavedPlan>,
   escalations: Record<string, Escalation>,
   records: MaintenanceRecord[],
+  loadedAt: number = APP_LOADED_AT,
 ): ActivityEvent[] {
-  const events: ActivityEvent[] = alerts.map((alert) => ({
-    at: alert.raisedAt,
+  const alertEvents: ActivityEvent[] = alerts.map((alert) => ({
+    kind: 'alert',
+    at: alertStartedAt(alert, loadedAt),
     text: `${alert.assetId} ${alert.title.toLowerCase()}`,
   }));
+  const actions: ActivityEvent[] = [];
   for (const plan of Object.values(plans)) {
-    events.push({ at: plan.savedAt, text: `${plan.assetId} plan saved` });
+    actions.push({ kind: 'action', at: Date.parse(plan.savedAt), text: `${plan.assetId} plan saved` });
     if (plan.finding) {
-      events.push({
-        at: plan.finding.savedAt,
+      actions.push({
+        kind: 'action',
+        at: Date.parse(plan.finding.savedAt),
         text: `${plan.assetId} inspected: ${inspectionStatus(plan.finding.outcome, records).short}`,
       });
     }
   }
   for (const escalation of Object.values(escalations)) {
-    events.push({ at: escalation.escalatedAt, text: `${escalation.assetId} escalated` });
+    actions.push({ kind: 'action', at: Date.parse(escalation.escalatedAt), text: `${escalation.assetId} escalated` });
   }
-  return events.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  return [...actions.sort(newestFirst), ...alertEvents.sort(newestFirst)];
 }
