@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { SavedPlan } from '../domain/types';
-import { STORAGE_KEY, loadPlan, saveFinding, savePlan } from './plans';
+import { STORAGE_KEY, clearPlans, loadPlan, saveFinding, savePlan } from './plans';
 
 function fakeStorage(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial));
   return {
     getItem: (key: string) => store.get(key) ?? null,
     setItem: (key: string, value: string) => void store.set(key, value),
+    removeItem: (key: string) => void store.delete(key),
   };
 }
 
@@ -36,6 +37,13 @@ describe('plan storage', () => {
   it('does not save a finding without a plan', () => {
     const storage = fakeStorage();
     expect(saveFinding('M-204', { outcome: 'neither', savedAt: 'x' }, storage)).toBeNull();
+  });
+
+  it('clears saved data for a demo reset', () => {
+    const storage = fakeStorage();
+    savePlan(plan, storage);
+    clearPlans(storage);
+    expect(loadPlan('M-204', storage)).toBeNull();
   });
 
   it('reads corrupt storage as empty', () => {
