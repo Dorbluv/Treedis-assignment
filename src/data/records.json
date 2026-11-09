@@ -124,7 +124,7 @@
         "title": "Check the bearing",
         "titleGerman": "Lager prüfen",
         "original": "Lagergehäuse auf der Antriebsseite auf Hitzespuren und Spiel prüfen. Welle von Hand drehen und auf raues Laufen achten.",
-        "english": "Turn the shaft by hand. Feel for heat, roughness or play.",
+        "english": "Check the housing for signs of heat and play. Then turn the shaft by hand and feel for roughness.",
         "goodEnglish": "smooth, no play",
         "goodGerman": "gleichmäßig, kein Spiel",
         "ifNotEnglish": "points to bearing wear",
