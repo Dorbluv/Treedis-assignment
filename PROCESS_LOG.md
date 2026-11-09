@@ -154,3 +154,23 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code.
 - **What changed:** The machine title and status share a line, the sibling line is shorter, and the zone name no longer wraps.
 - **Evidence link or screenshot:** _to fill in_
+
+## Legend placement, F-118 flow and empty machine screen
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** User review of Gate 2.
+- **What went wrong:** The legend sat inside one line, F-118's shorter flow had no visible reason, and the M-310 machine screen looked empty.
+- **Caught by:** The user.
+- **What changed:** The legend sits above Line 1 and lists every status. Machines with no procedure keep the four-step structure, with Plan shown as blocked. Every machine screen shows a snapshot built from data.
+- **Evidence link or screenshot:** _to fill in_
+
+## Snapshot and blocked step did not fit at phone width
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Browser review of the Gate 2 fixes at 380px.
+- **What went wrong:** The new machine snapshot fell below the fixed button, by up to 110px. "No procedure" also ran into "Finding" in the progress bar, which the measured checks missed and a screenshot showed.
+- **Caught by:** Claude Code.
+- **What changed:** On phone, a selected machine shows only its own group on the floor. The blocked step has more room.
+- **Evidence link or screenshot:** _to fill in_
