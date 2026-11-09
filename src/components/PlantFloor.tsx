@@ -1,9 +1,17 @@
 import { alerts, assets, records } from '../data';
 import { machineStatus } from '../domain/floor';
+import { inspectionStatus, type InspectionStatus } from '../domain/status';
 import type { Asset } from '../domain/types';
-import { AlertMark, TypeIcon } from './Icons';
+import type { PlanMap } from '../storage/plans';
+import { AlertMark, CheckMark, TypeIcon } from './Icons';
 
 type Role = 'selected' | 'parent' | 'sibling' | 'child' | null;
+
+interface FloorState {
+  selected: Asset | null;
+  plans: PlanMap;
+  animateInspected: boolean;
+}
 
 function roleOf(asset: Asset, selected: Asset | null): Role {
   if (!selected) return null;
@@ -33,29 +41,50 @@ function open(id: string) {
   window.location.hash = `#/asset/${id}`;
 }
 
-function MachineBody({ asset, role, selected }: { asset: Asset; role: Role; selected: Asset | null }) {
+/** A finding moves an alert to Inspected. It does not clear it. */
+function inspectionOf(asset: Asset, plans: PlanMap, hasAlert: boolean): InspectionStatus | null {
+  const finding = plans[asset.id]?.finding;
+  return finding && hasAlert ? inspectionStatus(finding.outcome, records) : null;
+}
+
+function MachineBody({ asset, role, state }: { asset: Asset; role: Role; state: FloorState }) {
   const { alert, value } = machineStatus(asset, alerts, records);
+  const inspection = inspectionOf(asset, state.plans, Boolean(alert));
+  const isNew = inspection && state.animateInspected ? ' is-new' : '';
   return (
     <>
       <span className="machine-top">
         <TypeIcon type={asset.type} />
         <span className="machine-id">{asset.id}</span>
-        {alert ? (
+        {inspection ? (
+          <span className={`status-inspected${isNew}`}><CheckMark /></span>
+        ) : alert ? (
           <span className="status-alert"><span className="pulse" /><AlertMark /></span>
         ) : (
           <span className="status-dot" />
         )}
       </span>
-      <span className="machine-desc">{describe(asset, role, selected)}</span>
-      {value && <span className={`machine-value${alert ? ' is-abnormal' : ''}`}>{value}</span>}
-      {alert && <span className="machine-alert-text">{alert.title}</span>}
+      <span className="machine-desc">{describe(asset, role, state.selected)}</span>
+      {value && (
+        <span className={`machine-value${alert ? ' is-abnormal' : ''}`}>
+          {inspection && <AlertMark />}
+          {value}
+        </span>
+      )}
+      {inspection ? (
+        <span className={`machine-inspected-text${isNew}`}>Inspected: {inspection.short}</span>
+      ) : (
+        alert && <span className="machine-alert-text">{alert.title}</span>
+      )}
     </>
   );
 }
 
-function controlProps(asset: Asset, role: Role, selected: Asset | null) {
+function controlProps(asset: Asset, role: Role, state: FloorState) {
   const { alert, value } = machineStatus(asset, alerts, records);
-  const parts = [asset.name, alert ? alert.title : 'no alert', value, role && role !== 'selected' ? describe(asset, role, selected) : null];
+  const inspection = inspectionOf(asset, state.plans, Boolean(alert));
+  const statusText = inspection ? `inspected: ${inspection.short}, readings still above limit` : alert ? alert.title : 'no alert';
+  const parts = [asset.name, statusText, value, role && role !== 'selected' ? describe(asset, role, state.selected) : null];
   return {
     type: 'button' as const,
     'aria-pressed': role === 'selected',
@@ -64,20 +93,20 @@ function controlProps(asset: Asset, role: Role, selected: Asset | null) {
   };
 }
 
-function Machine({ asset, selected, row }: { asset: Asset; selected: Asset | null; row?: boolean }) {
-  const role = roleOf(asset, selected);
+function Machine({ asset, state, row }: { asset: Asset; state: FloorState; row?: boolean }) {
+  const role = roleOf(asset, state.selected);
   const hasAlert = alerts.some((alert) => alert.assetId === asset.id);
   const classes = ['machine', role ? `is-${role}` : '', hasAlert ? 'has-alert' : '', row ? 'machine-row' : ''];
   return (
-    <button className={classes.filter(Boolean).join(' ')} {...controlProps(asset, role, selected)}>
-      <MachineBody asset={asset} role={role} selected={selected} />
+    <button className={classes.filter(Boolean).join(' ')} {...controlProps(asset, role, state)}>
+      <MachineBody asset={asset} role={role} state={state} />
     </button>
   );
 }
 
-function Assembly({ belt, selected }: { belt: Asset; selected: Asset | null }) {
+function Assembly({ belt, state }: { belt: Asset; state: FloorState }) {
   const stations = assets.filter((asset) => asset.parentId === belt.id);
-  const role = roleOf(belt, selected);
+  const role = roleOf(belt, state.selected);
   return (
     <div className={`assembly${role ? ' is-lit' : ''}`}>
       <div className="drive">
@@ -85,22 +114,34 @@ function Assembly({ belt, selected }: { belt: Asset; selected: Asset | null }) {
           <div className="drive-part" key={station.id}>
             {index > 0 && <span className="shaft"><span className="coupling" /></span>}
             <div className="station">
-              <Machine asset={station} selected={selected} />
+              <Machine asset={station} state={state} />
               <span className="stem" />
             </div>
           </div>
         ))}
       </div>
-      <button className={`machine belt${role ? ` is-${role}` : ''}`} {...controlProps(belt, role, selected)}>
-        <MachineBody asset={belt} role={role} selected={selected} />
+      <button className={`machine belt${role ? ` is-${role}` : ''}`} {...controlProps(belt, role, state)}>
+        <MachineBody asset={belt} role={role} state={state} />
         <span className="belt-track" aria-hidden="true" />
       </button>
     </div>
   );
 }
 
-export function PlantFloor({ selectedId }: { selectedId: string | null }) {
-  const selected = assets.find((asset) => asset.id === selectedId) ?? null;
+export function PlantFloor({
+  selectedId,
+  plans,
+  animateInspected,
+}: {
+  selectedId: string | null;
+  plans: PlanMap;
+  animateInspected: boolean;
+}) {
+  const state: FloorState = {
+    selected: assets.find((asset) => asset.id === selectedId) ?? null,
+    plans,
+    animateInspected,
+  };
   const lines = [...new Set(assets.map((asset) => asset.line))].sort();
   const isParent = (asset: Asset) => assets.some((other) => other.parentId === asset.id);
 
@@ -122,8 +163,8 @@ export function PlantFloor({ selectedId }: { selectedId: string | null }) {
                 <span><AlertMark /> Alert</span>
               </p>
             )}
-            {assemblies.map((asset) => <Assembly belt={asset} selected={selected} key={asset.id} />)}
-            {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} selected={selected} row key={asset.id} />)}
+            {assemblies.map((asset) => <Assembly belt={asset} state={state} key={asset.id} />)}
+            {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} state={state} row key={asset.id} />)}
           </section>
         );
       })}

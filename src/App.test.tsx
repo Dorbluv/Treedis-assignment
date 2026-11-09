@@ -3,7 +3,8 @@ import { act } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from './App';
-import { records } from './data';
+import { alertFor, dataset, records } from './data';
+import { retrieve } from './domain/retrieve';
 import type { SopRecord } from './domain/types';
 import { STORAGE_KEY } from './storage/plans';
 
@@ -343,7 +344,8 @@ describe('Other machines', () => {
     ]);
     await click(outcomeButton('No issue found'));
     await click(primary());
-    expect(heading()).toBe('Finding saved for M-310');
+    expect(heading()).toBe('No issue found.');
+    expect(container.querySelector('.track')).toBeNull();
     expect(body()).toContain('SOP-022 rev A');
   });
 
@@ -370,7 +372,114 @@ describe('Other machines', () => {
   });
 });
 
+describe('After saving a finding', () => {
+  async function finishWith(label: string, note?: string) {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    await click(outcomeButton(label));
+    if (note) await typeNote(note);
+    await click(primary());
+  }
+
+  const trackStates = () =>
+    [...container.querySelectorAll('.track li')].map((item) => [item.querySelector('.track-label')?.textContent, item.className]);
+
+  it.each([
+    ['Bearing wear', 'Bearing wear found. Repair needed.', 'Inspected: bearing wear'],
+    ['Lubrication problem', 'Lubrication problem found. Repair needed.', 'Inspected: lubrication problem'],
+    ['Neither', 'Cause still open. Escalate through the site process.', 'Inspected: cause still open'],
+    ['Inconclusive', 'Inconclusive. Reinspect or escalate.', 'Inspected: inconclusive'],
+  ])('shows the right status for %s', async (label, headline, floorText) => {
+    await finishWith(label);
+    expect(heading()).toBe(headline);
+    expect(trackStates()).toEqual([
+      ['Alert raised', 'is-done'],
+      ['Inspected', 'is-done'],
+      ['Repair', 'is-next'],
+      ['Closed', ''],
+    ]);
+    expect(container.querySelector('.track button, .track a')).toBeNull();
+    expect(primary().textContent).toBe('Back to plant layout');
+
+    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
+    expect(machine.querySelector('.status-inspected.is-new')).not.toBeNull();
+    expect(machine.querySelector('.status-alert')).toBeNull();
+    expect(machine.querySelector('.machine-inspected-text')?.textContent).toBe(floorText);
+  });
+
+  it('keeps the readings above limit, unchanged, and says so', async () => {
+    await finishWith('Bearing wear');
+    expect([...container.querySelectorAll('.meter-status')].map((item) => item.textContent)).toEqual([
+      'Above limit 4.5',
+      'Above limit 75',
+    ]);
+    expect([...container.querySelectorAll('.meter-value')].map((item) => item.textContent)).toEqual(['8.4 mm/s', '78 °C']);
+    expect(body()).toContain('Readings stay high until repaired.');
+    const value = container.querySelector('.machine.has-alert .machine-value.is-abnormal') as HTMLElement;
+    expect(value.textContent).toBe('8.4 mm/s');
+    expect(value.querySelector('.icon-alert')).not.toBeNull();
+  });
+
+  it('keeps the plan and evidence collapsed, and shows the history entry', async () => {
+    await finishWith('Bearing wear', 'Rough running');
+    const groups = [...container.querySelectorAll('.groups details')];
+    expect(groups).toHaveLength(2);
+    for (const group of groups) expect(group.hasAttribute('open')).toBe(false);
+    expect(body()).toContain('Added to M-204 history');
+    expect(container.querySelector('.history-entry')?.textContent).toContain('Bearing wear');
+    expect(container.querySelector('.history-entry')?.textContent).toContain('Rough running');
+    expect(body()).not.toMatch(/solved|resolved|fixed/i);
+  });
+
+  it('puts the finding at the top of the machine history on later visits', async () => {
+    await finishWith('Lubrication problem', 'Below the mark');
+    await go('#/asset/M-204');
+    const entries = [...container.querySelectorAll('.history .history-entry')];
+    expect(entries).toHaveLength(3);
+    expect(entries[0].textContent).toContain('Lubrication problem');
+    expect(entries[0].textContent).toContain('Below the mark');
+    expect(entries[0].textContent).toContain('Technician finding');
+    expect(entries[1].textContent).toContain('Worn bearing');
+    expect(entries[2].textContent).toContain('Low lubricant');
+    expect(container.querySelector('.machine.has-alert .machine-inspected-text')?.textContent).toBe('Inspected: lubrication problem');
+    expect(container.querySelector('.status-inspected.is-new')).toBeNull();
+  });
+
+  it('leaves retrieval results and the evidence screen identical', async () => {
+    const before = JSON.stringify(retrieve('M-204', alertFor('M-204'), dataset));
+    const recordsBefore = JSON.stringify(dataset);
+    await go('#/asset/M-204/evidence');
+    const screenBefore = [...container.querySelectorAll('.compare, .groups, .meters')].map((item) => item.innerHTML);
+
+    await finishWith('Bearing wear', 'Rough running');
+
+    expect(JSON.stringify(retrieve('M-204', alertFor('M-204'), dataset))).toBe(before);
+    expect(JSON.stringify(dataset)).toBe(recordsBefore);
+    await go('#/asset/M-204/evidence');
+    expect([...container.querySelectorAll('.compare, .groups, .meters')].map((item) => item.innerHTML)).toEqual(screenBefore);
+    expect(body()).not.toContain('Technician finding');
+  });
+});
+
 describe('Reset demo', () => {
+  it('restores the original alert state', async () => {
+    await go('#/asset/M-204/plan');
+    await click(primary());
+    await click(outcomeButton('Bearing wear'));
+    await click(primary());
+    expect(container.querySelector('.status-inspected')).not.toBeNull();
+
+    await click(container.querySelector('button.reset') as Element);
+
+    const machine = container.querySelector('.machine.has-alert') as HTMLElement;
+    expect(container.querySelector('.status-inspected')).toBeNull();
+    expect(machine.querySelector('.status-alert')).not.toBeNull();
+    expect(machine.querySelector('.machine-alert-text')?.textContent).toBe('Abnormal vibration');
+    expect(primary().textContent).toBe('Open M-204 alert');
+    await go('#/asset/M-204');
+    expect(body()).not.toContain('Technician finding');
+  });
+
   it('clears saved data from the summary and returns to the plant floor', async () => {
     await go('#/asset/M-204/plan');
     await click(primary());

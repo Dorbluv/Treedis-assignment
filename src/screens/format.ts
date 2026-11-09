@@ -13,6 +13,10 @@ export function shortDate(isoDate: string): string {
   });
 }
 
+export function localDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
 export interface OutcomeOption {
   key: string;
   label: string;

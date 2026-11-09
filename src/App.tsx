@@ -6,7 +6,7 @@ import { Banner } from './components/Banner';
 import { MachineHeader } from './components/MachineHeader';
 import { PlantFloor } from './components/PlantFloor';
 import { Progress, type ProgressStep } from './components/Progress';
-import { clearPlans, hasSavedPlans, loadPlan } from './storage/plans';
+import { clearPlans, hasSavedPlans, loadAllPlans, loadPlan, type PlanMap } from './storage/plans';
 import { DoneScreen } from './screens/DoneScreen';
 import { EvidenceScreen } from './screens/EvidenceScreen';
 import { FindingScreen } from './screens/FindingScreen';
@@ -77,6 +77,14 @@ function readPlan(assetId: string): SavedPlan | null {
   }
 }
 
+function readAllPlans(): PlanMap {
+  try {
+    return loadAllPlans();
+  } catch {
+    return {};
+  }
+}
+
 function anySavedPlans(): boolean {
   try {
     return hasSavedPlans();
@@ -95,6 +103,7 @@ export function App() {
   );
   // Read on every render: each route change re-renders, so this is never stale.
   const saved = result ? readPlan(result.asset.id) : null;
+  const plans = readAllPlans();
 
   function resetDemo() {
     try {
@@ -117,6 +126,9 @@ export function App() {
     panel = (
       <LayoutScreen
         asset={asset}
+        result={result}
+        saved={saved}
+        plans={plans}
         showReset={!asset && anySavedPlans()}
         onReset={resetDemo}
       />
@@ -146,7 +158,8 @@ export function App() {
     panel = <EvidenceScreen result={result} />;
   }
 
-  const onFloor = view === 'map' || view === 'selected';
+  // The summary keeps the floor in view, so the change to the machine can be seen.
+  const onFloor = view === 'map' || view === 'selected' || view === 'done';
 
   return (
     <div className="app" data-view={view} data-resets={resetCount}>
@@ -157,10 +170,10 @@ export function App() {
       </header>
       <main className="workspace">
         <section className={`floor-col${onFloor ? ' is-floor-step' : ''}`} aria-label="Plant floor">
-          <PlantFloor selectedId={asset?.id ?? null} />
+          <PlantFloor selectedId={asset?.id ?? null} plans={plans} animateInspected={view === 'done'} />
         </section>
         <section className="panel-col" key={hash}>
-          {result && !onFloor && <MachineHeader result={result} />}
+          {result && !onFloor && <MachineHeader result={result} saved={saved} />}
           {panel}
         </section>
       </main>
