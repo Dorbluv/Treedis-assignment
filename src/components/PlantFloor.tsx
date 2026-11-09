@@ -106,20 +106,27 @@ export function PlantFloor({ selectedId }: { selectedId: string | null }) {
 
   return (
     <div className="floor">
-      {lines.map((line) => {
+      {lines.map((line, index) => {
         const top = assets.filter((asset) => asset.line === line && asset.parentId === null);
+        const assemblies = top.filter(isParent);
         return (
-          <section className={`zone zone-${line}`} key={line} aria-label={`Line ${line}`}>
+          <section
+            className={`zone zone-${line}${assemblies.length === 0 ? ' zone-strip' : ''}`}
+            key={line}
+            aria-label={`Line ${line}`}
+          >
             <h2 className="zone-name">Line {line}</h2>
-            {top.filter(isParent).map((asset) => <Assembly belt={asset} selected={selected} key={asset.id} />)}
+            {index === lines.length - 1 && (
+              <p className="legend">
+                <span><span className="status-dot" /> No alert</span>
+                <span><AlertMark /> Alert</span>
+              </p>
+            )}
+            {assemblies.map((asset) => <Assembly belt={asset} selected={selected} key={asset.id} />)}
             {top.filter((asset) => !isParent(asset)).map((asset) => <Machine asset={asset} selected={selected} row key={asset.id} />)}
           </section>
         );
       })}
-      <p className="legend">
-        <span><span className="status-dot" /> No alert</span>
-        <span><AlertMark /> Alert</span>
-      </p>
     </div>
   );
 }

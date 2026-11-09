@@ -133,14 +133,19 @@ a { color: var(--blue); }
   background-size: 22px 22px;
   border-radius: 8px;
 }
-.zone { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.35rem 0.5rem 0.5rem; border-radius: 6px; }
+.zone { position: relative; display: flex; flex-direction: column; gap: 0.35rem; padding: 0.35rem 0.5rem 0.5rem; border-radius: 6px; }
+.zone-strip { flex-direction: row; align-items: center; gap: 0.6rem; padding: 0.3rem 0.5rem; }
+.zone-strip .zone-name { flex: none; }
+.zone-strip .machine { flex: 1 1 0; min-width: 0; width: auto; }
+.zone-strip .machine.machine-row { flex-wrap: nowrap; }
+.machine-value { white-space: nowrap; }
 .zone-1 { background: var(--zone-1); border: 1px solid var(--zone-1-line); }
 .zone-2 { background: var(--zone-2); border: 1px solid var(--zone-2-line); }
 .zone-name { font-size: var(--size-meta); font-weight: 600; }
 .zone-1 .zone-name { color: var(--zone-1-text); }
 .zone-2 .zone-name { color: var(--zone-2-text); }
 
-.legend { position: absolute; top: 0.72rem; right: 1rem; display: flex; gap: 0.7rem; color: var(--muted); font-size: 0.75rem; }
+.legend { position: absolute; top: 0.35rem; right: 0.55rem; display: flex; gap: 0.7rem; color: var(--muted); font-size: 0.75rem; }
 .legend > span { display: inline-flex; align-items: center; gap: 0.25rem; }
 
 .machine {
@@ -281,7 +286,6 @@ section { display: flex; flex-direction: column; gap: 0.45rem; }
 }
 
 .note-line { color: var(--muted); }
-.text-button { padding: 0; border: 0; background: none; color: var(--blue); font: inherit; text-align: left; text-decoration: underline; cursor: pointer; }
 .tap-link { overflow-wrap: anywhere; }
 
 /* Collapsed evidence groups */
@@ -307,8 +311,6 @@ section { display: flex; flex-direction: column; gap: 0.45rem; }
 @container (min-width: 480px) {
   .group-preview { flex: 1 1 0; padding-left: 0.4rem; text-align: right; }
 }
-.scroll-anchor:focus { outline: none; }
-
 .rows { display: flex; flex-direction: column; padding-bottom: 0.35rem; }
 .row {
   display: flex;
@@ -424,7 +426,7 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
 /* Phone: every tap target reaches 44px. */
 @media (max-width: 767.98px) {
   html { scrollbar-gutter: stable; }
-  .source-link, .text-button { display: inline-flex; align-items: center; min-height: 44px; }
+  .source-link { display: inline-flex; align-items: center; min-height: 44px; }
   .cause { gap: 0.15rem; }
   /* Links inside a line of text extend their target without disturbing the line spacing. */
   .wordmark, .tap-link.solo, .check .tap-link, .note-links .tap-link { position: relative; }
@@ -452,14 +454,16 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   /* The floor fills the panel, and machines share out the height. */
   .floor { height: 100%; min-height: 100%; gap: 0.5rem; padding: 0.5rem; container-type: inline-size; }
   .zone { padding: 0.5rem 0.65rem 0.65rem; gap: 0.5rem; }
-  .zone-1 { flex: 1 1 0; }
-  .zone-2 { flex: 3.2 1 0; }
-  .zone > .machine-row { flex: 1 1 0; }
-  .assembly { flex: 3 1 0; gap: 0.9rem; min-height: 0; }
+  /* Line 1 is a short strip. Line 2 takes the rest, and its drive train takes most of that. */
+  .zone-strip { flex: none; padding: 0.3rem 0.65rem; }
+  .zone:not(.zone-strip) { flex: 1 1 0; min-height: 0; }
+  .zone:not(.zone-strip) > .machine-row { flex: none; }
+  .assembly { flex: 1 1 0; gap: 0.9rem; min-height: 0; }
   .drive { flex: 1 1 0; min-height: 0; }
   .stem { bottom: -0.9rem; height: 0.9rem; }
-  .belt { flex: none; min-height: 84px; }
-  .belt-track { height: 12px; }
+  .belt { flex: none; min-height: 96px; }
+  .belt-track { height: 16px; }
+  .shaft { height: 6px; }
   .machine { padding: 0.5rem 0.7rem; gap: 0.15rem; }
   .machine-id { font-size: 1.1875rem; }
   .machine-desc { font-size: var(--size-meta); }
@@ -467,8 +471,17 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   .machine-alert-text { font-size: var(--size-meta); }
   .type-icon { width: 1.25em; height: 1.25em; }
   .status-dot { width: 0.7rem; height: 0.7rem; }
-  .legend { top: 1.05rem; right: 1.3rem; }
+  .legend { top: 0.5rem; right: 0.7rem; }
+  .machine.machine-row { min-height: 44px; padding: 0.25rem 0.7rem; }
+  .machine-row .machine-id, .machine-row .machine-value { font-size: var(--size-lead); }
+  @container (min-width: 420px) {
+    .assembly .machine-id { font-size: 1.625rem; }
+    .assembly .machine-value { font-size: 1.75rem; }
+    .assembly .machine-desc, .assembly .machine-alert-text { font-size: var(--size-body); }
+    .assembly .type-icon { width: 1.5em; height: 1.5em; }
+  }
   @container (max-width: 340px) {
+    .zone-strip .machine-desc { display: none; }
     .machine { padding: 0.45rem 0.5rem; }
     .machine-id { font-size: var(--size-lead); }
     .machine-value { font-size: var(--size-lead); }
@@ -479,7 +492,9 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   .machine-header { display: none; }
   .panel-col { min-height: 0; min-width: 0; }
   .work-panel { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
-  .work-body { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; }
+  .work-body { flex: 1; min-height: 0; overflow-y: auto; gap: 0.5rem; padding: 0.7rem 1rem; }
+  .work-body section { gap: 0.3rem; }
+  .group summary { min-height: 40px; padding: 0.15rem; }
   .action-bar { position: static; padding: 0; }
   .action-inner { padding: 0.7rem 1rem; }
 }

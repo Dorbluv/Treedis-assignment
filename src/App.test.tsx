@@ -182,11 +182,9 @@ describe('Evidence screen', () => {
     expect(groups[2].querySelector('.group-preview')?.textContent).toBe('Gearbox report that mentions vibration, older procedure');
   });
 
-  it('opens Left out from the summary line, keeping the INC-2310 keyword and reason', async () => {
-    const leftOut = container.querySelector('#left-out') as HTMLDetailsElement;
-    expect(leftOut.open).toBe(false);
-    await click(container.querySelector('.text-button') as Element);
-    expect(leftOut.open).toBe(true);
+  it('keeps the preview in the Left out header only, with the INC-2310 keyword and reason inside', () => {
+    expect(body()).not.toContain('records left out');
+    const leftOut = container.querySelectorAll('.groups details')[2] as HTMLDetailsElement;
     expect(leftOut.querySelectorAll('.row')).toHaveLength(2);
     const row = [...leftOut.querySelectorAll('.row-excluded')].find((item) => item.textContent?.includes('INC-2310'));
     expect(row?.querySelector('mark')?.textContent).toBe('vibration');
@@ -229,6 +227,9 @@ describe('Plan screen', () => {
       'Check alignment',
       'Record and release',
     ]);
+    expect(container.querySelectorAll('.step-text')[1].textContent).toBe(
+      'Check the housing for signs of heat and play. Then turn the shaft by hand and feel for roughness.',
+    );
     const checks = [...container.querySelectorAll('.step-check')].map((item) => item.textContent);
     expect(checks).toContain('Good: smooth, no play');
     expect(checks).toContain('If not: points to bearing wear');
@@ -291,6 +292,9 @@ describe('Plant floor', () => {
     for (const id of ['C-204', 'M-204', 'G-204', 'M-310']) expect(zone2.textContent).toContain(id);
     expect(container.querySelectorAll('.zone-2 .zone-name')).toHaveLength(1);
     expect(container.querySelector('.zone-1')?.textContent).toContain('F-118');
+    expect(container.querySelector('.zone-1')?.classList.contains('zone-strip')).toBe(true);
+    expect(container.querySelector('.zone-2')?.classList.contains('zone-strip')).toBe(false);
+    expect(container.querySelectorAll('.belt .belt-track')).toHaveLength(1);
     const alertMachines = [...container.querySelectorAll('.machine.has-alert')];
     expect(alertMachines).toHaveLength(1);
     expect(alertMachines[0].textContent).toContain('8.4 mm/s');
