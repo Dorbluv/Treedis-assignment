@@ -45,7 +45,7 @@ describe('cause comparison', () => {
   });
 
   it('builds the separating sentence from the linked steps', () => {
-    expect(separatingSentence(items)).toBe('Neither is confirmed. Steps 2 and 3 tell them apart.');
+    expect(separatingSentence(items)).toBe('Neither is confirmed. Steps 2 and 3 of the inspection tell them apart.');
   });
 });
 

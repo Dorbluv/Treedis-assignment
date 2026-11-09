@@ -5,9 +5,6 @@ import type { Escalation, Finding, MaintenanceRecord } from './types';
  * Neither ever closes an alert: no repair has happened in this prototype.
  */
 
-export const INSPECTION_STAGES = ['Alert raised', 'Inspected', 'Repair', 'Closed'];
-export const ESCALATION_STAGES = ['Alert raised', 'Escalated', 'Site review', 'Closed'];
-
 export const ESCALATION_HEADLINE = 'Escalated through the site process. Waiting on site review.';
 
 export interface InspectionStatus {

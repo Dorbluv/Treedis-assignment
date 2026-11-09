@@ -30,17 +30,15 @@ export function recordLine(record: MaintenanceRecord): string {
 }
 
 const VIEW_NAMES: Record<string, string> = {
-  selected: 'Machine',
-  evidence: 'Evidence',
+  investigate: 'Investigate',
   source: 'Source',
-  plan: 'Plan',
+  plan: 'Inspection plan',
   finding: 'Finding',
-  done: 'Summary',
 };
 
 export function pageTitle(view: string, assetId: string | null): string {
   const app = 'Maintenance Copilot';
-  return assetId ? `${VIEW_NAMES[view] ?? 'Machine'}, ${assetId}, ${app}` : `Plant floor, ${app}`;
+  return assetId ? `${VIEW_NAMES[view] ?? 'Investigate'}, ${assetId}, ${app}` : `Plant floor, ${app}`;
 }
 
 export interface OutcomeOption {

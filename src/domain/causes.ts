@@ -45,7 +45,7 @@ export function hasReviewableEvidence(result: RetrievalResult): boolean {
 
 export function separatingSentence(items: CauseComparisonItem[]): string {
   const steps = items.map((item) => item.stepNumber).sort((a, b) => a - b);
-  return `Neither is confirmed. Steps ${steps.join(' and ')} tell them apart.`;
+  return `Neither is confirmed. Steps ${steps.join(' and ')} of the inspection tell them apart.`;
 }
 
 export interface ContextStepNote {

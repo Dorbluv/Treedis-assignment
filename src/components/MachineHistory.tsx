@@ -52,7 +52,7 @@ export function MachineHistory({
       {escalation && <EscalationEntry escalation={escalation} />}
       {finding && <FindingEntry result={result} finding={finding} />}
       {past.map(({ record }) => (
-        <a className="history-entry" key={record.id} href={`#/asset/${asset.id}/evidence/source/${record.id}`}>
+        <a className="history-entry" key={record.id} href={`#/asset/${asset.id}/investigate/source/${record.id}`}>
           <span className="history-date">{formatDay(record.occurredOn ?? '')}</span>
           <span className="history-main">{record.takeaway}</span>
           <span className="tag">{TAGS[record.kind]}</span>

@@ -19,9 +19,9 @@ describe('date format', () => {
 
 describe('page title', () => {
   it('names the step and the machine', () => {
-    expect(pageTitle('evidence', 'M-204')).toBe('Evidence, M-204, Maintenance Copilot');
-    expect(pageTitle('selected', 'M-310')).toBe('Machine, M-310, Maintenance Copilot');
-    expect(pageTitle('done', 'M-204')).toBe('Summary, M-204, Maintenance Copilot');
+    expect(pageTitle('investigate', 'M-204')).toBe('Investigate, M-204, Maintenance Copilot');
+    expect(pageTitle('plan', 'M-310')).toBe('Inspection plan, M-310, Maintenance Copilot');
+    expect(pageTitle('finding', 'M-204')).toBe('Finding, M-204, Maintenance Copilot');
     expect(pageTitle('map', null)).toBe('Plant floor, Maintenance Copilot');
   });
 });
