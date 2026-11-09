@@ -217,8 +217,8 @@ a { color: var(--blue); }
   position: relative;
   flex: none;
   display: inline-block;
-  width: 0.7rem;
-  height: 0.7rem;
+  width: 0.55rem;
+  height: 0.55rem;
   border-radius: 50%;
   background: var(--blue);
 }
@@ -519,7 +519,7 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   .machine-value { font-size: var(--size-section); }
   .machine-alert-text, .machine-inspected-text { font-size: var(--size-meta); }
   .type-icon { width: 1.25em; height: 1.25em; }
-  .status-dot { width: 0.7rem; height: 0.7rem; }
+  .status-dot, .status-inspected { width: 0.7rem; height: 0.7rem; }
   .legend { top: 0.5rem; right: 0.7rem; }
   .machine.machine-row { min-height: 44px; padding: 0.25rem 0.7rem; }
   .machine-row .machine-id, .machine-row .machine-value { font-size: var(--size-lead); }

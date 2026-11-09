@@ -161,6 +161,7 @@ export function PlantFloor({
               <p className="legend">
                 <span><span className="status-dot" /> No alert</span>
                 <span><AlertMark /> Alert</span>
+                <span><span className="status-inspected" /> Inspected</span>
               </p>
             )}
             {assemblies.map((asset) => <Assembly belt={asset} state={state} key={asset.id} />)}
