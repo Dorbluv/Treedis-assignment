@@ -97,3 +97,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** The user.
 - **What changed:** Step 2 now follows the German: check the housing for signs of heat and play, then turn the shaft by hand and feel for roughness.
 - **Evidence link or screenshot:** _to fill in_
+
+## Finishing the flow had no visible effect
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code
+- **Prompt or context:** Review of what happens after "Save finding".
+- **What went wrong:** The user noticed that finishing the flow had no visible effect.
+- **Caught by:** The user.
+- **What changed:** Decision: show the alert moving to Inspected and the finding added to machine history, rather than claiming the problem is solved, because no repair has happened.
+- **Evidence link or screenshot:** _to fill in_
