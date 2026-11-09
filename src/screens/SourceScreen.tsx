@@ -1,13 +1,16 @@
+import { PrimaryAction } from '../components/PrimaryAction';
 import type { RetrievalResult } from '../domain/types';
 
 export function SourceScreen({
   result,
   recordId,
   backHref,
+  backLabel,
 }: {
   result: RetrievalResult;
   recordId: string;
   backHref: string;
+  backLabel: string;
 }) {
   const item = [...result.included, ...result.uncertain, ...result.excluded, ...result.comparison].find(
     (candidate) => candidate.record.id === recordId,
@@ -16,8 +19,8 @@ export function SourceScreen({
   if (!item) {
     return (
       <div className="panel">
-        <a href={backHref}>Back</a>
         <p>This source is not part of the records for {result.asset.id}.</p>
+        <PrimaryAction label={backLabel} href={backHref} />
       </div>
     );
   }
@@ -28,9 +31,8 @@ export function SourceScreen({
 
   return (
     <div className="panel">
-      <a href={backHref}>Back</a>
       <h1>{record.id}</h1>
-      <p className="card-title">{record.title}</p>
+      <p className="row-title">{record.title}</p>
       <span className="pill">{item.label}</span>
       <dl className="source">
         <dt>ID</dt>
@@ -57,6 +59,7 @@ export function SourceScreen({
         <dt>Limitation</dt>
         <dd>{record.limitation}</dd>
       </dl>
+      <PrimaryAction label={backLabel} href={backHref} />
     </div>
   );
 }

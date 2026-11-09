@@ -51,9 +51,10 @@ export function PlantMap({ selectedId }: { selectedId: string | null }) {
   const ordered = [...assets].sort((a, b) => (a.parentId === null ? 0 : 1) - (b.parentId === null ? 0 : 1));
 
   return (
-    <svg className="plant-map" viewBox="0 0 360 390" role="group" aria-label="Plant layout. Select equipment to see how it is related.">
-      <text x="20" y="26" className="map-line">Line 1</text>
-      <text x="20" y="136" className="map-line">Line 2</text>
+    <svg className="plant-map" viewBox="0 0 360 224" role="group" aria-label="Plant layout. Select equipment to see how it is related.">
+      <text x="20" y="16" className="map-line">Line 1</text>
+      <text x="200" y="16" className="map-line">Line 2</text>
+      <text x="20" y="96" className="map-line">Line 2</text>
 
       {ordered.map((asset) => {
         const { x, y, width, height } = asset.mapPosition;
@@ -80,8 +81,8 @@ export function PlantMap({ selectedId }: { selectedId: string | null }) {
               </text>
             ) : (
               <>
-                <text x={x + 12} y={y + 26} className="map-name">{asset.id}</text>
-                <text x={x + 12} y={y + 46} className={hasAlert ? 'map-alert' : 'map-detail'}>
+                <text x={x + 12} y={y + 24} className="map-name">{asset.id}</text>
+                <text x={x + 12} y={y + 44} className={hasAlert ? 'map-alert' : 'map-detail'}>
                   {hasAlert ? '! Vibration alert' : detail}
                 </text>
               </>

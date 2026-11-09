@@ -5,7 +5,7 @@
     "type": "conveyor",
     "parentId": null,
     "line": "2",
-    "mapPosition": { "x": 20, "y": 150, "width": 320, "height": 120 }
+    "mapPosition": { "x": 20, "y": 102, "width": 320, "height": 112 }
   },
   {
     "id": "M-204",
@@ -13,7 +13,7 @@
     "type": "motor",
     "parentId": "C-204",
     "line": "2",
-    "mapPosition": { "x": 40, "y": 190, "width": 120, "height": 64 }
+    "mapPosition": { "x": 40, "y": 142, "width": 120, "height": 62 }
   },
   {
     "id": "G-204",
@@ -21,7 +21,7 @@
     "type": "gearbox",
     "parentId": "C-204",
     "line": "2",
-    "mapPosition": { "x": 200, "y": 190, "width": 120, "height": 64 }
+    "mapPosition": { "x": 200, "y": 142, "width": 120, "height": 62 }
   },
   {
     "id": "M-310",
@@ -29,7 +29,7 @@
     "type": "motor",
     "parentId": null,
     "line": "2",
-    "mapPosition": { "x": 20, "y": 310, "width": 140, "height": 64 }
+    "mapPosition": { "x": 200, "y": 22, "width": 140, "height": 56 }
   },
   {
     "id": "F-118",
@@ -37,6 +37,6 @@
     "type": "filler",
     "parentId": null,
     "line": "1",
-    "mapPosition": { "x": 20, "y": 40, "width": 140, "height": 64 }
+    "mapPosition": { "x": 20, "y": 22, "width": 140, "height": 56 }
   }
 ]
