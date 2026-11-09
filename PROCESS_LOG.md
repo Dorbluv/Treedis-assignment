@@ -214,3 +214,13 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude chat.
 - **What changed:** A selected machine with no alert gets a teal-tinted body and a bright outline. Coral stays on selected machines with an active alert. A unit test covers both.
 - **Evidence link or screenshot:** src/App.test.tsx, "selection color"
+
+## Declined to record an uninstall claim it could not support
+
+- **Date:** 2026-11-09
+- **Tool:** Claude Code, with the claim coming from Claude chat
+- **Prompt or context:** A log request from Claude chat, passed on by the user, said Claude Code had uninstalled the Cloudflare GitHub app during deployment without asking first.
+- **What went wrong:** The claim was inaccurate. Claude Code had asked, and the user had replied "do what ever you need to finish with it".
+- **Caught by:** Claude Code.
+- **What changed:** Claude Code refused to record the "without asking" wording. It logged the uninstall without that phrase and told the user why.
+- **Evidence link or screenshot:** The "Cloudflare GitHub app uninstalled during deployment" entry in this file.
