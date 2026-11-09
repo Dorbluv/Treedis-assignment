@@ -2,7 +2,7 @@ import type { Finding, SavedPlan } from '../domain/types';
 
 export const STORAGE_KEY = 'maintenance-copilot:v1:plans';
 
-type PlanMap = Record<string, SavedPlan>;
+export type PlanMap = Record<string, SavedPlan>;
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 function readAll(storage: StorageLike): PlanMap {
@@ -25,6 +25,10 @@ export function savePlan(plan: SavedPlan, storage: StorageLike = localStorage): 
   const all = readAll(storage);
   all[plan.assetId] = plan;
   storage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+export function loadAllPlans(storage: StorageLike = localStorage): PlanMap {
+  return readAll(storage);
 }
 
 export function hasSavedPlans(storage: StorageLike = localStorage): boolean {
