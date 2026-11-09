@@ -2,45 +2,68 @@
   {
     "id": "SR-M204-01",
     "kind": "sensor",
-    "title": "Vibration reading, drive-end bearing housing",
+    "title": "Readings at the alert, drive-end bearing housing",
+    "takeaway": "Vibration is 8.4 mm/s against a 4.5 limit. Temperature is also above its limit.",
     "assetId": "M-204",
     "linkedAssetIds": [],
     "conditions": ["vibration"],
     "language": "en",
-    "excerpt": "Vibration velocity 7.1 mm/s RMS at the drive-end bearing housing. Demo alert level 4.5 mm/s RMS.",
-    "englishExplanation": "The demo sensor shows vibration above the demo alert level on this motor.",
-    "limitation": "Synthetic demo reading. It shows that vibration is high, not why."
+    "excerpt": "Drive-end bearing housing: vibration velocity 8.4 mm/s RMS (demo limit 4.5), temperature 78 °C (demo limit 75), motor current 12.1 A (demo limit 14).",
+    "englishExplanation": "Vibration and temperature are above their demonstration limits on this motor. Current is within its limit.",
+    "limitation": "Synthetic demo readings. They show what is high, not why.",
+    "readings": [
+      { "label": "Vibration", "unit": "mm/s", "value": 8.4, "limit": 4.5, "history": [3.1, 3.2, 3.2, 3.6, 4.2, 5.4, 7.0, 8.4] },
+      { "label": "Temperature", "unit": "°C", "value": 78, "limit": 75, "history": [68, 68, 69, 70, 72, 74, 76, 78] },
+      { "label": "Current", "unit": "A", "value": 12.1, "limit": 14, "history": [11.8, 11.9, 11.8, 12.0, 12.1, 12.0, 12.1, 12.1] }
+    ]
   },
   {
     "id": "INC-2291",
     "kind": "incident",
     "title": "Bearing wear after high vibration",
+    "takeaway": "A worn bearing caused high vibration on this motor in March 2025.",
     "assetId": "M-204",
     "linkedAssetIds": [],
     "conditions": ["vibration"],
     "language": "en",
-    "excerpt": "High vibration reported on M-204. On opening the drive-end housing, the bearing showed wear on the outer race. Bearing replaced.",
+    "excerpt": "High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced.",
     "englishExplanation": "A past high-vibration event on this motor was traced to a worn bearing.",
     "limitation": "A past incident is a possible explanation only. It does not show what is happening now.",
-    "possibleCause": { "key": "bearing_wear", "label": "Bearing wear" }
+    "possibleCause": { "key": "bearing_wear", "label": "Bearing wear" },
+    "occurredOn": "2025-03-12",
+    "alertMatch": "Vibration passed the limit at the same drive-end bearing as today.",
+    "foundCondition": "Wear on the outer race of the drive-end bearing",
+    "fix": "Bearing replaced",
+    "downtimeHours": 6.5,
+    "symptoms": ["Rough running when the shaft was turned by hand", "Play at the bearing"],
+    "testedByStepId": "SOP-014-C-2"
   },
   {
     "id": "INC-1877",
     "kind": "incident",
     "title": "Schmierungsproblem bei erhöhter Vibration",
+    "takeaway": "Low lubricant caused similar vibration on this motor in September 2024.",
     "assetId": "M-204",
     "linkedAssetIds": [],
     "conditions": ["vibration"],
     "language": "de",
-    "excerpt": "Erhöhte Vibration an M-204 festgestellt. Ursache war unzureichende Schmierung des Lagers. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
-    "englishExplanation": "Increased vibration on M-204 was traced to insufficient bearing lubrication. After lubricant was topped up, vibration returned to the normal range.",
+    "excerpt": "Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich.",
+    "englishExplanation": "Increased vibration on M-204 was traced to insufficient bearing lubrication, with the lubricant below the mark. After lubricant was topped up, vibration returned to the normal range.",
     "limitation": "A past incident is a possible explanation only. The English text is a prepared explanation, not an approved translation.",
-    "possibleCause": { "key": "lubrication", "label": "Lubrication problem" }
+    "possibleCause": { "key": "lubrication", "label": "Lubrication problem" },
+    "occurredOn": "2024-09-03",
+    "alertMatch": "Vibration passed the limit at the same bearing as today.",
+    "foundCondition": "Too little lubricant at the bearing",
+    "fix": "Lubricant topped up",
+    "downtimeHours": 1.5,
+    "symptoms": ["Lubricant below the mark", "Vibration fell back after topping up"],
+    "testedByStepId": "SOP-014-C-3"
   },
   {
     "id": "INC-2310",
     "kind": "incident",
     "title": "Gearbox oil seal leak with vibration",
+    "takeaway": "A leaking oil seal on the gearbox, not on this motor.",
     "assetId": "G-204",
     "linkedAssetIds": [],
     "conditions": ["vibration"],
@@ -53,6 +76,7 @@
     "id": "ASM-0412",
     "kind": "assembly",
     "title": "Conveyor drive alignment check",
+    "takeaway": "Drive alignment on conveyor C-204 drifted after a belt replacement.",
     "assetId": "C-204",
     "linkedAssetIds": [],
     "conditions": ["vibration"],
@@ -65,6 +89,7 @@
     "id": "NOTE-5521",
     "kind": "note",
     "title": "Shift note: motor on line 2 noisy",
+    "takeaway": "Someone reported a noisy motor on line 2 but did not say which one.",
     "assetId": null,
     "candidateLine": "2",
     "candidateType": "motor",
@@ -79,6 +104,7 @@
     "id": "SOP-014-C",
     "kind": "sop",
     "title": "SOP-014 Inspektion Antriebsmotor, Revision C",
+    "takeaway": "Current procedure for this motor. Every inspection step comes from it.",
     "sopNumber": "SOP-014",
     "revision": "C",
     "status": "current",
@@ -98,17 +124,23 @@
       {
         "id": "SOP-014-C-2",
         "original": "Lagergehäuse auf der Antriebsseite auf Hitzespuren und Spiel prüfen. Welle von Hand drehen und auf raues Laufen achten.",
-        "english": "Check the drive-end bearing housing for signs of heat and play. Turn the shaft by hand and feel for rough running."
+        "english": "Check the drive-end bearing housing for signs of heat and play. Turn the shaft by hand and feel for rough running.",
+        "expectedOriginal": "Gleichmäßiger Lauf und kein Spiel. Raues Laufen oder Spiel deutet auf Lagerverschleiß hin.",
+        "expectedEnglish": "Smooth rotation and no play. Rough running or play points to bearing wear."
       },
       {
         "id": "SOP-014-C-3",
         "original": "Schmierstoffstand und Zustand des Schmierstoffs am Lager prüfen.",
-        "english": "Check the lubricant level and the lubricant condition at the bearing."
+        "english": "Check the lubricant level and the lubricant condition at the bearing.",
+        "expectedOriginal": "Schmierstoff auf Sollstand und sauber. Niedriger Stand oder gealterter Schmierstoff deutet auf ein Schmierungsproblem hin.",
+        "expectedEnglish": "Lubricant at the mark and clean. A low level or degraded lubricant points to a lubrication problem."
       },
       {
         "id": "SOP-014-C-4",
         "original": "Ausrichtung zwischen Motor und Getriebe an der Kupplung prüfen.",
-        "english": "Check the alignment between the motor and the gearbox at the coupling."
+        "english": "Check the alignment between the motor and the gearbox at the coupling.",
+        "checks": "alignment",
+        "contextRecordId": "ASM-0412"
       },
       {
         "id": "SOP-014-C-5",
@@ -121,6 +153,7 @@
     "id": "SOP-014-B",
     "kind": "sop",
     "title": "SOP-014 Inspektion Antriebsmotor, Revision B",
+    "takeaway": "Older procedure, with no lubrication check.",
     "sopNumber": "SOP-014",
     "revision": "B",
     "status": "superseded",
@@ -153,6 +186,7 @@
     "id": "SOP-022",
     "kind": "sop",
     "title": "SOP-022 Motor inspection",
+    "takeaway": "Current procedure for motor M-310.",
     "sopNumber": "SOP-022",
     "revision": "A",
     "status": "current",
@@ -180,6 +214,7 @@
     "id": "INC-1650",
     "kind": "incident",
     "title": "Filler nozzle blockage",
+    "takeaway": "A blocked nozzle stopped this filler.",
     "assetId": "F-118",
     "linkedAssetIds": [],
     "conditions": ["blockage"],

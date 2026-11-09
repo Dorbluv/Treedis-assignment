@@ -33,6 +33,15 @@ export interface PossibleCause {
   label: string;
 }
 
+/** Display only. The status is computed from value and limit, never stored. */
+export interface Reading {
+  label: string;
+  unit: string;
+  value: number;
+  limit: number;
+  history: number[];
+}
+
 interface RecordBase {
   id: string;
   kind: RecordKind;
@@ -44,6 +53,17 @@ interface RecordBase {
   englishExplanation: string;
   limitation: string;
   possibleCause?: PossibleCause;
+  /** Display only: what this record tells the technician. */
+  takeaway: string;
+  // Display only, never read by retrieval.
+  occurredOn?: string;
+  alertMatch?: string;
+  foundCondition?: string;
+  fix?: string;
+  downtimeHours?: number;
+  symptoms?: string[];
+  testedByStepId?: string;
+  readings?: Reading[];
 }
 
 /** The record names one asset. */
@@ -66,6 +86,11 @@ export interface SopStep {
   id: string;
   original: string;
   english: string;
+  expectedOriginal?: string;
+  expectedEnglish?: string;
+  /** Display only: what this step checks when a record, not a cause, prompts it. */
+  checks?: string;
+  contextRecordId?: string;
 }
 
 export type SopRecord = RecordBase & KnownApplicability & {
