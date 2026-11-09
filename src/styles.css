@@ -515,8 +515,7 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   .zone:not(.zone-strip) { flex: 1 1 0; min-height: 0; }
   .zone:not(.zone-strip) > .machine-row { flex: none; }
   .assembly { flex: 1 1 0; gap: 0.9rem; min-height: 0; justify-content: center; }
-  /* Cards are capped so they do not stretch into tall empty boxes. */
-  .drive { flex: 0 1 220px; min-height: 0; max-height: 220px; }
+  .drive { flex: 1 1 0; min-height: 0; }
   .stem { bottom: -0.9rem; height: 0.9rem; }
   .belt { flex: none; min-height: 96px; }
   .belt-track { height: 16px; }
@@ -554,4 +553,9 @@ mark { padding: 0 0.2em; background: var(--raised); border-bottom: 2px solid var
   .group summary { min-height: 40px; padding: 0.15rem; }
   .action-bar { position: static; padding: 0; }
   .action-inner { padding: 0.7rem 1rem; }
+}
+
+/* Tablet only: the narrow column would stretch these cards into tall empty boxes. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .drive { flex: 0 1 220px; max-height: 220px; }
 }
