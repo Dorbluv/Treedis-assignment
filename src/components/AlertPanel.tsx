@@ -23,6 +23,7 @@ import { NoProcedureCallout } from './NoProcedureCallout';
 import { PrimaryAction } from './PrimaryAction';
 import { ReadingCard } from './ReadingCard';
 import { SourceSheet } from './SourceSheet';
+import { SummaryCard } from './SummaryCard';
 import { WorkspaceTabs, tabId, tabPanelId, type TabDefinition } from './WorkspaceTabs';
 
 const COPY = {
@@ -422,6 +423,7 @@ export function AlertPanel({
                   {readings.map((reading) => <ReadingCard key={reading.label} reading={reading} />)}
                 </div>
                 {moved && <p className="readings-note">Readings stay high until repaired.</p>}
+                <SummaryCard result={result} sourceHref={(id) => `${base}/investigate/source/${id}`} />
               </section>
             )}
 
