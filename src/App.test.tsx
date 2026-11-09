@@ -655,7 +655,7 @@ describe('copy rules', () => {
     'has no em dashes on %s',
     async (hash) => {
       await go(hash);
-      expect(body()).not.toContain('—');
+      expect(body()).not.toContain(String.fromCharCode(0x2014));
     },
   );
 });
