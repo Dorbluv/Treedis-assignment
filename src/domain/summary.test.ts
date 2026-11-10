@@ -173,6 +173,16 @@ describe('limit labels', () => {
   });
 });
 
+describe('record IDs', () => {
+  it.each(['INC-1650', 'SOP-014 rev C', 'SR-F118-01', 'ASM-0412', 'NOTE-5521', 'inc-1650'])('rejects %s in the text', (id) => {
+    expect(rules(one(`A past record, ${id}, lists nozzle blockage as a possible cause.`, 'INC-1650'), 'F-118')).toContain('record_id');
+  });
+
+  it('allows a machine ID', () => {
+    expect(rules(one('A past record lists nozzle blockage on F-118 as a possible cause.', 'INC-1650'), 'F-118')).not.toContain('record_id');
+  });
+});
+
 describe('M-310', () => {
   it('must state that evidence is insufficient', () => {
     expect(rules(one('Vibration is 6.2 mm/s.', 'SR-M310-01'), 'M-310')).toContain('insufficient');
