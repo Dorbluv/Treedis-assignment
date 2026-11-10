@@ -349,3 +349,22 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Limit found:** Cached answers last 24 hours from 2026-11-09T17:11:48.670Z, so the entries expire around 2026-11-10 17:11 UTC. The next call after that asks the model again and may word the summary differently from the sentences marked reviewed.
 - **Caught by:** Claude Code.
 - **Evidence link or screenshot:** evidence/gate-3/live-check-first.json
+
+## The key survived after being added as type Secret
+
+- **Date:** 2026-11-10
+- **Tool:** Claude Code, with requests to the public URL. The user changed the Cloudflare dashboard.
+- **Prompt or context:** Follow-up to the key lost after push 73f0eb8.
+- **What was found:** Once the user added `GEMINI_API_KEY` as type Secret, it survived the rebuilds for ddb6cd6 and b3df693. That points to the first entry not being stored as a Secret. This is an inference from the outcome, because the first entry was not inspected.
+- **Caught by:** Claude Code found the loss. The user re-added the key.
+- **Evidence link or screenshot:** The two entries above on the key and the public URL.
+
+## Summary cache extended to 30 days
+
+- **Date:** 2026-11-10
+- **Tool:** Claude Code
+- **Prompt or context:** The reviewed sentences would have expired at 17:11 UTC, and the next call could have worded them differently.
+- **What changed:** Valid summaries are kept for 30 days. Failures still last 5 minutes. Entries already stored keep their own 24-hour expiry, so a cache hit now rewrites an older entry once with the 30-day expiry, keeping its wording and calling no model.
+- **Limit:** The Cache API is per data center and can evict entries early, so another location can still generate new wording.
+- **Caught by:** The user asked for the change. Claude Code found that raising the expiry alone would not reach the stored entries.
+- **Evidence link or screenshot:** worker/summary.test.ts, "extends an older 24-hour entry to 30 days once"
