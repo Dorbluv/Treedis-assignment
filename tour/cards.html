@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Tour cards</title>
+<style>
+@font-face { font-family: 'Sora Variable'; src: url('/node_modules/@fontsource-variable/sora/files/sora-latin-wght-normal.woff2') format('woff2'); font-weight: 100 800; }
+@font-face { font-family: 'Instrument Sans Variable'; src: url('/node_modules/@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2') format('woff2'); font-weight: 400 700; }
+html, body { margin: 0; height: 100%; background: #101d2b; }
+#card {
+  box-sizing: border-box; width: 1920px; height: 1080px; padding: 90px 150px;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 36px; text-align: center;
+  color: #eaf1f6; font-family: 'Instrument Sans Variable', sans-serif; font-variant-numeric: tabular-nums;
+  opacity: 0; transition: opacity 450ms ease;
+}
+#card.show { opacity: 1; }
+.kicker { font-size: 34px; color: #7fe0d3; font-weight: 600; }
+.big { font-family: 'Sora Variable', sans-serif; font-weight: 600; font-size: 72px; line-height: 1.2; max-width: 1500px; }
+.withimage .big { font-size: 46px; }
+.sub { font-size: 54px; color: #bfcdd9; font-weight: 500; max-width: 1400px; line-height: 1.3; }
+.source { font-size: 26px; color: #9fb2c2; }
+.list { display: flex; gap: 40px; list-style: none; padding: 0; margin: 0; }
+.list li { font-family: 'Sora Variable', sans-serif; font-weight: 600; font-size: 56px; padding: 40px 50px; background: #162839; border: 1px solid #243a4e; border-radius: 14px; }
+.figure { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.figure img { display: block; max-width: 1560px; max-height: 720px; border: 1px solid #243a4e; border-radius: 10px; }
+.figure.full img { max-height: 860px; }
+.label { font-size: 28px; color: #bfcdd9; }
+#card.fullscreen { padding: 0; gap: 0; }
+#card.fullscreen img { width: 1920px; height: 1080px; max-width: none; max-height: none; border: 0; border-radius: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; width: 100%; }
+.stat { display: flex; flex-direction: column; gap: 22px; padding: 44px 36px; background: #162839; border: 1px solid #243a4e; border-radius: 14px; }
+.value { font-family: 'Sora Variable', sans-serif; font-weight: 600; font-size: 74px; }
+.stat p { margin: 0; font-size: 32px; line-height: 1.35; color: #bfcdd9; }
+</style>
+</head>
+<body>
+<main id="card"></main>
+<script>
+function make(tag, className, text) {
+  const element = document.createElement(tag);
+  if (className) element.className = className;
+  if (text !== undefined) element.textContent = text;
+  return element;
+}
+
+window.showCard = (card) => {
+  const root = document.getElementById('card');
+  root.classList.remove('show');
+  setTimeout(() => {
+    root.replaceChildren();
+    root.className = card.fullscreen ? 'fullscreen' : card.image && card.big ? 'withimage' : '';
+    if (card.kicker) root.append(make('div', 'kicker', card.kicker));
+    if (card.image) {
+      const figure = make('div', card.big ? 'figure' : 'figure full');
+      const image = make('img');
+      image.src = '/tour/' + card.image;
+      image.alt = card.imageLabel || '';
+      figure.append(image);
+      if (card.imageLabel) figure.append(make('div', 'label', card.imageLabel));
+      root.append(figure);
+    }
+    if (card.big) root.append(make('div', 'big', card.big));
+    if (card.sub) root.append(make('div', 'sub', card.sub));
+    if (card.list) {
+      const list = make('ul', 'list');
+      card.list.forEach((item) => list.append(make('li', '', item)));
+      root.append(list);
+    }
+    if (card.stats) {
+      const stats = make('div', 'stats');
+      card.stats.forEach((stat) => {
+        const box = make('div', 'stat');
+        box.append(make('div', 'value', stat.value), make('p', '', stat.label));
+        stats.append(box);
+      });
+      root.append(stats);
+    }
+    if (card.source) root.append(make('div', 'source', card.source));
+    requestAnimationFrame(() => root.classList.add('show'));
+  }, 120);
+};
+</script>
+</body>
+</html>
