@@ -170,11 +170,11 @@ describe('cache', () => {
     expect(model).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps a good result for 24 hours and a failure for 5 minutes', async () => {
+  it('keeps a good result for 30 days and a failure for 5 minutes', async () => {
     let now = 0;
     cache = memoryCache(() => now);
     await call('M-204');
-    now = 24 * 3_600_000 - 1;
+    now = 30 * 24 * 3_600_000 - 1;
     await call('M-204');
     expect(model).toHaveBeenCalledTimes(1);
     now += 1;
@@ -191,6 +191,23 @@ describe('cache', () => {
     now += 1;
     await call('M-204');
     expect(model).toHaveBeenCalledTimes(2);
+  });
+
+  it('extends an older 24-hour entry to 30 days once, keeping its wording and calling no model', async () => {
+    let now = 0;
+    cache = memoryCache(() => now);
+    const key = 'gemini-3.5-flash-lite/v5/M-204';
+    const old = { source: 'gemini' as const, sentences: [{ text: 'Reviewed wording.', citations: ['INC-2291'] }] };
+    await cache.put(key, old, 24 * 3_600_000);
+    const put = vi.spyOn(cache, 'put');
+
+    expect((await call('M-204')).body).toEqual(old);
+    await call('M-204');
+    expect(put).toHaveBeenCalledTimes(1);
+
+    now = 29 * 24 * 3_600_000;
+    expect((await call('M-204')).body).toEqual(old);
+    expect(model).not.toHaveBeenCalled();
   });
 
   it('still answers when the cache throws', async () => {

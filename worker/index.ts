@@ -1,5 +1,5 @@
 import { handleSummary, memoryCache, type SummaryCache, type SummaryEnv } from './summary';
-import type { SummaryResponse } from '../src/domain/summary';
+import type { CachedSummary } from './summary';
 
 interface Env extends SummaryEnv {
   ASSETS: { fetch(request: Request): Promise<Response> };
@@ -15,7 +15,7 @@ const cache: SummaryCache = {
     if (local) return local;
     const store = (caches as unknown as { default: Cache }).default;
     const hit = await store.match(cacheUrl(key));
-    return hit ? ((await hit.json()) as SummaryResponse) : null;
+    return hit ? ((await hit.json()) as CachedSummary) : null;
   },
   async put(key, value, ttlMs) {
     await memory.put(key, value, ttlMs);

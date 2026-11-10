@@ -27,7 +27,7 @@ On the Investigate tab, Gemini reads the records that retrieval already chose an
 
 - The browser sends only an asset ID to `POST /api/summary`. The Worker runs `retrieve()` on bundled data and sends only that asset's included records to the model. Inspection steps are withheld.
 - Model: `gemini-3.5-flash-lite`, on the free tier per Google's pricing page and listed there for new projects, checked 2026-11-09. Timeout: 8 seconds. In testing on that date, `gemini-3.8-flash` and `gemini-3.6-flash` mostly returned 503 or timed out.
-- Each asset's result is cached on the server, 24 hours when valid and 5 minutes after a failure. Assumed: the cache is the isolate's memory plus the Cloudflare Cache API, which is per data center, so a few extra calls are possible.
+- Each asset's result is cached on the server, 30 days when valid and 5 minutes after a failure. Assumed: the cache is the isolate's memory plus the Cloudflare Cache API, which is per data center, so a few extra calls are possible.
 - If the call fails, times out or fails validation, the app shows a deterministic summary labeled "Prepared summary, AI unavailable". The flow never waits for AI.
 
 ### Setting the key
@@ -43,25 +43,25 @@ Without a key the app uses the prepared summary.
 
 Before anything is shown, code checks that every cited ID is in that asset's included set, that every number appears in a cited record, that no sentence states a confirmed cause, names a cause outside the allowed list or gives an instruction, that every limit is called a demo limit, that no sentence only restates a reading, that a summary names all allowed causes or none, and that no sentence contains a record ID. M-310 has no allowed cause, so it gets no summary and makes no model call.
 
-These checks do not fully prove that each excerpt supports its sentence. They are word and number patterns. A number can be attached to the wrong reading, and a claim can use allowed words yet misread its source. That is why a person reviews the sentences below.
+These checks do not fully prove that each excerpt supports its sentence. They are word and number patterns. A number can be attached to the wrong reading, and a claim can use allowed words yet misread its source. That is why the live sentences are reviewed below.
 
-### Human review
+### Sentence review
 
-The live v5 sentences, read from the public URL on 2026-11-10. M-310 gets no AI summary: its fixed insufficient-evidence message and "No past incidents" line are shown instead.
+The live v5 sentences, read from the public URL on 2026-11-10. Claude chat reviewed each one against the records shown in the app. M-310 gets no AI summary: its fixed insufficient-evidence message and "No past incidents" line are shown instead.
 
 **M-204**
 
-| Sentence | Cited excerpt | Review |
+| Sentence | Cited excerpt | Verdict |
 |---|---|---|
-| Bearing wear and a lubrication problem are possible causes in these records. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. | Reviewed by Claude chat |
-| These records cannot tell whether either applies to the current fault. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. | Reviewed by Claude chat |
+| Bearing wear and a lubrication problem are possible causes in these records. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. | Supported, reviewed by Claude chat |
+| These records cannot tell whether either applies to the current fault. | INC-2291: High vibration reported on M-204. The shaft ran rough when turned by hand and the drive-end bearing had play. On opening the housing, the outer race showed wear. Bearing replaced. INC-1877: Erhöhte Vibration an M-204 festgestellt. Schmierstoffstand am Lager unter der Markierung, Ursache war unzureichende Schmierung. Schmierstoff nachgefüllt, Vibration danach im Normalbereich. | Supported, reviewed by Claude chat |
 
 **F-118**
 
-| Sentence | Cited excerpt | Review |
+| Sentence | Cited excerpt | Verdict |
 |---|---|---|
-| Nozzle blockage is a possible cause. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. | Reviewed by Claude chat |
-| These records cannot tell the technician why the pressure is high now. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. | Reviewed by Claude chat |
+| Nozzle blockage is a possible cause. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. | Supported, reviewed by Claude chat |
+| These records cannot tell the technician why the pressure is high now. | INC-1650: Filler F-118 stopped on low flow. Nozzle 3 was blocked and was cleared. | Supported, reviewed by Claude chat |
 
 ## Credits
 

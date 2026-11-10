@@ -7,7 +7,9 @@ import type { Alert, RetrievalResult } from '../src/domain/types';
 export const MODEL = 'gemini-3.5-flash-lite';
 export const PROMPT_VERSION = 'v5';
 export const TIMEOUT_MS = 8000;
-const GOOD_TTL_MS = 24 * 60 * 60 * 1000;
+const GOOD_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/** Marks an entry stored with the 30-day expiry. Older entries get it once, keeping their wording. */
+const STORED_FOR = '30d';
 const FAILED_TTL_MS = 5 * 60 * 1000;
 
 export interface SummaryEnv {
@@ -16,9 +18,11 @@ export interface SummaryEnv {
 
 type FetchLike = (input: string, init: RequestInit) => Promise<Response>;
 
+export type CachedSummary = SummaryResponse & { storedFor?: string };
+
 export interface SummaryCache {
-  get(key: string): Promise<SummaryResponse | null>;
-  put(key: string, value: SummaryResponse, ttlMs: number): Promise<void>;
+  get(key: string): Promise<CachedSummary | null>;
+  put(key: string, value: CachedSummary, ttlMs: number): Promise<void>;
 }
 
 export class ModelError extends Error {
@@ -181,12 +185,19 @@ export async function handleSummary(request: Request, env: SummaryEnv, fetchImpl
 
   const key = `${MODEL}/${PROMPT_VERSION}/${asset.id}`;
   const cached = await cache.get(key).catch(() => null);
-  if (cached) return json(cached);
+  if (cached) {
+    const { storedFor, ...response } = cached;
+    if (response.source === 'gemini' && storedFor !== STORED_FOR) {
+      await cache.put(key, { ...response, storedFor: STORED_FOR } as CachedSummary, GOOD_TTL_MS).catch(() => undefined);
+    }
+    return json(response);
+  }
 
   let pending = inFlight.get(key);
   if (!pending) {
     pending = summarize(result, alert, apiKey, fetchImpl).then(async (response) => {
-      await cache.put(key, response, response.source === 'gemini' ? GOOD_TTL_MS : FAILED_TTL_MS).catch(() => undefined);
+      const good = response.source === 'gemini';
+      await cache.put(key, good ? { ...response, storedFor: STORED_FOR } : response, good ? GOOD_TTL_MS : FAILED_TTL_MS).catch(() => undefined);
       return response;
     });
     inFlight.set(key, pending);
@@ -196,7 +207,7 @@ export async function handleSummary(request: Request, env: SummaryEnv, fetchImpl
 }
 
 export function memoryCache(now: () => number = Date.now): SummaryCache {
-  const entries = new Map<string, { value: SummaryResponse; expires: number }>();
+  const entries = new Map<string, { value: CachedSummary; expires: number }>();
   return {
     async get(key) {
       const entry = entries.get(key);
