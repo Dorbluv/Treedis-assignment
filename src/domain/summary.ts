@@ -54,7 +54,7 @@ const INSTRUCTION =
 const IMPERATIVE_START =
   /^\s*(?:please\s+)?(check|inspect|lock|turn|replace|tighten|verify|measure|isolate|top up|stop|shut|remove|clean|apply|perform|follow|escalate|repair|use|open|feel|look|test|examine|lubricate|grease|align|confirm|investigate|review|schedule|call|contact|do)\b/i;
 
-const RECORD_ID_IN_TEXT = /(?:INC|SOP|SR|ASM|NOTE)-[A-Z]*d/i;
+const RECORD_ID_IN_TEXT = /\b(?:INC|SOP|SR|ASM|NOTE)-[A-Z]*\d/i;
 const UNLABELED_LIMIT = /(?<!\bdemo\s)(?<!\bdemonstration\s)\blimits?\b/i;
 
 const RECORD_OR_ASSET_ID = /\b[A-Z]{1,4}-[A-Z]?\d+(?:-[A-Z0-9]+)*\b/g;
