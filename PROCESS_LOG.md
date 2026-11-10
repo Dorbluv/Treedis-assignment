@@ -317,3 +317,35 @@ Record each meaningful AI mistake or direction change. Only record things that a
 - **Caught by:** Claude Code.
 - **What changed:** Nothing yet. The dashboard is the user's to change.
 - **Evidence link or screenshot:** The response quoted above, read from the public URL.
+
+## Gemini key restored, and it survived two deploys
+
+- **Date:** 2026-11-10
+- **Tool:** Claude Code, with requests to the public URL. The user changed the Cloudflare dashboard.
+- **Prompt or context:** After the docs push 73f0eb8 the live Worker returned `no_key`.
+- **What went wrong:** The Worker lost `GEMINI_API_KEY` after a docs-only rebuild. Visitors saw the labeled fallback, not an error.
+- **Caught by:** Claude Code.
+- **What changed:** The user added the key again as type Secret. At 13:19 UTC M-204, M-310 and F-118 returned Gemini text. Docs commit ddb6cd6 was pushed about 13:20 UTC and 24 checks over 12 minutes never saw `no_key`. The merge b3df693 was pushed at 13:33 UTC, was live by 13:34 UTC, and M-204 still returned Gemini text 2 minutes later. The cause of the first loss was never verified. Hypothesized: the first entry was not stored as type Secret, which is consistent with a Secret surviving two deploys.
+- **Evidence link or screenshot:** Responses read from the public URL, quoted in this entry.
+
+## M-310 summary removed and record IDs rejected on main
+
+- **Date:** 2026-11-10
+- **Tool:** Claude Code
+- **Prompt or context:** The user asked for only these two changes from `summary-v6`, keeping the v5 prompt.
+- **What changed:** M-310 makes no model call and shows no summary, and a new check rejects record IDs in sentence text. After the deploy `POST /api/summary` for M-310 returned `{"source":"none"}`. Tests: 289 passed. Playwright: 3 passed. `retrieve.ts` and `retrieve.test.ts` unchanged.
+- **What went wrong:** A shell heredoc corrupted the record ID pattern, and failing commit 44d5c69 was made on the local branch because the commit ran after an edit that had failed.
+- **Caught by:** Claude Code.
+- **What changed after that:** Fixed in a26d4c3 before any merge, with every check rerun.
+- **Evidence link or screenshot:** Commits 44d5c69, a26d4c3, b3df693.
+
+## Cache API on workers.dev: evidence that it works
+
+- **Date:** 2026-11-10
+- **Tool:** Claude Code, with requests to the public URL
+- **Prompt or context:** The open question from the first public URL check.
+- **What was found:** The M-204 and F-118 sentences stayed word for word the same from 2026-11-09T17:11:48.670Z through 13:36 UTC on 2026-11-10, across the secret change and two deploys. At 13:19 UTC the calls returned in 0.26 to 0.31 seconds. The model varied its wording between uncached runs, so identical text points to a cache hit.
+- **Conclusion:** Supports the Cache API working on `workers.dev`. Hypothesized step: each new Worker version starts with empty isolate memory, so only the Cache API could have held the answer. No Worker logs or cache header were inspected.
+- **Limit found:** Cached answers last 24 hours from 2026-11-09T17:11:48.670Z, so the entries expire around 2026-11-10 17:11 UTC. The next call after that asks the model again and may word the summary differently from the sentences marked reviewed.
+- **Caught by:** Claude Code.
+- **Evidence link or screenshot:** evidence/gate-3/live-check-first.json
