@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { alertFor, assets, dataset } from '../src/data';
 import { retrieve } from '../src/domain/retrieve';
-import { INSUFFICIENT_SENTENCE, preparedSummary } from '../src/domain/summary';
+import { preparedSummary } from '../src/domain/summary';
 import { TIMEOUT_MS, handleSummary, memoryCache, type SummaryCache } from './summary';
 
 const KEY = 'test-key-not-real';
@@ -55,7 +55,7 @@ describe('request handling', () => {
     expect(model).not.toHaveBeenCalled();
   });
 
-  it.each(['G-204', 'C-204'])('gives no summary on %s and never calls the model', async (id) => {
+  it.each(['G-204', 'C-204', 'M-310'])('gives no summary on %s and never calls the model', async (id) => {
     expect((await call(id)).body).toEqual({ source: 'none' });
     expect(model).not.toHaveBeenCalled();
   });
@@ -108,6 +108,7 @@ describe('fallback', () => {
     ['a citation of INC-2310', { sentences: [{ text: 'Vibration was noted on the gearbox.', citations: ['INC-2310'] }] }, 'invalid_citation'],
     ['an added number', { sentences: [{ text: 'Vibration is 11.2 mm/s.', citations: ['SR-M204-01'] }] }, 'invalid_number'],
     ['a restated reading', { sentences: [{ text: 'Vibration is 8.4 mm/s.', citations: ['SR-M204-01'] }] }, 'invalid_restates_reading'],
+    ['a record ID in the text', { sentences: [{ text: 'Past records INC-2291 and INC-1877 list bearing wear and low lubricant as possible causes.', citations: ['INC-2291', 'INC-1877'] }] }, 'invalid_record_id'],
     ['an instruction', { sentences: [{ text: 'Check the bearing for play.', citations: ['SOP-014-C'] }] }, 'invalid_instruction'],
     ['the wrong shape', { text: 'hello' }, 'invalid_shape'],
   ])('falls back on %s', async (_name, reply, reason) => {
@@ -116,14 +117,6 @@ describe('fallback', () => {
     expect(body.source).toBe('prepared');
     expect(body.reason).toBe(reason);
     expect(body.sentences).toEqual(expectedPrepared('M-204'));
-  });
-
-  it('falls back when M-310 names a cause or omits the insufficient statement', async () => {
-    model = vi.fn(async () => modelReply({ sentences: [{ text: 'Vibration is 6.2 mm/s.', citations: ['SR-M310-01'] }] }));
-    expect((await call('M-310')).body.reason).toBe('invalid_restates_reading+insufficient');
-    cache = memoryCache();
-    model = vi.fn(async () => modelReply({ sentences: [{ text: `${INSUFFICIENT_SENTENCE}`, citations: ['SR-M310-01'] }, { text: 'Bearing wear is possible.', citations: ['SR-M310-01'] }] }));
-    expect((await call('M-310')).body.reason).toBe('invalid_cause');
   });
 
   it.each([

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { alertFor, records } from '../data';
 import { machineHistory } from '../domain/snapshot';
+import { summaryAllowed } from '../domain/summary';
 import { causeComparison, causesWithoutStep, contextStepNotes, separatingSentence } from '../domain/causes';
 import { ESCALATION_HEADLINE, inspectionStatus } from '../domain/status';
 import type { Alert, Escalation, RetrievalResult, SavedPlan, SopRecord } from '../domain/types';
@@ -423,7 +424,7 @@ export function AlertPanel({
                   {readings.map((reading) => <ReadingCard key={reading.label} reading={reading} />)}
                 </div>
                 {moved && <p className="readings-note">Readings stay high until repaired.</p>}
-                <SummaryCard result={result} sourceHref={(id) => `${base}/investigate/source/${id}`} />
+                {summaryAllowed(result) && <SummaryCard result={result} sourceHref={(id) => `${base}/investigate/source/${id}`} />}
               </section>
             )}
 

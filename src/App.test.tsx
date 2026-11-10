@@ -312,6 +312,17 @@ describe('action bar', () => {
   });
 });
 
+describe('M-310 without a summary', () => {
+  it('keeps its fixed messages', async () => {
+    await go('#/asset/M-310');
+    await act(settle);
+    const fixed = container.querySelector('.insufficient')?.textContent;
+    expect(fixed).toContain('Insufficient asset-specific evidence');
+    expect(fixed).toContain('No past incidents on this machine');
+    expect(container.querySelector('.summary')).toBeNull();
+  });
+});
+
 describe('evidence summary', () => {
   const summary = () => container.querySelector('.summary') as HTMLElement;
   const label = () => container.querySelector('.summary-label')?.textContent;
@@ -384,7 +395,7 @@ describe('evidence summary', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
-  it.each(['G-204', 'C-204'])('has no summary on %s and makes no request', async (id) => {
+  it.each(['G-204', 'C-204', 'M-310'])('has no summary on %s and makes no request', async (id) => {
     await go(`#/asset/${id}`);
     await act(settle);
     expect(summary()).toBeNull();

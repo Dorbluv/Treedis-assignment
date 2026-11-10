@@ -19,7 +19,7 @@ export const MAX_SENTENCES = 2;
 export const MAX_SENTENCE_CHARS = 110;
 export const INSUFFICIENT_SENTENCE = 'Insufficient asset-specific evidence to recommend a likely cause.';
 
-export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient' | 'limit_label' | 'cause_coverage' | 'restates_reading';
+export type SummaryRule = 'shape' | 'citation' | 'number' | 'diagnosis' | 'cause' | 'instruction' | 'insufficient' | 'limit_label' | 'cause_coverage' | 'restates_reading' | 'record_id';
 
 export interface ValidationFailure {
   rule: SummaryRule;
@@ -54,6 +54,7 @@ const INSTRUCTION =
 const IMPERATIVE_START =
   /^\s*(?:please\s+)?(check|inspect|lock|turn|replace|tighten|verify|measure|isolate|top up|stop|shut|remove|clean|apply|perform|follow|escalate|repair|use|open|feel|look|test|examine|lubricate|grease|align|confirm|investigate|review|schedule|call|contact|do)\b/i;
 
+const RECORD_ID_IN_TEXT = /(?:INC|SOP|SR|ASM|NOTE)-[A-Z]*d/i;
 const UNLABELED_LIMIT = /(?<!\bdemo\s)(?<!\bdemonstration\s)\blimits?\b/i;
 
 const RECORD_OR_ASSET_ID = /\b[A-Z]{1,4}-[A-Z]?\d+(?:-[A-Z0-9]+)*\b/g;
@@ -110,6 +111,8 @@ function checkSentence(sentence: SummarySentence, result: RetrievalResult): Vali
     if (!new RegExp(`\\b${word}\\b`, 'i').test(citedText)) failures.push({ rule: 'number', detail: `"${word}" is in no cited record` });
   }
 
+  if (RECORD_ID_IN_TEXT.test(text)) failures.push({ rule: 'record_id', detail: 'record IDs belong in citations, not the sentence' });
+
   if (onlyRestatesReading(text, result)) failures.push({ rule: 'restates_reading', detail: 'only restates a reading the screen already shows' });
 
   if (UNLABELED_LIMIT.test(text)) failures.push({ rule: 'limit_label', detail: 'a limit must be called a demo limit' });
@@ -149,6 +152,11 @@ function isSentence(value: unknown): value is SummarySentence {
     candidate.citations.length > 0 &&
     candidate.citations.every((id) => typeof id === 'string')
   );
+}
+
+/** With no allowed cause there is nothing to compare, so the machine gets no summary and no model call. */
+export function summaryAllowed(result: RetrievalResult): boolean {
+  return result.possibleCauses.length > 0;
 }
 
 /** Nothing reaches the screen unless every rule here passes. */

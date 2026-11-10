@@ -1,6 +1,6 @@
 import { alertFor, assets, dataset } from '../src/data';
 import { retrieve } from '../src/domain/retrieve';
-import { MAX_SENTENCES, MAX_SENTENCE_CHARS, INSUFFICIENT_SENTENCE, preparedSummary, validateSummary, type SummaryResponse } from '../src/domain/summary';
+import { MAX_SENTENCES, MAX_SENTENCE_CHARS, INSUFFICIENT_SENTENCE, preparedSummary, summaryAllowed, validateSummary, type SummaryResponse } from '../src/domain/summary';
 import type { Alert, RetrievalResult } from '../src/domain/types';
 
 /** Free tier, confirmed on Google's models and pricing pages on 2026-11-09. 3.8 and 3.6 Flash were overloaded in testing. */
@@ -171,6 +171,8 @@ export async function handleSummary(request: Request, env: SummaryEnv, fetchImpl
   if (!alert) return json({ source: 'none' } satisfies SummaryResponse);
 
   const result = retrieve(asset.id, alert, dataset);
+  if (!summaryAllowed(result)) return json({ source: 'none' } satisfies SummaryResponse);
+
   const apiKey = env.GEMINI_API_KEY;
   if (!apiKey) {
     logFailure(asset.id, 'no_key');
